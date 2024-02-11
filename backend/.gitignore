@@ -1,0 +1,7 @@
+node_modules
+coverage 
+logfile.log
+uncaughtExceptions.log
+.env
+config
+karanstore-2c850-firebase-adminsdk-5ry9v-ff376d22e0.json
