@@ -1,9 +1,11 @@
 // src/components/ChatPage.js
 import React, { useState, useEffect } from "react"
 import { useParams } from "react-router-dom"
+import { useUser } from "../contexts/userContext"
 
 const ChatPage = ({ user_id, xAuthToken }) => {
   const { id } = useParams()
+  const user = useUser()
   const [inputMessage, setInputMessage] = useState("")
   const [messages, setMessages] = useState([])
   const [isOpen, setIsOpen] = useState(false)
@@ -12,7 +14,6 @@ const ChatPage = ({ user_id, xAuthToken }) => {
   const [selectedChannel, setSelectedChannel] = useState("general")
   const [channels, setChannels] = useState(["general"])
   const [newChannel, setNewChannel] = useState("")
-  const [pageNumber, setPageNumber] = useState(1)
 
   useEffect(() => {
     const fetchChatData = async () => {
@@ -214,7 +215,7 @@ const ChatPage = ({ user_id, xAuthToken }) => {
             messages.map((msg) => (
               <div key={msg.id} className="mb-2">
                 <span className="font-semibold">{msg.employee_id}:</span>{" "}
-                {msg.message} - {msg.isRead.toString()} - {msg.channel} -{" "}
+                {msg.value} - {msg.isRead.toString()} - {msg.channel} -{" "}
                 {selectedChannel} - {msg.id || msg.dataValues.id}
               </div>
             ))}

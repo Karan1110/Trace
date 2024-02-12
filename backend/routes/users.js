@@ -2,7 +2,7 @@ const express = require("express")
 const router = express.Router()
 const bcrypt = require("bcrypt")
 const auth = require("../middlewares/auth.js")
-const isadmin = require("../middlewares/isAdmin.js")
+const Chat = require("../models/chat.js")
 const User = require("../models/user.js")
 const Ticket = require("../models/ticket.js")
 const Meeting = require("../models/meeting.js")
@@ -80,6 +80,7 @@ router.get("/stats/:id", [auth], async (req, res) => {
     res.status(500).send("Internal Server Error")
   }
 })
+
 router.get("/stats", [auth], async (req, res) => {
   try {
     // Average time taken to complete a ticket
@@ -98,6 +99,7 @@ router.get("/stats", [auth], async (req, res) => {
     res.status(500).send("Internal Server Error")
   }
 })
+
 router.get("/leaderboard", async (req, res) => {
   try {
     const AllTimeRankedUsers = await User.findAll({
@@ -161,6 +163,7 @@ router.get("/leaderboard", async (req, res) => {
     console.log(ex)
   }
 })
+
 router.get("/:id", [auth], async (req, res) => {
   const user = await User.findOne({
     where: {
@@ -197,6 +200,10 @@ router.get("/:id", [auth], async (req, res) => {
       {
         model: Department,
         as: "Department",
+      },
+      {
+        model: Chat,
+        as: "Chats",
       },
     ],
   })

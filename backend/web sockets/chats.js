@@ -2,49 +2,59 @@ const Message = require("../models/message")
 const User = require("../models/user")
 const Sequelize = require("sequelize")
 const Chat = require("../models/chat")
+const ChatUser = require("../models/ChatUser")
 const auth = require("./utils/auth")
 const addToChats = require("./utils/addToChats")
 const addToChannels = require("./utils/addToChannels")
-const sendMessage = require("./utils/sendMessage")
+const { createProducer } = require("./utils/Kafka")
+const { produceMessage } = require("./utils/Kafka")
+const { startConsumingMessages } = require("./utils/Kafka")
 
 module.exports = function (app) {
   require("express-ws")(app)
   // TODO  - use db for this
+
   // Store WebSocket connections for each chat room
   const Chats = {}
 
-  app.ws("/chat/:chatRoom/:channel", auth, async (ws, req) => {
+  app.ws("/chat/:chat/:channel", auth, async (ws, req) => {
     try {
-      console.log("user connected...")
-      const user_id = req.query.user_id
-      let chatRoom = await Chat.findByPk(req.params.chatRoom)
+      let currentChat = await Chat.findByPk(req.params.chat, {
+        include: {
+          as: "Messages",
+          model: Message,
+        },
+      })
+
       const user = await User.findByPk(req.user.id)
-      if (!chatRoom) {
-        chatRoom = await Chat.create({
-          id: req.params.chatRoom,
+      if (!currentChat) {
+        currentChat = await Chat.create({
+          id: req.params.chat,
           user_id: [req.query.user_id],
           channels: [req.params.channel],
           type: req.query.type,
           name: req.query.name,
         })
       }
-      // console.log(chatRoom.dataValues)
+
       if (
-        !chatRoom.dataValues.user_id.includes(
+        !currentChat.dataValues.user_id.includes(
           user.dataValues.id || user.id || req.query.user_id
         )
       ) {
         addToChats(
           Chat,
           user.id || user.dataValues.id,
-          chatRoom.id || chatRoom.dataValues.id
+          currentChat.id || currentChat.dataValues.id
         )
       }
 
       if (
-        !chatRoom.dataValues.channels.includes(req.params.channel || "general")
+        !currentChat.dataValues.channels.includes(
+          req.params.channel || "general"
+        )
       ) {
-        addToChannels(Chat, req.params.channel, chatRoom.id)
+        addToChannels(Chat, req.params.channel, currentChat.id)
       }
 
       if (!user_id) {
@@ -52,23 +62,36 @@ module.exports = function (app) {
       }
 
       // Check if the chat room exists, create a new one if it doesn't
-      const chatRoomKey = `${req.params.chatRoom}_${req.params.channel}`
-      if (!Chats[chatRoomKey]) {
-        Chats[chatRoomKey] = []
+      const chatKey = `${req.params.chat}_${req.params.channel}`
+      if (!Chats[chatKey]) {
+        Chats[chatKey] = []
       }
 
       // Add the WebSocket connection to the chat room
-      Chats[chatRoomKey].push(ws)
+      Chats[chatKey].push(ws)
 
+      let chat_user = await ChatUser.findOne({
+        where: {
+          user_id: req.user.id,
+          chat_id: currentChat.dataValues.id,
+        },
+      })
+
+      if (!chat_user) {
+        ChatUser = await ChatUser.create({
+          user_id: req.user.id,
+          chat_id: currentChat.dataValues.id,
+        })
+      }
       // Update user's online status
-      if (!user.dataValues.chats.includes(req.params.chatRoom)) {
+      if (!user.dataValues.chats.includes(req.params.chat)) {
         await User.update(
           {
             isOnline: true,
             chats: Sequelize.fn(
               "array_append",
               Sequelize.col("chats"),
-              chatRoom.dataValues.id.toString() || chatRoom.id.toString()
+              currentChat.dataValues.id.toString() || currentChat.id.toString()
             ),
           },
           {
@@ -90,12 +113,14 @@ module.exports = function (app) {
         )
       }
 
+      // Mark all messages as read
+
       await Message.update(
         { isRead: true },
         {
           where: {
             isRead: false,
-            chatRoom_id: chatRoom.id || chatRoom.dataValues.id,
+            chat_id: currentChat.id || currentChat.dataValues.id,
             user_id: {
               [Sequelize.Op.notIn]: [req.user.id, req.query.user_id],
             },
@@ -104,42 +129,26 @@ module.exports = function (app) {
       )
 
       // Get all messages for the current chat room
-      const messages = await Message.findAll({
-        where: {
-          chatRoom_id:
-            chatRoom.id || chatRoom.dataValues.id || req.params.chatRoom,
-          channel: req.params.channel || "general",
-        },
-        limit: 20,
-        order: [["createdAt", "ASC"]],
-      })
-
-      // Mark all messages as read
+      const messages = currentChat.dataValues.Messages
 
       // Send all messages to the WebSocket connection and mark them as read
       for (const msg of messages) {
         ws.send(
           JSON.stringify({
             id: msg.id,
-            message: msg.message,
+            message: msg.value,
             user_id: msg.user_id,
             isRead: true, // Mark as read
             channel: msg.channel,
           })
         )
       }
+``
+      startConsumingMessages(Chats, req, ws)
 
       // Handle incoming messages
       ws.on("message", async (msg) => {
-        sendMessage(
-          Chats,
-          msg,
-          req.params.channel,
-          Message,
-          req.params.chatRoom,
-          req,
-          ws
-        )
+        produceMessage(msg)
       })
       // Handle WebSocket connection closure
       ws.on("close", async () => {
@@ -156,8 +165,8 @@ module.exports = function (app) {
         )
 
         // Remove the WebSocket connection from the chat room
-        const chatRoomKey = `${req.params.chatRoom}_${req.params.channel}`
-        Chats[chatRoomKey] = Chats[chatRoomKey].filter(
+        const chatKey = `${req.params.chat}_${req.params.channel}`
+        Chats[chatKey] = Chats[chatKey].filter(
           (connection) => connection !== ws
         )
       })

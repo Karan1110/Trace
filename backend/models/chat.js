@@ -14,10 +14,6 @@ const Chat = db.define(
       type: Sequelize.STRING,
       allowNull: false,
     },
-    user_id: {
-      type: Sequelize.ARRAY(Sequelize.INTEGER),
-      defaultValue: [],
-    },
     channels: {
       type: Sequelize.ARRAY(Sequelize.STRING),
       defaultValue: [],

@@ -6,7 +6,7 @@ router.get("/", async (req, res) => {
   try {
     const messages = await Message.findAll({
       where: {
-        chatRoom_id: req.query.chatRoom_id,
+        chat_id: req.query.chat_id,
         channel: req.query.channel,
       },
       limit: 20,
@@ -22,9 +22,8 @@ router.get("/", async (req, res) => {
 })
 
 router.get("/:id", async (req, res) => {
-  let chatRoom = await Chat.findByPk(req.params.id)
-  console.log(chatRoom)
-  res.send(chatRoom)
+  let chat = await Chat.findByPk(req.params.id)
+  res.send(chat)
 })
 
 module.exports = router

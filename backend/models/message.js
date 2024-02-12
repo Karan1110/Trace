@@ -1,17 +1,19 @@
 const Sequelize = require("sequelize")
 const db = require("../startup/db")
 const User = require("./user")
+const Chat = require("./chat")
 
 const Message = db.define(
   "Message",
   {
-    message: Sequelize.STRING,
+    value: Sequelize.STRING,
     isRead: {
       type: Sequelize.BOOLEAN,
       defaultValue: false,
     },
-    chatRoom_id: Sequelize.INTEGER,
+    chat_id: Sequelize.INTEGER,
     channel: Sequelize.STRING,
+    user_id: Sequelize.INTEGER,
   },
   {
     timestamps: true,
@@ -36,21 +38,24 @@ User.hasMany(Message, {
   as: "SentMessages", // Change the alias to "SentMessages"
   foreignKey: "user_id",
   onDelete: "CASCADE",
-  onUpdate: "CASCADE",
+})
+
+Message.belongsTo(Chat, {
+  as: "Chat",
+  foreignKey: "chat_id",
+  onDelete: "CASCADE",
+})
+
+Chat.hasMany(Message, {
+  as: "Messages",
+  foreignKey: "chat_id",
+  onDelete: "CASCADE",
 })
 
 Message.belongsTo(User, {
   as: "Sender", // Change the alias to "Sender"
   foreignKey: "user_id",
   onDelete: "CASCADE",
-  onUpdate: "CASCADE",
 })
 
 module.exports = Message
-
-// Message.hasOne(ChatRoom, {
-//   as: "chatRoom",
-//   foreignKey: "chatRoom_id",
-//   onDelete: "CASCADE",
-//   onUpdate: "CASCADE",
-// })

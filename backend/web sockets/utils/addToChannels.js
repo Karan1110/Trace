@@ -1,14 +1,14 @@
 const Sequelize = require("sequelize")
 
-module.exports = async (ChatRoom, channel, chatRoom_id) => {
-  await ChatRoom.update(
+module.exports = async (Chat, channel, chat_id) => {
+  await Chat.update(
     {
       channels: Sequelize.literal(
         `array_append(channels, '${channel || "general"}')`
       ),
     },
     {
-      where: { id: chatRoom_id },
+      where: { id: chat_id },
     }
   )
 }
