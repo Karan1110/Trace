@@ -21,10 +21,6 @@ const User = db.define(
       type: Sequelize.INTEGER,
       defaultValue: 0,
     },
-    chats: {
-      type: Sequelize.ARRAY(Sequelize.STRING),
-      defaultValue: [],
-    },
     blockedUsers: {
       type: Sequelize.ARRAY(Sequelize.INTEGER),
       defaultValue: [],
