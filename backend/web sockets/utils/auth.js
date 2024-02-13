@@ -10,6 +10,6 @@ module.exports = (ws, req, next) => {
     req.user = decoded
     next()
   } catch (ex) {
-    ws.close(4000, `${ex}`)
+    ws.close(4000, `${ex.message}`)
   }
 }

@@ -15,7 +15,7 @@ const kafka = new Kafka({
 })
 let producer = null
 
-export async function createProducer() {
+const createProducer = async () => {
   if (producer) return producer
   const _producer = kafka.producer()
   await _producer.connect()
@@ -23,7 +23,12 @@ export async function createProducer() {
   return producer
 }
 
-export async function produceMessage(Chats, message, ws, req) {
+exports.produceMessage = async function produceMessage(
+  Chats,
+  message,
+  ws,
+  req
+) {
   const producer = await createProducer()
   const msg = {
     key: `${Date.now()}-message`,
@@ -42,13 +47,16 @@ export async function produceMessage(Chats, message, ws, req) {
   }
 
   await producer.send({
-    messages: [msg],
+    messages: [{ value: JSON.stringify(msg) }],
     topic: "message",
   })
   return true
 }
 
-export async function startConsumingMessages(Chats, req) {
+exports.startConsumingMessages = async function startConsumingMessages(
+  Chats,
+  req
+) {
   try {
     // Consume messages from Kafka
     console.log("Consumer is running..")
@@ -59,7 +67,7 @@ export async function startConsumingMessages(Chats, req) {
     await consumer.run({
       eachMessage: async ({ message, pause }) => {
         try {
-          const msg = JSON.parse(message)
+          const msg = JSON.parse(message.value.toString())
           Chats[`${req.params.chat}_${req.params.channel}`].forEach(
             (connection) => {
               connection.send(

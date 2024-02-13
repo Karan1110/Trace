@@ -21,7 +21,7 @@ module.exports = function (app) {
   app.use(express.json())
   app.use(helmet())
   app.use(cors())
-  require("../web sockets/chat")(app)
+  require("../web sockets/chats")(app)
   app.use("/notifications", notifications)
   app.use("/users", users)
   app.use("/departments", departments)

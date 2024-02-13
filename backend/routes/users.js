@@ -238,16 +238,6 @@ router.get("/:id", [auth], async (req, res) => {
 
 router.post("/", async (req, res) => {
   try {
-    const userExists = await User.findAll({
-      where: {
-        email: req.body.email,
-      },
-    })
-    if (userExists && userExists.length > 0) {
-      console.log(userExists)
-      return res.status(400).send("User already exists...")
-    }
-
     const salt = await bcrypt.genSalt(10)
     const p = await bcrypt.hash(req.body.password, salt)
 

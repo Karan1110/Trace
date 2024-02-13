@@ -6,31 +6,34 @@ const Chat = require("./chat")
 const ChatUser = db.define(
   "ChatUser",
   {
-    user_id: Sequelize.INTEGER,
-    chat_id: Sequelize.INTEGER,
+    user_id: {
+      type: Sequelize.INTEGER,
+      allowNull: false, // Ensure user_id is not null
+    },
+    chat_id: {
+      type: Sequelize.INTEGER,
+      allowNull: false, // Ensure chat_id is not null
+    },
   },
   {
     tablename: "ChatUser",
   }
 )
+ChatUser.belongsTo(User, { foreignKey: "user_id", as: "User" })
+ChatUser.belongsTo(Chat, { foreignKey: "chat_id", as: "Chat" })
 
-ChatUser.belongsTo(User, {
-  as: "User",
-  foreignKey: "user_id",
-})
-
-ChatUser.belongsTo(Chat, {
-  as: "Chat",
-  foreignKey: "chat_id",
-})
 Chat.belongsToMany(User, {
-  as: "Users",
   through: ChatUser,
+  as: "Users",
+  foreignKey: "chat_id",
+  otherKey: "user_id",
 })
 
 User.belongsToMany(Chat, {
-  as: "Chats",
   through: ChatUser,
+  as: "Chats",
+  foreignKey: "user_id",
+  otherKey: "chat_id",
 })
 
 module.exports = ChatUser

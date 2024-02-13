@@ -17,20 +17,6 @@ const Message = db.define(
   },
   {
     timestamps: true,
-    indexes: [
-      {
-        fields: ["message"],
-      },
-    ],
-    hooks: {
-      afterCreate: function (message, options) {
-        // Your logic after creating a message
-      },
-      afterUpdate: function (message, options) {
-        console.log("hii karu") // Add this log statement
-        // Your logic after updating a message
-      },
-    },
   }
 )
 
