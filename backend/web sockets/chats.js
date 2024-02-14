@@ -23,8 +23,6 @@ module.exports = function (app) {
           model: Message,
         },
       })
-
-      const user = await User.findByPk(req.user.id)
       if (!currentChat) {
         currentChat = await Chat.create({
           id: req.params.chat,
@@ -33,6 +31,8 @@ module.exports = function (app) {
           name: req.query.name,
         })
       }
+
+      const user = await User.findByPk(req.user.id)
 
       if (
         !currentChat.dataValues.channels.includes(
@@ -64,35 +64,17 @@ module.exports = function (app) {
           chat_id: currentChat.dataValues.id,
         })
       }
-      // Update user's online status
-      if (!user.dataValues.chats.includes(req.params.chat)) {
-        await User.update(
-          {
-            isOnline: true,
-            chats: Sequelize.fn(
-              "array_append",
-              Sequelize.col("chats"),
-              currentChat.dataValues.id.toString() || currentChat.id.toString()
-            ),
+
+      await User.update(
+        {
+          isOnline: true,
+        },
+        {
+          where: {
+            id: req.user.id,
           },
-          {
-            where: {
-              id: req.user.id,
-            },
-          }
-        )
-      } else {
-        await User.update(
-          {
-            isOnline: true,
-          },
-          {
-            where: {
-              id: req.user.id,
-            },
-          }
-        )
-      }
+        }
+      )
 
       // Mark all messages as read
 
@@ -111,7 +93,12 @@ module.exports = function (app) {
 
       // Get all messages for the current chat room
       const messages = currentChat.dataValues.Messages
-      console.log(messages)
+      console.log(
+        "these are the messages : ",
+        messages,
+        "chatData : ",
+        currentChat
+      )
 
       // Send all messages to the WebSocket connection and mark them as read
       if (messages.length > 0) {
@@ -143,7 +130,7 @@ module.exports = function (app) {
           },
           {
             where: {
-              id: user.dataValues.id || user.id,
+              id: user.dataValues.id,
             },
           }
         )

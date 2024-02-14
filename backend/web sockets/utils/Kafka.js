@@ -1,5 +1,6 @@
 const { Kafka } = require("kafkajs")
 const fs = require("fs")
+const Message = require("../../models/message")
 const path = require("path")
 
 const kafka = new Kafka({
@@ -81,8 +82,15 @@ exports.startConsumingMessages = async function startConsumingMessages(
               )
             }
           )
-          // Assuming 'm' is defined somewhere in your code
-          await Message.create(msg)
+          const createdMessage = await Message.create({
+            value: msg.value,
+            isRead: JSON.parse(msg.isRead),
+            channel: msg.channel,
+            chat_id: parseInt(msg.chat_id),
+            user_id: parseInt(msg.user_id),
+          })
+
+          console.log(createdMessage)
         } catch (ex) {
           console.log("Error processing message:", ex.message)
           // Pause the consumer and resume after a delay
