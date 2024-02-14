@@ -2,18 +2,20 @@ const { Kafka } = require("kafkajs")
 const fs = require("fs")
 const Message = require("../../models/message")
 const path = require("path")
+const config = require("config")
 
 const kafka = new Kafka({
-  brokers: ["kafka-329a4bd9-karan-7208.a.aivencloud.com:10658"],
+  brokers: [config.get("kafka_broker")],
   ssl: {
     ca: [fs.readFileSync(path.resolve("./ca.pem"), "utf-8")],
   },
   sasl: {
     mechanism: "plain",
-    username: "avnadmin",
-    password: "AVNS_aENUHTmChXDosAD1p2X",
+    username: config.get("kafka_username"),
+    password: config.get("kafka_password"),
   },
 })
+
 let producer = null
 
 const createProducer = async () => {
