@@ -1,7 +1,7 @@
 // Leaderboard.js
 import React, { useState, useEffect } from "react"
 import axios from "axios"
-import { Tabs, Tab, Table } from "@radix-ui/react-tabs"
+import { Tabs, Table } from "@radix-ui/react-tabs"
 import { toast } from "react-hot-toast"
 
 const Leaderboard = () => {
@@ -35,23 +35,23 @@ const Leaderboard = () => {
 
   return (
     <div className="mx-auto max-w-4xl p-4">
-      <Tabs defaultValue="1">
-        <Tab value="1">All Time</Tab>
-        <Tab value="2">Last Month</Tab>
-        <Tab value="3">Last Year</Tab>
+      <Tabs.Root defaultValue="1">
+        <Tabs.List>
+          <Tabs.Trigger value="1">All Time</Tabs.Trigger>
+          <Tabs.Trigger value="2">Last Month</Tabs.Trigger>
+          <Tabs.Trigger value="3">Last Year</Tabs.Trigger>
+        </Tabs.List>
 
         <Tabs.Content>
           <Tabs.Panel value="1">
             <Table.Root className="max-w-2xl">
               <Table.Header>
                 <Table.Row>
-                  <Table.ColumnHeaderCell>User</Table.ColumnHeaderCell>
-                  <Table.ColumnHeaderCell align="right">
-                    Points
-                  </Table.ColumnHeaderCell>
-                  <Table.ColumnHeaderCell align="right">
+                  <Table.ColumnHeader>User</Table.ColumnHeader>
+                  <Table.ColumnHeader align="right">Points</Table.ColumnHeader>
+                  <Table.ColumnHeader align="right">
                     Department
-                  </Table.ColumnHeaderCell>
+                  </Table.ColumnHeader>
                 </Table.Row>
               </Table.Header>
 
@@ -72,13 +72,11 @@ const Leaderboard = () => {
             <Table.Root className="max-w-2xl">
               <Table.Header>
                 <Table.Row>
-                  <Table.ColumnHeaderCell>User</Table.ColumnHeaderCell>
-                  <Table.ColumnHeaderCell align="right">
-                    Points
-                  </Table.ColumnHeaderCell>
-                  <Table.ColumnHeaderCell align="right">
+                  <Table.ColumnHeader>User</Table.ColumnHeader>
+                  <Table.ColumnHeader align="right">Points</Table.ColumnHeader>
+                  <Table.ColumnHeader align="right">
                     Department
-                  </Table.ColumnHeaderCell>
+                  </Table.ColumnHeader>
                 </Table.Row>
               </Table.Header>
 
@@ -99,13 +97,11 @@ const Leaderboard = () => {
             <Table.Root className="max-w-2xl">
               <Table.Header>
                 <Table.Row>
-                  <Table.ColumnHeaderCell>User</Table.ColumnHeaderCell>
-                  <Table.ColumnHeaderCell align="right">
-                    Points
-                  </Table.ColumnHeaderCell>
-                  <Table.ColumnHeaderCell align="right">
+                  <Table.ColumnHeader>User</Table.ColumnHeader>
+                  <Table.ColumnHeader align="right">Points</Table.ColumnHeader>
+                  <Table.ColumnHeader align="right">
                     Department
-                  </Table.ColumnHeaderCell>
+                  </Table.ColumnHeader>
                 </Table.Row>
               </Table.Header>
 
@@ -122,7 +118,7 @@ const Leaderboard = () => {
             </Table.Root>
           </Tabs.Panel>
         </Tabs.Content>
-      </Tabs>
+      </Tabs.Root>
     </div>
   )
 }
