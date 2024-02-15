@@ -119,8 +119,17 @@ module.exports = function (app) {
 
       // Handle incoming messages
       ws.on("message", async (msg) => {
-        produceMessage(Chats, msg, ws, req)
+        const parsedMsg = JSON.parse(msg)
+        if (parsedMsg.edit == true) {
+          // Emit an "edit" event with the edited message content
+          const editedMessage = parsedMsg.message
+          ws.emit("edit", editedMessage, parsedMsg.id)
+        } else {
+          // Process regular message
+          produceMessage(Chats, msg, ws, req)
+        }
       })
+
       ws.on("edit", async (msg, msgId) => {
         produceMessage(Chats, msg, ws, req, true, msgId)
       })

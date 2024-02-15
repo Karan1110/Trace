@@ -1,5 +1,6 @@
 // src/components/ChatPage.js
 import React, { useState, useEffect } from "react"
+import { ContextMenu } from "@radix-ui/themes"
 
 const Chat = () => {
   const id = 786
@@ -58,6 +59,12 @@ const Chat = () => {
       }
     }
   }, [id, xAuthToken, chatData, selectedChannel])
+  const edit = (msgId, newMessage) => {
+    if (ws && msgId && newMessage) {
+      // Emit the "edit" event to the WebSocket server with the new message and message ID
+      ws.send(JSON.stringify({ edit: true, id: msgId, message: newMessage }))
+    }
+  }
 
   const handleAddChannel = () => {
     setIsOpen(true)
@@ -211,11 +218,29 @@ const Chat = () => {
         <div className="mb-4 overflow-y-auto">
           {messages &&
             messages.map((msg) => (
-              <div key={msg.id} className="mb-2">
-                <span className="font-semibold">{msg.employee_id}:</span>{" "}
-                {msg.value} - {msg.isRead.toString()} - {msg.channel} -{" "}
-                {selectedChannel} - {msg.id || msg.dataValues.id}
-              </div>
+              <ContextMenu.Root size="1">
+                <ContextMenu.Trigger>
+                  <RightClickZone>
+                    <div key={msg.id} className="my-3">
+                      <span className="font-semibold">{msg.employee_id}:</span>{" "}
+                      {msg.value} - {msg.isRead.toString()} - {msg.channel} -{" "}
+                      {selectedChannel} - {msg.id || msg.dataValues.id}
+                    </div>
+                  </RightClickZone>
+                </ContextMenu.Trigger>
+                <ContextMenu.Content>
+                  <ContextMenu.Item
+                    shortcut="⌘ E"
+                    onClick={() => edit(msg.id, "New edited message")}
+                  >
+                    Edit
+                  </ContextMenu.Item>
+                  <ContextMenu.Separator />
+                  <ContextMenu.Item shortcut="⌘ ⌫" color="red">
+                    Delete
+                  </ContextMenu.Item>
+                </ContextMenu.Content>
+              </ContextMenu.Root>
             ))}
         </div>
         <div className="flex space-x-2 absolute justify-center tex-center  items-center bottom-5">
