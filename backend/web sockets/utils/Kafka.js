@@ -30,7 +30,9 @@ exports.produceMessage = async function produceMessage(
   Chats,
   message,
   ws,
-  req
+  req,
+  edit = false,
+  msgId = null
 ) {
   const producer = await createProducer()
   const msg = {
@@ -40,6 +42,8 @@ exports.produceMessage = async function produceMessage(
     channel: req.params.channel,
     chat_id: req.params.chat,
     user_id: req.user.id,
+    edit: edit,
+    msgId: msgId,
   }
 
   const chatKey = `${req.params.chat}_${req.params.channel}`
@@ -71,28 +75,53 @@ exports.startConsumingMessages = async function startConsumingMessages(
       eachMessage: async ({ message, pause }) => {
         try {
           const msg = JSON.parse(message.value.toString())
-          Chats[`${req.params.chat}_${req.params.channel}`].forEach(
-            (connection) => {
-              connection.send(
-                JSON.stringify({
-                  key: msg.key,
-                  value: msg.value,
-                  user_id: msg.user_id,
-                  isRead: msg.isRead,
-                  channel: msg.channel,
-                })
-              )
-            }
-          )
-          const createdMessage = await Message.create({
-            value: msg.value,
-            isRead: JSON.parse(msg.isRead),
-            channel: msg.channel,
-            chat_id: parseInt(msg.chat_id),
-            user_id: parseInt(msg.user_id),
-          })
+          if (msg.edit == true) {
+            Chats[`${req.params.chat}_${req.params.channel}`].forEach(
+              (connection) => {
+                connection.send(
+                  JSON.stringify({
+                    id: msg.msgId,
+                    value: msg.value,
+                    edited: true,
+                  })
+                )
+              }
+            )
 
-          console.log(createdMessage)
+            await Message.update(
+              {
+                value: msg.value,
+              },
+              {
+                where: {
+                  id: msg.msgId,
+                },
+              }
+            )
+          } else {
+            Chats[`${req.params.chat}_${req.params.channel}`].forEach(
+              (connection) => {
+                connection.send(
+                  JSON.stringify({
+                    key: msg.key,
+                    value: msg.value,
+                    user_id: msg.user_id,
+                    isRead: msg.isRead,
+                    channel: msg.channel,
+                  })
+                )
+              }
+            )
+
+            const createdMessage = await Message.create({
+              value: msg.value,
+              isRead: JSON.parse(msg.isRead),
+              channel: msg.channel,
+              chat_id: parseInt(msg.chat_id),
+              user_id: parseInt(msg.user_id),
+            })
+            console.log(createdMessage)
+          }
         } catch (ex) {
           console.log("Error processing message:", ex.message)
           // Pause the consumer and resume after a delay

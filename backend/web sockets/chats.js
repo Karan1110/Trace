@@ -121,6 +121,9 @@ module.exports = function (app) {
       ws.on("message", async (msg) => {
         produceMessage(Chats, msg, ws, req)
       })
+      ws.on("edit", async (msg, msgId) => {
+        produceMessage(Chats, msg, ws, req, true, msgId)
+      })
       // Handle WebSocket connection closure
       ws.on("close", async () => {
         await User.update(

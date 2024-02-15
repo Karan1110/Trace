@@ -4,8 +4,7 @@ import "@radix-ui/themes/styles.css"
 import { Theme } from "@radix-ui/themes"
 import { BrowserRouter as Router, Route, Routes } from "react-router-dom"
 import Navbar from "./components/Navbar"
-import ChatListPage from "./components/chats"
-import ChatPage from "./components/chat"
+import Chat from "./components/Chat.jsx"
 import { Toaster } from "react-hot-toast"
 import EmailVerificationForm from "./components/Mail"
 import Department from "./components/Department"
@@ -30,8 +29,7 @@ const App = () => {
           <Navbar />
           <Router>
             <Routes>
-              <Route path="/chats/:id" element={<ChatPage />} />
-              <Route path="/chat" element={<ChatListPage />} />
+              <Route path="/chat" element={<Chat />} />
               <Route path="/verify" element={<EmailVerificationForm />} />
               <Route path="/departments" element={<Department />} />
               <Route path="/signup" element={<SignUp />} />

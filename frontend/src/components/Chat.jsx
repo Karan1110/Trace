@@ -1,11 +1,8 @@
 // src/components/ChatPage.js
 import React, { useState, useEffect } from "react"
-import { useParams } from "react-router-dom"
-import { useUser } from "../contexts/userContext"
 
-const ChatPage = ({ user_id, xAuthToken }) => {
-  const { id } = useParams()
-  const user = useUser()
+const Chat = () => {
+  const id = 786
   const [inputMessage, setInputMessage] = useState("")
   const [messages, setMessages] = useState([])
   const [isOpen, setIsOpen] = useState(false)
@@ -14,6 +11,7 @@ const ChatPage = ({ user_id, xAuthToken }) => {
   const [selectedChannel, setSelectedChannel] = useState("general")
   const [channels, setChannels] = useState(["general"])
   const [newChannel, setNewChannel] = useState("")
+  const xAuthToken = localStorage.getItem("token")
 
   useEffect(() => {
     const fetchChatData = async () => {
@@ -43,7 +41,7 @@ const ChatPage = ({ user_id, xAuthToken }) => {
         ws.close()
       }
       const newWs = new WebSocket(
-        `ws://localhost:1111/chat/${id}/${selectedChannel}?xAuthToken=${xAuthToken}&user_id=${user_id}&type=group&name=${chatData.name}`
+        `ws://localhost:1111/chat/${id}/${selectedChannel}?xAuthToken=${xAuthToken}&type=group&name=${chatData.name}`
       )
 
       setMessages([])
@@ -59,7 +57,7 @@ const ChatPage = ({ user_id, xAuthToken }) => {
         newWs.close()
       }
     }
-  }, [id, xAuthToken, user_id, chatData, selectedChannel])
+  }, [id, xAuthToken, chatData, selectedChannel])
 
   const handleAddChannel = () => {
     setIsOpen(true)
@@ -245,4 +243,4 @@ const ChatPage = ({ user_id, xAuthToken }) => {
   )
 }
 
-export default ChatPage
+export default Chat
