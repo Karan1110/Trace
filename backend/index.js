@@ -21,6 +21,6 @@ db.authenticate()
     winston.error("Database NOT connected...", ex)
   })
 
-module.exports = app.listen(1111, () => {
+app.listen(1111, () => {
   winston.info("Listening on  http://localhost:1111")
 })

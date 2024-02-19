@@ -20,6 +20,7 @@ const Ticket = db.define(
       type: Sequelize.DATE,
       defaultValue: null,
     },
+    before_id: Sequelize.INTEGER,
   },
   {
     timestamps: true,
@@ -41,6 +42,12 @@ Ticket.belongsTo(User, {
 Ticket.hasOne(Department, {
   as: "department",
   foreignKey: "department_id",
+  onDelete: "CASCADE",
+})
+
+Ticket.belongsTo(Ticket, {
+  as: "Before",
+  foreignKey: "before_id",
   onDelete: "CASCADE",
 })
 

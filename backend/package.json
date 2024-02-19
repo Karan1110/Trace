@@ -37,8 +37,10 @@
     "prettier": "^2.8.8",
     "random-number-range": "^1.0.1",
     "sequelize": "^6.31.1",
+    "socket.io": "^2.3.0",
     "sqlite3": "^5.1.6",
     "toad-scheduler": "^3.0.0",
+    "uuid": "^9.0.1",
     "winston": "^2.4.0"
   },
   "keywords": [],

@@ -29,8 +29,6 @@ const User = db.define(
       type: Sequelize.ARRAY(Sequelize.INTEGER),
       defaultValue: [],
     },
-    last_seen: Sequelize.DATE,
-    isOnline: Sequelize.BOOLEAN,
     points: {
       type: Sequelize.INTEGER,
       defaultValue: 0,

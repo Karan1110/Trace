@@ -328,6 +328,10 @@ router.get("/:id", async (req, res) => {
           as: "Comments",
           model: Comment,
         },
+{
+as : "Before",
+model : Ticket
+}
       ],
     })
 
@@ -363,6 +367,7 @@ router.post("/", [auth, upload.single("video")], async (req, res) => {
     status: req.body.status,
     description: req.body.description,
     department_id: req.body.department_id,
+    before_id : req.body.before_id
   })
 
   await Notification.create({

@@ -1,8 +1,11 @@
 const Sequelize = require("sequelize")
-const config = require("config")
 
-module.exports = new Sequelize(config.get("dbURL"), {
-  logging: false,
-  alter: true,
-  sync: true,
-})
+module.exports = new Sequelize(
+  "postgres://jqsmcexd:fbz0ucMzDtTmlS1Tt4J32UwENR9eoVlL@mahmud.db.elephantsql.com/jqsmcexd",
+  {
+    logging: false,
+    alter: true,
+    sync: true,
+    force: false,
+  }
+)

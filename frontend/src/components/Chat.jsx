@@ -1,17 +1,27 @@
-// src/components/ChatPage.js
 import React, { useState, useEffect } from "react"
-import { ContextMenu } from "@radix-ui/themes"
+import {
+  Box,
+  Text,
+  Flex,
+  Avatar,
+  Card,
+  ContextMenu,
+  Button,
+  TextField,
+} from "@radix-ui/themes"
 
 const Chat = () => {
-  const id = 786
+  const id = 1
   const [inputMessage, setInputMessage] = useState("")
   const [messages, setMessages] = useState([])
   const [isOpen, setIsOpen] = useState(false)
+  const [editing, setEditing] = useState(null)
   const [ws, setWs] = useState(null)
   const [chatData, setChatData] = useState(null)
   const [selectedChannel, setSelectedChannel] = useState("general")
   const [channels, setChannels] = useState(["general"])
   const [newChannel, setNewChannel] = useState("")
+  const [editMessage, setEditMessage] = useState(null)
   const xAuthToken = localStorage.getItem("token")
 
   useEffect(() => {
@@ -37,32 +47,65 @@ const Chat = () => {
   }, [id])
 
   useEffect(() => {
-    if (chatData) {
-      if (ws) {
-        ws.close()
-      }
-      const newWs = new WebSocket(
-        `ws://localhost:1111/chat/${id}/${selectedChannel}?xAuthToken=${xAuthToken}&type=group&name=${chatData.name}`
-      )
+    if (ws) {
+      ws.close()
+    }
 
-      setMessages([])
+    const newWs = new WebSocket(
+      `ws://localhost:1111/chat/${id}/${selectedChannel}?xAuthToken=${xAuthToken}`
+    )
 
-      newWs.onmessage = (event) => {
-        const message = JSON.parse(event.data)
+    setMessages([])
+
+    newWs.onmessage = (event) => {
+      const message = JSON.parse(event.data)
+      console.log(message)
+      if (message.edited == true) {
+        updateMessageValue(message.id, message.value)
+      } else {
         setMessages((prevMessages) => [...prevMessages, message])
       }
-
-      setWs(newWs)
-
-      return () => {
-        newWs.close()
-      }
     }
-  }, [id, xAuthToken, chatData, selectedChannel])
-  const edit = (msgId, newMessage) => {
-    if (ws && msgId && newMessage) {
-      // Emit the "edit" event to the WebSocket server with the new message and message ID
-      ws.send(JSON.stringify({ edit: true, id: msgId, message: newMessage }))
+
+    setWs(newWs)
+
+    return () => {
+      newWs.close()
+    }
+  }, [id, selectedChannel])
+
+  const updateMessageValue = (idToUpdate, newMessage) => {
+    // Find the index of the message with the matching ID
+    const indexToUpdate = messages.findIndex((message) => {
+      return message.id == idToUpdate
+    })
+    messages.forEach((message) =>
+      console.log(typeof message.id == typeof idToUpdate)
+    )
+
+    console.log("index to find : ", indexToUpdate)
+    // Check if the message with the given ID exists
+    if (indexToUpdate != -1) {
+      console.log("editing....")
+      // Create a copy of the messages array
+      const updatedMessages = [...messages]
+
+      // Update the value of the message with the matching ID
+      updatedMessages[indexToUpdate] = {
+        ...updatedMessages[indexToUpdate],
+        value: newMessage,
+      }
+
+      // Set the state with the updated array
+      setMessages(updatedMessages)
+    }
+  }
+
+  const edit = (msgId) => {
+    if (ws && msgId) {
+      ws.send(`${editMessage}~edit-message-karan112010=${msgId}`)
+      setEditing(null)
+      setEditMessage(null)
     }
   }
 
@@ -176,17 +219,16 @@ const Chat = () => {
       {chatData && (
         <aside
           id="default-sidebar"
-          className="fixed top-[70px] left-0 z-40 w-64 h-screen transition-transform -translate-x-full sm:translate-x-0"
-          aria-label="Sidebar"
+          className="sticky left-0 border-r border-double border-gray-100 z-40 w-64 h-screen transition-transform -translate-x-full sm:translate-x-0"
         >
-          <div className="h-full px-3 py-4 overflow-y-auto bg-gray-50 dark:bg-gray-800">
+          <div className="h-full px-3 py-4 overflow-y-auto  dark:bg-gray-800">
             <ul className="space-y-2 font-medium">
               {channels &&
                 channels.map((channel) => (
                   <li key={channel} onClick={() => setSelectedChannel(channel)}>
                     <a
                       href="#"
-                      className="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group"
+                      className="flex items-center border-2 mb-4 p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group"
                     >
                       <svg
                         className="flex-shrink-0 w-5 h-5 text-gray-500 transition duration-75 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white"
@@ -204,34 +246,61 @@ const Chat = () => {
                     </a>
                   </li>
                 ))}
-              <button
-                className="px-3 py-1 bg-blue-600 rounded-full shadow-lg hover:bg-blue-800"
-                onClick={handleAddChannel}
-              >
+              <Button onClick={handleAddChannel} color="purple">
                 Add
-              </button>
+              </Button>
             </ul>
           </div>
         </aside>
       )}
-      <div className="ml-[250px] p-8 bg-gray-100 rounded-md shadow-md">
-        <div className="mb-4 overflow-y-auto">
+      <div className="p-5 ">
+        <div className="flex flex-col p-4 space-x-5 space-y-5 h-[500px] absolute top-5  left-96">
           {messages &&
             messages.map((msg) => (
               <ContextMenu.Root size="1">
                 <ContextMenu.Trigger>
-                  <RightClickZone>
-                    <div key={msg.id} className="my-3">
-                      <span className="font-semibold">{msg.employee_id}:</span>{" "}
-                      {msg.value} - {msg.isRead.toString()} - {msg.channel} -{" "}
-                      {selectedChannel} - {msg.id || msg.dataValues.id}
-                    </div>
-                  </RightClickZone>
+                  {editing == msg.id ? (
+                    <Flex direction="row">
+                      <TextField.Input
+                        style={{
+                          width: "500px",
+                        }}
+                        size="2"
+                        onChange={(e) => setEditMessage(e.target.value)}
+                      />
+
+                      <Button
+                        color="purple"
+                        onClick={() => edit(msg.id, editMessage)}
+                      >
+                        Edit
+                      </Button>
+                    </Flex>
+                  ) : (
+                    <Card
+                      style={{ maxWidth: 240, marginTop: 10, marginBottom: 10 }}
+                      size="1"
+                    >
+                      <Flex gap="3" align="center">
+                        <Avatar
+                          size="3"
+                          src="https://images.unsplash.com/photo-1607346256330-dee7af15f7c5?&w=64&h=64&dpr=2&q=70&crop=focalpoint&fp-x=0.67&fp-y=0.5&fp-z=1.4&fit=crop"
+                          radius="full"
+                          fallback="T"
+                        />
+                        <Box>
+                          <Text as="div" size="2" color="gray">
+                            {msg.value || msg.message}
+                          </Text>
+                        </Box>
+                      </Flex>
+                    </Card>
+                  )}
                 </ContextMenu.Trigger>
                 <ContextMenu.Content>
                   <ContextMenu.Item
                     shortcut="⌘ E"
-                    onClick={() => edit(msg.id, "New edited message")}
+                    onClick={() => setEditing(msg.id)}
                   >
                     Edit
                   </ContextMenu.Item>
@@ -243,25 +312,16 @@ const Chat = () => {
               </ContextMenu.Root>
             ))}
         </div>
-        <div className="flex space-x-2 absolute justify-center tex-center  items-center bottom-5">
-          <input
-            type="text"
+        <div className="flex flex-row  items-center justify-center    space-x-4 fixed bottom-5 left-96 ">
+          <TextField.Input
             value={inputMessage}
             style={{
-              width: "800px",
+              width: "900px",
             }}
+            size="3"
             onChange={(e) => setInputMessage(e.target.value)}
-            className="flex-1 px-4 py-2 w-full ml-10
-            
-            
-             border rounded-md focus:outline-none focus:ring focus:border-blue-300"
           />
-          <button
-            onClick={sendMessage}
-            className="px-6 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 focus:outline-none focus:ring focus:border-blue-300"
-          >
-            Send
-          </button>
+          <Button onClick={sendMessage}>Send</Button>
         </div>
       </div>
     </>

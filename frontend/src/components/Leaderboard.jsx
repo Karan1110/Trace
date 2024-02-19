@@ -1,7 +1,7 @@
 // Leaderboard.js
 import React, { useState, useEffect } from "react"
 import axios from "axios"
-import { Tabs, Table } from "@radix-ui/react-tabs"
+import { Tabs, Table } from "@radix-ui/themes"
 import { toast } from "react-hot-toast"
 
 const Leaderboard = () => {

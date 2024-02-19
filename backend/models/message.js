@@ -6,6 +6,7 @@ const Chat = require("./chat")
 const Message = db.define(
   "Message",
   {
+    id: { type: Sequelize.STRING, primaryKey: true },
     value: Sequelize.STRING,
     isRead: {
       type: Sequelize.BOOLEAN,

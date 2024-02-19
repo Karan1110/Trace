@@ -31,12 +31,13 @@ exports.produceMessage = async function produceMessage(
   message,
   ws,
   req,
-  edit = false,
-  msgId = null
+  edit,
+  msgId,
+  id
 ) {
   const producer = await createProducer()
   const msg = {
-    key: `${Date.now()}-message`,
+    id: id,
     value: JSON.stringify(message),
     isRead: false,
     channel: req.params.channel,
@@ -45,12 +46,13 @@ exports.produceMessage = async function produceMessage(
     edit: edit,
     msgId: msgId,
   }
+  console.log("producer msg : ", msg)
 
   const chatKey = `${req.params.chat}_${req.params.channel}`
   const otherClients = Chats[chatKey].filter((connection) => connection !== ws)
 
   if (otherClients.length > 0) {
-    m.isRead = true
+    msg.isRead = true
   }
 
   await producer.send({
@@ -60,13 +62,8 @@ exports.produceMessage = async function produceMessage(
   return true
 }
 
-exports.startConsumingMessages = async function startConsumingMessages(
-  Chats,
-  req
-) {
+exports.startConsumingMessages = async function startConsumingMessages() {
   try {
-    // Consume messages from Kafka
-    console.log("Consumer is running..")
     const consumer = kafka.consumer({ groupId: "default" })
     await consumer.connect()
     await consumer.subscribe({ topic: "message", fromBeginning: true })
@@ -75,22 +72,14 @@ exports.startConsumingMessages = async function startConsumingMessages(
       eachMessage: async ({ message, pause }) => {
         try {
           const msg = JSON.parse(message.value.toString())
+          console.log("consumer message...", msg)
+          const temp2 = msg.value.split("~")
+          const value = temp2[0]
+          console.log(value)
           if (msg.edit == true) {
-            Chats[`${req.params.chat}_${req.params.channel}`].forEach(
-              (connection) => {
-                connection.send(
-                  JSON.stringify({
-                    id: msg.msgId,
-                    value: msg.value,
-                    edited: true,
-                  })
-                )
-              }
-            )
-
             await Message.update(
               {
-                value: msg.value,
+                value: value,
               },
               {
                 where: {
@@ -99,31 +88,17 @@ exports.startConsumingMessages = async function startConsumingMessages(
               }
             )
           } else {
-            Chats[`${req.params.chat}_${req.params.channel}`].forEach(
-              (connection) => {
-                connection.send(
-                  JSON.stringify({
-                    key: msg.key,
-                    value: msg.value,
-                    user_id: msg.user_id,
-                    isRead: msg.isRead,
-                    channel: msg.channel,
-                  })
-                )
-              }
-            )
-
-            const createdMessage = await Message.create({
+            await Message.create({
+              id: msg.id,
               value: msg.value,
               isRead: JSON.parse(msg.isRead),
               channel: msg.channel,
               chat_id: parseInt(msg.chat_id),
               user_id: parseInt(msg.user_id),
             })
-            console.log(createdMessage)
           }
         } catch (ex) {
-          console.log("Error processing message:", ex.message)
+          console.error("Error processing message:", ex.message, ex)
           // Pause the consumer and resume after a delay
           pause()
           setTimeout(() => {

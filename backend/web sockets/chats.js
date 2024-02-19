@@ -1,12 +1,12 @@
 const Message = require("../models/message")
 const User = require("../models/user")
-const Sequelize = require("sequelize")
 const Chat = require("../models/chat")
 const ChatUser = require("../models/ChatUser")
 const auth = require("./utils/auth")
 const addToChannels = require("./utils/addToChannels")
 const { produceMessage } = require("./utils/Kafka")
 const { startConsumingMessages } = require("./utils/Kafka")
+const { v4: uuidv4 } = require("uuid")
 
 module.exports = function (app) {
   require("express-ws")(app)
@@ -23,16 +23,11 @@ module.exports = function (app) {
           model: Message,
         },
       })
-      if (!currentChat) {
-        currentChat = await Chat.create({
-          id: req.params.chat,
-          channels: [req.params.channel],
-          type: req.query.type,
-          name: req.query.name,
-        })
-      }
-
       const user = await User.findByPk(req.user.id)
+
+      if (!currentChat || !user) {
+        ws.close("chat not found")
+      }
 
       if (
         !currentChat.dataValues.channels.includes(
@@ -58,13 +53,6 @@ module.exports = function (app) {
         },
       })
 
-      if (!chat_user) {
-        chat_user = await ChatUser.create({
-          user_id: req.user.id,
-          chat_id: currentChat.dataValues.id,
-        })
-      }
-
       await User.update(
         {
           isOnline: true,
@@ -75,33 +63,26 @@ module.exports = function (app) {
           },
         }
       )
-
+      // TODO: use Kafka here...
       // Mark all messages as read
-
-      await Message.update(
-        { isRead: true },
-        {
-          where: {
-            isRead: false,
-            chat_id: currentChat.id || currentChat.dataValues.id,
-            user_id: {
-              [Sequelize.Op.notIn]: [req.user.id],
-            },
-          },
-        }
-      )
+      // await Message.update(
+      //   { isRead: true },
+      //   {
+      //     where: {
+      //       isRead: false,
+      //       chat_id: currentChat.id || currentChat.dataValues.id,
+      //       user_id: {
+      //         [Sequelize.Op.notIn]: [req.user.id],
+      //       },
+      //     },
+      //   }
+      // )
 
       // Get all messages for the current chat room
       const messages = currentChat.dataValues.Messages
-      console.log(
-        "these are the messages : ",
-        messages,
-        "chatData : ",
-        currentChat
-      )
 
       // Send all messages to the WebSocket connection and mark them as read
-      if (messages.length > 0) {
+      if (messages && messages.length > 0) {
         for (const msg of messages) {
           ws.send(
             JSON.stringify({
@@ -115,38 +96,49 @@ module.exports = function (app) {
         }
       }
 
-      startConsumingMessages(Chats, req, ws)
+      startConsumingMessages()
 
       // Handle incoming messages
       ws.on("message", async (msg) => {
-        const parsedMsg = JSON.parse(msg)
-        if (parsedMsg.edit == true) {
-          // Emit an "edit" event with the edited message content
-          const editedMessage = parsedMsg.message
-          ws.emit("edit", editedMessage, parsedMsg.id)
+        const regex = /edit-message-karan112010/
+        if (regex.test(msg)) {
+          const temp = msg.split("=")
+          const message_id = temp[temp.length - 1]
+          const temp2 = msg.split("~")
+          const value = temp2[0]
+          Chats[`${req.params.chat}_${req.params.channel}`].forEach(
+            (connection) => {
+              connection.send(
+                JSON.stringify({
+                  id: message_id,
+                  value: value,
+                  edited: true,
+                })
+              )
+            }
+          )
+          produceMessage(Chats, msg, ws, req, true, message_id)
         } else {
-          // Process regular message
-          produceMessage(Chats, msg, ws, req)
+          const id = uuidv4().toString()
+          Chats[`${req.params.chat}_${req.params.channel}`].forEach(
+            (connection) => {
+              console.log("the value of the message is", msg.value)
+              connection.send(
+                JSON.stringify({
+                  id: id,
+                  value: msg,
+                  channel: req.params.channel,
+                  chat_id: req.params.chat,
+                  user_id: req.user.id,
+                })
+              )
+            }
+          )
+          produceMessage(Chats, msg, ws, req, null, null, id)
         }
-      })
-
-      ws.on("edit", async (msg, msgId) => {
-        produceMessage(Chats, msg, ws, req, true, msgId)
       })
       // Handle WebSocket connection closure
       ws.on("close", async () => {
-        await User.update(
-          {
-            isOnline: false,
-            last_seen: new Date(),
-          },
-          {
-            where: {
-              id: user.dataValues.id,
-            },
-          }
-        )
-
         // Remove the WebSocket connection from the chat room
         const chatKey = `${req.params.chat}_${req.params.channel}`
         Chats[chatKey] = Chats[chatKey].filter(
@@ -154,8 +146,7 @@ module.exports = function (app) {
         )
       })
     } catch (ex) {
-      console.log("ERROR!!!")
-      console.log(ex)
+      console.log("ERROR!!!", ex.message, ex)
       ws.close(4000, ex.message)
     }
   })
