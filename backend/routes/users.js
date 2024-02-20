@@ -2,6 +2,7 @@ const express = require("express")
 const router = express.Router()
 const bcrypt = require("bcrypt")
 const auth = require("../middlewares/auth.js")
+const blockedUsers = require("../middlewares/blockedUsers.js")
 const Chat = require("../models/chat.js")
 const User = require("../models/user.js")
 const Ticket = require("../models/ticket.js")
@@ -22,6 +23,19 @@ router.get("/", auth, async (req, res) => {
     console.log(ex)
     res.send("Someting failed.")
   }
+})
+
+router.get("/suggested", [auth, blockedUsers], async (req, res) => {
+  const users = await User.findAll({
+    where: {
+      id: {
+        [Op.notIn]: req.blockedUsers,
+      },
+    },
+  })
+
+  users.sort(() => Math.random() - 0.5)
+  res.json(users)
 })
 
 router.get("/search", auth, async (req, res) => {
