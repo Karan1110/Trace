@@ -29,12 +29,9 @@ module.exports = function (app) {
         ws.close("chat not found")
       }
 
-      if (
-        !currentChat.dataValues.channels.includes(
-          req.params.channel || "general"
-        )
-      ) {
-        addToChannels(Chat, req.params.channel, currentChat.id)
+      if (!currentChat.dataValues.channels.includes(req.params.channel)) {
+        addToChannels(Chat, req.params.channel.toString(), currentChat.id)
+        console.log("creating new channel")
       }
 
       // Check if the chat room exists, create a new one if it doesn't
@@ -151,3 +148,89 @@ module.exports = function (app) {
     }
   })
 }
+
+// direct messaging;
+
+/* 
+const Message = require("../models/message");
+const User = require("../models/user");
+const Chat = require("../models/chat");
+const ChatUser = require("../models/ChatUser");
+const auth = require("./utils/auth");
+const addToChannels = require("./utils/addToChannels");
+const { produceMessage } = require("./utils/Kafka");
+const { startConsumingMessages } = require("./utils/Kafka");
+const { v4: uuidv4 } = require("uuid");
+
+module.exports = function (app) {
+  require("express-ws")(app);
+
+  // Store WebSocket connections for each user
+  const Users = {};
+
+  app.ws("/chat/:userId", auth, async (ws, req) => {
+    try {
+      const recipientId = req.params.userId;
+      const senderId = req.user.id;
+
+      // Ensure both sender and recipient exist
+      const [sender, recipient] = await Promise.all([
+        User.findByPk(senderId),
+        User.findByPk(recipientId),
+      ]);
+
+      if (!sender || !recipient) {
+        ws.close("User not found");
+        return;
+      }
+
+      // Check if the WebSocket connection for the sender exists
+      if (!Users[senderId]) {
+        Users[senderId] = [];
+      }
+
+      // Add the WebSocket connection to the sender's connections
+      Users[senderId].push(ws);
+
+      // Handle incoming messages
+      ws.on("message", async (msg) => {
+        const id = uuidv4().toString();
+
+        // Send the message to the recipient's WebSocket connections
+        if (Users[recipientId]) {
+          Users[recipientId].forEach((connection) => {
+            connection.send(
+              JSON.stringify({
+                id: id,
+                value: msg,
+                sender_id: senderId,
+                recipient_id: recipientId,
+              })
+            );
+          });
+        } else {
+          // If the recipient is not online, handle the message accordingly
+          // For example, you could store the message in a database and mark it as unread
+        }
+      });
+
+      // Handle WebSocket connection closure
+      ws.on("close", async () => {
+        // Remove the WebSocket connection from the sender's connections
+        Users[senderId] = Users[senderId].filter(
+          (connection) => connection !== ws
+        );
+      });
+    } catch (ex) {
+      console.error("ERROR:", ex.message);
+      ws.close(4000, ex.message);
+    }
+  });
+};
+
+
+
+
+
+
+*/

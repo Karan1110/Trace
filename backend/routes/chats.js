@@ -27,14 +27,20 @@ router.get("/:id", async (req, res) => {
   let chat = await Chat.findByPk(req.params.id)
   res.send(chat)
 })
-router.post("/", async (req, res) => {
+
+router.post("/", auth, async (req, res) => {
   const chat = await Chat.create({
     id: req.params.chat,
-    channels: [req.params.channel],
     type: req.body.type,
     name: req.body.name,
   })
-  res.json(chat)
+
+  const chat_user = await ChatUser.create({
+    user_id: req.user.id,
+    chat_id: chat.dataValues.id,
+    role: "owner",
+  })
+  res.json({ chat, chat_user })
 })
 
 router.post("/join/:chatId", auth, async (req, res) => {
@@ -43,6 +49,32 @@ router.post("/join/:chatId", auth, async (req, res) => {
     chat_id: req.params.chatId,
   })
   res.json(chat_user)
+})
+
+router.put("/promote/:chatId/:userId", auth, async (req, res) => {
+  if (req.body.role != "owner" || "moderator")
+    return res.status(400).send("invalid role...")
+
+  const owner = await ChatUser.findOne({
+    chat_id: req.params.chatId,
+    user_id: req.user.id,
+    role: "owner",
+  })
+  if (!owner) return res.status(403).send("not authorized...")
+
+  await ChatUser.update(
+    {
+      role: req.body.role,
+    },
+    {
+      where: {
+        user_id: req.params.userId,
+        chat_id: req.params.chatId,
+      },
+    }
+  )
+
+  res.status(200).send(`promoted user ${req.params.userId} to ${req.body.role}`)
 })
 
 module.exports = router

@@ -14,11 +14,16 @@ const ChatUser = db.define(
       type: Sequelize.INTEGER,
       allowNull: false, // Ensure chat_id is not null
     },
+    role: {
+      type: Sequelize.ENUM("user", "moderator", "owner"),
+      defaultValue: "user",
+    },
   },
   {
     tablename: "ChatUser",
   }
 )
+
 ChatUser.belongsTo(User, { foreignKey: "user_id", as: "User" })
 ChatUser.belongsTo(Chat, { foreignKey: "chat_id", as: "Chat" })
 

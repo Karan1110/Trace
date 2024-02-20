@@ -60,8 +60,19 @@ const Chat = () => {
     newWs.onmessage = (event) => {
       const message = JSON.parse(event.data)
       console.log(message)
-      if (message.edited == true) {
-        updateMessageValue(message.id, message.value)
+      if (message.edited) {
+        const indexToUpdate = messages.findIndex(
+          (_message) => _message.id == message.id
+        )
+
+        setMessages((prevMessages) => {
+          const updatedMessages = [...prevMessages]
+          updatedMessages[indexToUpdate] = {
+            ...updatedMessages[indexToUpdate],
+            value: message.value,
+          }
+          return updatedMessages
+        })
       } else {
         setMessages((prevMessages) => [...prevMessages, message])
       }
@@ -76,12 +87,7 @@ const Chat = () => {
 
   const updateMessageValue = (idToUpdate, newMessage) => {
     // Find the index of the message with the matching ID
-    const indexToUpdate = messages.findIndex((message) => {
-      return message.id == idToUpdate
-    })
-    messages.forEach((message) =>
-      console.log(typeof message.id == typeof idToUpdate)
-    )
+    console.log("from updateMessageValue!", idToUpdate, newMessage)
 
     console.log("index to find : ", indexToUpdate)
     // Check if the message with the given ID exists
@@ -224,8 +230,8 @@ const Chat = () => {
           <div className="h-full px-3 py-4 overflow-y-auto  dark:bg-gray-800">
             <ul className="space-y-2 font-medium">
               {channels &&
-                channels.map((channel) => (
-                  <li key={channel} onClick={() => setSelectedChannel(channel)}>
+                channels.map((channel, index) => (
+                  <li key={index} onClick={() => setSelectedChannel(channel)}>
                     <a
                       href="#"
                       className="flex items-center border-2 mb-4 p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group"
@@ -259,7 +265,7 @@ const Chat = () => {
             messages.map((msg) => (
               <ContextMenu.Root size="1">
                 <ContextMenu.Trigger>
-                  {editing == msg.id ? (
+                  {msg && msg.id && editing == msg?.id ? (
                     <Flex direction="row">
                       <TextField.Input
                         style={{
