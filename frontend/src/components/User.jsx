@@ -15,6 +15,7 @@ import {
 } from "@radix-ui/themes"
 import { Link, useParams } from "react-router-dom"
 import { useUser } from "../contexts/userContext"
+import { Pie } from "react-chartjs-2"
 
 const User = () => {
   const [user, setUser] = useState(null)
@@ -23,6 +24,7 @@ const User = () => {
   const [followers, setFollowers] = useState([])
   const [following, setFollowing] = useState([])
   const currentUser = useUser()
+  const [stats, setStats] = useState({})
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -35,6 +37,17 @@ const User = () => {
 
         setFollowers(response.data.followedBy)
         setFollowing(response.data.following)
+        const closed = response.data.Ticket.filter((t) => t.status == "closed")
+        const open = response.data.Ticket.filter((t) => t.status == "open")
+        const inProgress = response.data.Ticket.filter(
+          (t) => t.status == "in-progress"
+        )
+        setStats({
+          closed: closed.length,
+          open: open.length,
+          inProgress: inProgress.length,
+        })
+
         const response2 = await axios.get(
           "http://localhost:1111/users/colleagues",
           {
@@ -234,6 +247,23 @@ const User = () => {
             </Card>
           </Flex>
         )}
+        <Pie
+          data={{
+            labels: ["Closed", "Open", "In-Progress"],
+            datasets: [
+              {
+                label: "Tickets",
+                data: [stats.closed, stats.open, stats.inProgress],
+                backgroundColor: [
+                  "rgb(255, 99, 132)",
+                  "rgb(54, 162, 235)",
+                  "rgb(255, 205, 86)",
+                ],
+                hoverOffset: 4,
+              },
+            ],
+          }}
+        />
         <Tabs.Root defaultValue="account">
           <Tabs.List>
             <Tabs.Trigger value="account">Account</Tabs.Trigger>
