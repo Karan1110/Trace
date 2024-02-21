@@ -248,7 +248,9 @@ const Chat = () => {
       <div className="p-5 ">
         <div className="flex flex-col p-4 space-x-5 space-y-5 h-[500px] absolute top-5  left-96">
           {selectedChannel && chatData && selectedChannel.type == "video" ? (
-            <Meet channel={selectedChannel} />
+            <div className="h-[480px] w-[500px] mx-5">
+              <Meet channel={selectedChannel} />
+            </div>
           ) : (
             messages &&
             messages.map((msg) => (
