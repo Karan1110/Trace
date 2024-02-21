@@ -1,12 +1,14 @@
 import { BsPlus, BsFillLightningFill, BsGearFill } from "react-icons/bs"
 import { FaFire, FaPoo } from "react-icons/fa"
-
 import { useUser } from "../contexts/userContext"
 import { useState } from "react"
+import { Dialog, Button, Flex, Text, TextField } from "@radix-ui/themes"
 
-const SideBar = ({ setId, chatId }) => {
-  const user = useUser()
+const SideBar = ({ setId }) => {
+  let user = useUser()
+  console.log(user)
   const [newServer, setNewServer] = useState({ name: "", type: "" })
+
   const createServer = async () => {
     try {
       const token = localStorage.getItem("token")
@@ -22,12 +24,17 @@ const SideBar = ({ setId, chatId }) => {
         newServer,
         config
       )
+      user.Chats.push({
+        ...response.data.chat,
+        channels: [response.data.channel],
+      })
       console.log("Chat created:", response.data)
       setNewServer({ name: "", type: "" })
     } catch (error) {
       console.error("Error creating chat:", error)
     }
   }
+
   return (
     <div
       className="fixed top-0 left-0 h-screen w-16 flex flex-col
@@ -35,12 +42,14 @@ const SideBar = ({ setId, chatId }) => {
     >
       <SideBarIcon icon={<FaFire size="28" />} />
       <Divider />
-      {user.Chats.map((chat) => (
-        <SideBarIcon
-          icon={<BsFillLightningFill size="20" />}
-          onClick={() => setId(chat.id)}
-        />
-      ))}
+      {user &&
+        user.Chats &&
+        user.Chats.map((chat) => (
+          <SideBarIcon
+            icon={<BsFillLightningFill size="20" />}
+            onClick={() => setId(chat.id)}
+          />
+        ))}
       <Dialog.Root>
         <Dialog.Trigger>
           <SideBarIcon icon={<BsPlus size="32" />} />

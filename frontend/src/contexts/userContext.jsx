@@ -10,7 +10,9 @@ export const UserProvider = ({ children }) => {
     const fetchUser = async () => {
       try {
         const response = await axios.get(
-          `http://localhost:1111/users/${localStorage.getItem("user_id")}`,
+          `http://localhost:1111/users/${parseInt(
+            localStorage.getItem("user_id")
+          )}`,
           {
             headers: {
               "x-auth-token": localStorage.getItem("token"),
