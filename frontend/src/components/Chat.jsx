@@ -8,10 +8,13 @@ import {
   ContextMenu,
   Button,
   TextField,
+  Select,
 } from "@radix-ui/themes"
+import Meet from "./Meet"
+import Sidebar from "./Sidebar"
 
 const Chat = () => {
-  const id = 1
+  const [id, setId] = useState(1)
   const [inputMessage, setInputMessage] = useState("")
   const [messages, setMessages] = useState([])
   const [isOpen, setIsOpen] = useState(false)
@@ -19,8 +22,10 @@ const Chat = () => {
   const [ws, setWs] = useState(null)
   const [chatData, setChatData] = useState(null)
   const [selectedChannel, setSelectedChannel] = useState("general")
-  const [channels, setChannels] = useState(["general"])
-  const [newChannel, setNewChannel] = useState("")
+  const [newChannel, setNewChannel] = useState({
+    type: "audio",
+    name: "",
+  })
   const [editMessage, setEditMessage] = useState(null)
   const xAuthToken = localStorage.getItem("token")
 
@@ -31,10 +36,6 @@ const Chat = () => {
         if (response.ok) {
           const data = await response.json()
           setChatData(data)
-          const { channels } = data
-
-          // console.log(chatChanels)
-          setChannels(channels)
         } else {
           console.error("Failed to fetch chat data")
         }
@@ -85,28 +86,6 @@ const Chat = () => {
     }
   }, [id, selectedChannel])
 
-  const updateMessageValue = (idToUpdate, newMessage) => {
-    // Find the index of the message with the matching ID
-    console.log("from updateMessageValue!", idToUpdate, newMessage)
-
-    console.log("index to find : ", indexToUpdate)
-    // Check if the message with the given ID exists
-    if (indexToUpdate != -1) {
-      console.log("editing....")
-      // Create a copy of the messages array
-      const updatedMessages = [...messages]
-
-      // Update the value of the message with the matching ID
-      updatedMessages[indexToUpdate] = {
-        ...updatedMessages[indexToUpdate],
-        value: newMessage,
-      }
-
-      // Set the state with the updated array
-      setMessages(updatedMessages)
-    }
-  }
-
   const edit = (msgId) => {
     if (ws && msgId) {
       ws.send(`${editMessage}~edit-message-karan112010=${msgId}`)
@@ -118,16 +97,31 @@ const Chat = () => {
   const handleAddChannel = () => {
     setIsOpen(true)
   }
-  const addChannel = (e) => {
+  const addChannel = async (e) => {
     e.preventDefault()
+    const token = localStorage.getItem("token")
 
-    if (channels.includes(newChannel)) {
-      return
+    // Set up the request headers
+    const config = {
+      headers: {
+        "Content-Type": "application/json",
+        "x-auth-token": token,
+      },
     }
-    // Update the channels state and set the selected channel
-    setChannels((prevChannels) => [...prevChannels, newChannel])
-    setSelectedChannel(newChannel)
+    const response = await axios.post(
+      "http://localhost:1111/chats/createChannel",
+      { ...newChannel, chat_id: id },
+      config
+    )
+
+    chatData.channels.push({
+      ...newChannel,
+      chat_id: id,
+      id: response.data.channel.dataValues.id,
+    })
+    setNewChannel({})
   }
+
   const sendMessage = () => {
     if (ws) {
       ws.send(inputMessage)
@@ -137,6 +131,7 @@ const Chat = () => {
 
   return (
     <>
+      <Sidebar setId={setId} />
       {isOpen && (
         // JSX for Main modal
         <div
@@ -186,37 +181,42 @@ const Chat = () => {
                     >
                       Name
                     </label>
-                    <input
+                    <TextField.Input
                       type="text"
-                      name="name"
-                      value={newChannel}
-                      onChange={(e) => setNewChannel(e.target.value)}
-                      id="name"
-                      className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
+                      value={newChannel.name}
+                      onChange={(e) =>
+                        setNewChannel({ ...newChannel, name: e.target.value })
+                      }
                       placeholder="Type channel name"
-                      required
-                    />
+                    />{" "}
+                    <Select.Root
+                      defaultValue="text"
+                      onValueChange={(value) =>
+                        setNewChannel({ ...newChannel, type: value })
+                      }
+                    >
+                      <Select.Trigger>
+                        <Button variant="outline">
+                          <CaretDownIcon />
+                        </Button>
+                      </Select.Trigger>
+                      <Select.Content color="purple">
+                        <Select.Item value="text" key={1}>
+                          Text
+                        </Select.Item>
+                        <Select.Item value="audio" key={2}>
+                          Audio
+                        </Select.Item>
+                        <Select.Item value="video" key={3}>
+                          Video
+                        </Select.Item>
+                        <Select.Item value={null}>Not Assigned</Select.Item>
+                      </Select.Content>
+                    </Select.Root>
                   </div>
                   {/* ... Other input fields ... */}
                 </div>
-                <button
-                  type="submit"
-                  className="text-white inline-flex items-center bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
-                >
-                  <svg
-                    className="me-1 -ms-1 w-5 h-5"
-                    fill="currentColor"
-                    viewBox="0 0 20 20"
-                    xmlns="http://www.w3.org/2000/svg"
-                  >
-                    <path
-                      fill-rule="evenodd"
-                      d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z"
-                      clip-rule="evenodd"
-                    />
-                  </svg>
-                  Add new channel
-                </button>
+                <Button type="submit">Add new channel</Button>
               </form>
             </div>
           </div>
@@ -229,9 +229,15 @@ const Chat = () => {
         >
           <div className="h-full px-3 py-4 overflow-y-auto  dark:bg-gray-800">
             <ul className="space-y-2 font-medium">
-              {channels &&
-                channels.map((channel, index) => (
-                  <li key={index} onClick={() => setSelectedChannel(channel)}>
+              {chatData &&
+                chatData.channels &&
+                chatData.channels.map((channel, index) => (
+                  <li
+                    key={index}
+                    onClick={() => {
+                      setSelectedChannel(channel.name)
+                    }}
+                  >
                     <a
                       href="#"
                       className="flex items-center border-2 mb-4 p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group"
@@ -247,7 +253,7 @@ const Chat = () => {
                         <path d="M14 2a3.963 3.963 0 0 0-1.4.267 6.439 6.439 0 0 1-1.331 6.638A4 4 0 1 0 14 2Zm1 9h-1.264A6.957 6.957 0 0 1 15 15v2a2.97 2.97 0 0 1-.184 1H19a1 1 0 0 0 1-1v-1a5.006 5.006 0 0 0-5-5ZM6.5 9a4.5 4.5 0 1 0 0-9 4.5 4.5 0 0 0 0 9ZM8 10H5a5.006 5.006 0 0 0-5 5v2a1 1 0 0 0 1 1h11a1 1 0 0 0 1-1v-2a5.006 5.006 0 0 0-5-5Z" />
                       </svg>
                       <span className="flex-1 ms-3 whitespace-nowrap">
-                        {channel}
+                        {channel.name}
                       </span>
                     </a>
                   </li>
@@ -261,7 +267,22 @@ const Chat = () => {
       )}
       <div className="p-5 ">
         <div className="flex flex-col p-4 space-x-5 space-y-5 h-[500px] absolute top-5  left-96">
-          {messages &&
+          {selectedChannel &&
+          chatData &&
+          chatData.channels &&
+          chatData.channels.find((channel) => channel.name == selectedChannel)
+            ?.type === "video" ? (
+            // Render Meet components if selected channel's type is video
+            <Meet channel={selectedChannel} />
+          ) : selectedChannel &&
+            chatData &&
+            chatData.channels &&
+            chatData.channels.find((channel) => channel.name == selectedChannel)
+              ?.type === "audio" ? (
+            // Render Meet components if selected channel's type is audio
+            <Meet channel={selectedChannel} />
+          ) : (
+            messages &&
             messages.map((msg) => (
               <ContextMenu.Root size="1">
                 <ContextMenu.Trigger>
@@ -316,7 +337,8 @@ const Chat = () => {
                   </ContextMenu.Item>
                 </ContextMenu.Content>
               </ContextMenu.Root>
-            ))}
+            ))
+          )}
         </div>
         <div className="flex flex-row  items-center justify-center    space-x-4 fixed bottom-5 left-96 ">
           <TextField.Input

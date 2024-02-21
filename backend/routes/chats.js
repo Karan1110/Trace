@@ -3,6 +3,10 @@ const ChatUser = require("../models/ChatUser")
 const Message = require("../models/message")
 const router = require("express").Router()
 const auth = require("../middlewares/auth")
+const { AccessToken } = require("livekit-server-sdk")
+const config = require("config")
+const Channel = require("../models/channel")
+const User = require("../models/user")
 
 router.get("/", async (req, res) => {
   try {
@@ -24,7 +28,19 @@ router.get("/", async (req, res) => {
 })
 
 router.get("/:id", async (req, res) => {
-  let chat = await Chat.findByPk(req.params.id)
+  let chat = await Chat.findByPk(req.params.id, {
+    include: [
+      {
+        model: Channel,
+        as: "channels",
+      },
+      {
+        model: User,
+        as: "Users",
+      },
+    ],
+  })
+
   res.send(chat)
 })
 
@@ -40,7 +56,13 @@ router.post("/", auth, async (req, res) => {
     chat_id: chat.dataValues.id,
     role: "owner",
   })
-  res.json({ chat, chat_user })
+  const channel = await Channel.create({
+    name: "general",
+    chat_id: chat.dataValues.id,
+    type: "text",
+  })
+
+  res.json({ chat, chat_user, channel })
 })
 
 router.post("/join/:chatId", auth, async (req, res) => {
@@ -49,6 +71,37 @@ router.post("/join/:chatId", auth, async (req, res) => {
     chat_id: req.params.chatId,
   })
   res.json(chat_user)
+})
+
+router.post("/createChannel", auth, async (req, res) => {
+  const channel = Channel.create({
+    type: req.body.channel_type,
+    name: req.body.name,
+    chat_id: req.body.chat_id,
+  })
+
+  res.json({ channel })
+})
+
+router.post("/joinChannel/:channel", auth, async (req, res) => {
+  const createToken = async () => {
+    const roomName = req.params.channel
+    const participantName = req.body.participantName
+
+    const at = new AccessToken(
+      config.get("LIVEKIT_API_KEY"),
+      config.get("LIVEKIT_API_SECRET"),
+      {
+        identity: participantName,
+      }
+    )
+
+    at.addGrant({ roomJoin: true, room: roomName })
+
+    return await at.toJwt()
+  }
+  const token = await createToken()
+  res.send(token)
 })
 
 router.put("/promote/:chatId/:userId", auth, async (req, res) => {

@@ -7,6 +7,7 @@ const addToChannels = require("./utils/addToChannels")
 const { produceMessage } = require("./utils/Kafka")
 const { startConsumingMessages } = require("./utils/Kafka")
 const { v4: uuidv4 } = require("uuid")
+const Channel = require("../models/channel")
 
 module.exports = function (app) {
   require("express-ws")(app)
@@ -18,20 +19,26 @@ module.exports = function (app) {
   app.ws("/chat/:chat/:channel", auth, async (ws, req) => {
     try {
       let currentChat = await Chat.findByPk(req.params.chat, {
-        include: {
-          as: "Messages",
-          model: Message,
-        },
+        include: [
+          {
+            as: "channels",
+            model: Channel,
+            include: {
+              model: Message,
+              as: "messages",
+              include: {
+                model: User,
+                as: "Sender",
+              },
+            },
+          },
+        ],
       })
+
       const user = await User.findByPk(req.user.id)
 
       if (!currentChat || !user) {
         ws.close("chat not found")
-      }
-
-      if (!currentChat.dataValues.channels.includes(req.params.channel)) {
-        addToChannels(Chat, req.params.channel.toString(), currentChat.id)
-        console.log("creating new channel")
       }
 
       // Check if the chat room exists, create a new one if it doesn't
@@ -50,16 +57,6 @@ module.exports = function (app) {
         },
       })
 
-      await User.update(
-        {
-          isOnline: true,
-        },
-        {
-          where: {
-            id: req.user.id,
-          },
-        }
-      )
       // TODO: use Kafka here...
       // Mark all messages as read
       // await Message.update(
@@ -76,7 +73,11 @@ module.exports = function (app) {
       // )
 
       // Get all messages for the current chat room
-      const messages = currentChat.dataValues.Messages
+      const channelIndex = currentChat.dataValues.channels.findIndex(
+        (c) => c.name == req.params.channel
+      )
+      req.channel = currentChat.dataValues.channels[channelIndex]
+      const messages = currentChat.dataValues.channels[channelIndex].messages
 
       // Send all messages to the WebSocket connection and mark them as read
       if (messages && messages.length > 0) {
@@ -84,10 +85,10 @@ module.exports = function (app) {
           ws.send(
             JSON.stringify({
               id: msg.id,
-              message: msg.value,
+              value: msg.value,
               user_id: msg.user_id,
               isRead: true, // Mark as read
-              channel: msg.channel,
+              channel: msg.channel_id,
             })
           )
         }
@@ -124,7 +125,7 @@ module.exports = function (app) {
                 JSON.stringify({
                   id: id,
                   value: msg,
-                  channel: req.params.channel,
+                  channel_id: req.channel.id,
                   chat_id: req.params.chat,
                   user_id: req.user.id,
                 })

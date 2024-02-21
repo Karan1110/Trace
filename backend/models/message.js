@@ -1,7 +1,7 @@
 const Sequelize = require("sequelize")
 const db = require("../startup/db")
 const User = require("./user")
-const Chat = require("./chat")
+const Channel = require("./channel")
 
 const Message = db.define(
   "Message",
@@ -12,8 +12,7 @@ const Message = db.define(
       type: Sequelize.BOOLEAN,
       defaultValue: false,
     },
-    chat_id: Sequelize.INTEGER,
-    channel: Sequelize.STRING,
+    channel_id: Sequelize.INTEGER,
     user_id: Sequelize.INTEGER,
   },
   {
@@ -27,16 +26,14 @@ User.hasMany(Message, {
   onDelete: "CASCADE",
 })
 
-Message.belongsTo(Chat, {
-  as: "Chat",
-  foreignKey: "chat_id",
-  onDelete: "CASCADE",
+Message.belongsTo(Channel, {
+  as: "channel",
+  foreignKey: "channel_id",
 })
 
-Chat.hasMany(Message, {
-  as: "Messages",
-  foreignKey: "chat_id",
-  onDelete: "CASCADE",
+Channel.hasMany(Message, {
+  as: "messages",
+  foreignKey: "channel_id",
 })
 
 Message.belongsTo(User, {

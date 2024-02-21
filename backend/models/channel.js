@@ -1,9 +1,8 @@
 const Sequelize = require("sequelize")
 const db = require("../startup/db")
-const Channel = require("./channel")
 
-const Chat = db.define(
-  "Chat", // Specify the desired table name here
+const Channel = db.define(
+  "Channel", // Specify the desired table name here
   {
     id: {
       type: Sequelize.INTEGER,
@@ -15,20 +14,15 @@ const Chat = db.define(
       type: Sequelize.STRING,
       allowNull: false,
     },
-    type: Sequelize.ENUM("channel", "group"),
+    type: {
+      type: Sequelize.ENUM("audio", "video", "text"),
+      defaultValue: "text",
+    },
+    chat_id: Sequelize.INTEGER,
   },
   {
     timestamps: true,
   }
 )
 
-Channel.belongsTo(Chat, {
-  as: "chat",
-  foreignKey: "chat_id",
-})
-
-Chat.hasMany(Channel, {
-  as: "channels",
-})
-
-module.exports = Chat
+module.exports = Channel

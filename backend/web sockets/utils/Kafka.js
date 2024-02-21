@@ -40,7 +40,7 @@ exports.produceMessage = async function produceMessage(
     id: id,
     value: JSON.stringify(message),
     isRead: false,
-    channel: req.params.channel,
+    channel_id: req.channel.id,
     chat_id: req.params.chat,
     user_id: req.user.id,
     edit: edit,
@@ -92,7 +92,7 @@ exports.startConsumingMessages = async function startConsumingMessages() {
               id: msg.id,
               value: msg.value,
               isRead: JSON.parse(msg.isRead),
-              channel: msg.channel,
+              channel_id: req.channel.id,
               chat_id: parseInt(msg.chat_id),
               user_id: parseInt(msg.user_id),
             })
