@@ -13,6 +13,7 @@ const { Sequelize, Op } = require("sequelize")
 const Review = require("../models/review.js")
 const Saved = require("../models/saved.js")
 const FollowUser = require("../models/followUser")
+const Channel = require("../models/channel.js")
 
 router.get("/", auth, async (req, res) => {
   try {
@@ -218,6 +219,10 @@ router.get("/:id", [auth], async (req, res) => {
       {
         model: Chat,
         as: "Chats",
+        include: {
+          model: Channel,
+          as: "channels",
+        },
       },
     ],
   })

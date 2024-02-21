@@ -62,7 +62,9 @@ exports.produceMessage = async function produceMessage(
   return true
 }
 
-exports.startConsumingMessages = async function startConsumingMessages() {
+exports.startConsumingMessages = async function startConsumingMessages(
+  channel
+) {
   try {
     const consumer = kafka.consumer({ groupId: "default" })
     await consumer.connect()
@@ -92,7 +94,7 @@ exports.startConsumingMessages = async function startConsumingMessages() {
               id: msg.id,
               value: msg.value,
               isRead: JSON.parse(msg.isRead),
-              channel_id: req.channel.id,
+              channel_id: channel.id,
               chat_id: parseInt(msg.chat_id),
               user_id: parseInt(msg.user_id),
             })

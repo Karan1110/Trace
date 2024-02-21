@@ -19,6 +19,7 @@ import Leaderboard from "./components/Leaderboard.jsx"
 import User from "./components/User"
 import { UserProvider } from "./contexts/userContext.jsx"
 import NewMeeting from "./components/NewMeeting.jsx"
+import Meet from "./components/Meet.jsx"
 
 const App = () => {
   return (
@@ -42,6 +43,7 @@ const App = () => {
               <Route path="/tickets" element={<Tickets />} />
               <Route path="/leaderboard" element={<Leaderboard />} />
               <Route path="/users/:id" element={<User />} />
+              <Route path="/meet" element={<Meet />} />
             </Routes>
           </Router>
         </Theme>

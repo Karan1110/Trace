@@ -6,28 +6,50 @@ import {
   ParticipantTile,
   RoomAudioRenderer,
   VideoConference,
+  useTracks,
 } from "@livekit/components-react"
 import { useEffect, useState } from "react"
-
-const serverUrl = "wss://trace-8rs0qfc2.livekit.cloud"
+import Spinner from "./Spinner"
+import axios from "axios"
+import { Track } from "livekit-client"
 
 export default function ({ channel }) {
+  const serverUrl = "wss://trace-8rs0qfc2.livekit.cloud"
   const [token, setToken] = useState(null)
 
   useEffect(() => {
     const fetchToken = async () => {
-      const response = await axios.get(
-        `http://localhost:1111/chats/joinChannel/${channel}`,
+      const response1 = await axios.get(
+        `http://localhost:1111/users/${parseInt(
+          localStorage.getItem("user_id")
+        )}`,
         {
           headers: {
             "x-auth-token": localStorage.getItem("token"),
           },
         }
       )
-      return response.data
+
+      const response = await axios.post(
+        `http://localhost:1111/chats/joinChannel/${channel || "my_room"}`,
+        { participantName: response1.data.user.name },
+        {
+          headers: {
+            "x-auth-token": localStorage.getItem("token"),
+          },
+        }
+      )
+
+      setToken(response.data)
+      console.log(response.data)
     }
-    setToken(fetchToken())
+
+    fetchToken()
   }, [])
+
+  if (!token || token == "") {
+    return <Spinner />
+  }
 
   return (
     <LiveKitRoom
@@ -35,24 +57,17 @@ export default function ({ channel }) {
       audio={true}
       token={token}
       serverUrl={serverUrl}
-      // Use the default LiveKit theme for nice styles.
       data-lk-theme="default"
       style={{ height: "100vh" }}
     >
-      {/* Your custom component with basic video conferencing functionality. */}
       <MyVideoConference />
-      {/* The RoomAudioRenderer takes care of room-wide audio for you. */}
       <RoomAudioRenderer />
-      {/* Controls for the user to start/stop audio, video, and screen 
-      share tracks and to leave the room. */}
       <ControlBar />
     </LiveKitRoom>
   )
 }
 
 function MyVideoConference() {
-  // `useTracks` returns all camera and screen share tracks. If a user
-  // joins without a published camera track, a placeholder track is returned.
   const tracks = useTracks(
     [
       { source: Track.Source.Camera, withPlaceholder: true },

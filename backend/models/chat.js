@@ -29,6 +29,7 @@ Channel.belongsTo(Chat, {
 
 Chat.hasMany(Channel, {
   as: "channels",
+  foreignKey: "chat_id",
 })
 
 module.exports = Chat

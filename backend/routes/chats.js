@@ -80,27 +80,25 @@ import("livekit-server-sdk").then(({ AccessToken }) => {
       chat_id: req.body.chat_id,
     })
 
-    res.json({ channel })
+    res.json({ channel: channel })
   })
 
   router.post("/joinChannel/:channel", auth, async (req, res) => {
-    const createToken = async () => {
-      const roomName = req.params.channel
-      const participantName = req.body.participantName
+    const roomName = req.params.channel
+    const participantName = req.body.participantName
 
-      const at = new AccessToken(
-        config.get("LIVEKIT_API_KEY"),
-        config.get("LIVEKIT_API_SECRET"),
-        {
-          identity: participantName,
-        }
-      )
+    const at = new AccessToken(
+      config.get("LIVEKIT_API_KEY"),
+      config.get("LIVEKIT_API_SECRET"),
+      {
+        identity: participantName,
+      }
+    )
 
-      at.addGrant({ roomJoin: true, room: roomName })
+    at.addGrant({ roomJoin: true, room: roomName })
 
-      return await at.toJwt()
-    }
-    const token = await createToken()
+    const token = await at.toJwt()
+    console.log(token)
     res.send(token)
   })
 

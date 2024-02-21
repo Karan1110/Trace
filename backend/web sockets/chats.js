@@ -94,7 +94,7 @@ module.exports = function (app) {
         }
       }
 
-      startConsumingMessages()
+      startConsumingMessages(req.channel)
 
       // Handle incoming messages
       ws.on("message", async (msg) => {
