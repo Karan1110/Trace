@@ -25,6 +25,7 @@ const User = () => {
   const [following, setFollowing] = useState([])
   const currentUser = useUser()
   const [stats, setStats] = useState({})
+  const [avgTime, setAvgTime] = useState(null)
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -32,6 +33,12 @@ const User = () => {
         const response = await axios.get(`http://localhost:1111/users/${id}`, {
           headers: { "x-auth-token": localStorage.getItem("token") },
         })
+
+        const response1 = await axios.get(
+          `http://localhost:1111/users/stats/${id}`
+        )
+        setAvgTime(response1.data.average_time_taken)
+
         console.log(response.data)
         setUser(response.data.user)
 
@@ -167,6 +174,7 @@ const User = () => {
             <Avatar fallback="A" size="6" className="mx-80 mt-5 " />
             <Heading>{user.name}</Heading>
             <Text>{user.email}</Text>
+            {avgTime && <p>Average time taken to finish a ticket: {avgTime}</p>}
             {user && user.id != localStorage.getItem("user_id") && (
               <Button
                 variant="solid"

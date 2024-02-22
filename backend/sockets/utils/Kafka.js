@@ -33,7 +33,8 @@ exports.produceMessage = async function produceMessage(
   req,
   edit,
   msgId,
-  id
+  id,
+  url
 ) {
   const producer = await createProducer()
   const msg = {
@@ -45,6 +46,7 @@ exports.produceMessage = async function produceMessage(
     user_id: req.user.id,
     edit: edit,
     msgId: msgId,
+    url: url,
   }
   console.log("producer msg : ", msg)
 
@@ -97,6 +99,7 @@ exports.startConsumingMessages = async function startConsumingMessages(
               channel_id: channel.id,
               chat_id: parseInt(msg.chat_id),
               user_id: parseInt(msg.user_id),
+              url: msg.url,
             })
           }
         } catch (ex) {

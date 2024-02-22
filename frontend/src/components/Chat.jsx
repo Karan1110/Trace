@@ -12,11 +12,13 @@ import {
   Select,
   Dialog,
   Heading,
+  AspectRatio,
 } from "@radix-ui/themes"
 import Meet from "./Meet"
 import Sidebar from "./Sidebar"
 import axios from "axios"
 import { toast } from "react-hot-toast"
+import Uploader from "./Uploader.jsx"
 
 const Chat = () => {
   const [id, setId] = useState(null)
@@ -42,6 +44,7 @@ const Chat = () => {
         const response = await fetch(`http://localhost:1111/chats/${id}`)
         if (response.ok) {
           const data = await response.json()
+          console.log(data)
           setChatData(data)
         } else {
           console.error("Failed to fetch chat data")
@@ -89,7 +92,7 @@ const Chat = () => {
 
         newWs.onclose = () => {
           toast("socket disconnected...")
-          reconnect()
+          setTimeout(connectWebSocket, 60 * 1000) // Reconnect after 60 seconds
         }
 
         newWs.onopen = () => {
@@ -102,20 +105,12 @@ const Chat = () => {
       connectWebSocket()
     }
 
-    const reconnect = () => {
-      setTimeout(() => {
-        if (!ws) {
-          connectWebSocket()
-        }
-      }, 60 * 1000)
-    }
-
     return () => {
       if (ws) {
         ws.close()
       }
     }
-  }, [id, selectedChannel, ws])
+  }, [id, selectedChannel])
 
   const edit = (msgId) => {
     if (ws && msgId) {
@@ -317,7 +312,7 @@ const Chat = () => {
                         <ContextMenu.SubTrigger>Role</ContextMenu.SubTrigger>
                         <ContextMenu.SubContent>
                           {["owner", "moderator", "user"]
-                            .filter((role) => role !== user.chatData.role)
+                            .filter((role) => role !== user.ChatUser.role)
                             .map((role) => {
                               return (
                                 <>
@@ -345,8 +340,9 @@ const Chat = () => {
       )}
       <div className="p-5 ">
         <div className="flex flex-col p-4 space-x-5 space-y-5 h-[500px] absolute top-5  left-96">
-          {(selectedChannel && chatData && selectedChannel.type == "video") ||
-          "audio" ? (
+          {selectedChannel &&
+          chatData &&
+          selectedChannel.type == ("video" || "audio") ? (
             <div className="h-[400px] w-[500px] ml-40 ">
               <Meet
                 channel={selectedChannel}
@@ -356,7 +352,7 @@ const Chat = () => {
           ) : (
             messages &&
             messages.map((msg) => (
-              <ContextMenu.Root size="1">
+              <ContextMenu.Root key={msg.id} size="1">
                 <ContextMenu.Trigger>
                   {msg && msg.id && editing == msg?.id ? (
                     <Flex direction="row">
@@ -367,7 +363,6 @@ const Chat = () => {
                         size="2"
                         onChange={(e) => setEditMessage(e.target.value)}
                       />
-
                       <Button
                         color="purple"
                         onClick={() => edit(msg.id, editMessage)}
@@ -376,24 +371,46 @@ const Chat = () => {
                       </Button>
                     </Flex>
                   ) : (
-                    <Card
-                      style={{ maxWidth: 240, marginTop: 10, marginBottom: 10 }}
-                      size="1"
-                    >
-                      <Flex gap="3" align="center">
-                        <Avatar
-                          size="3"
-                          src="https://images.unsplash.com/photo-1607346256330-dee7af15f7c5?&w=64&h=64&dpr=2&q=70&crop=focalpoint&fp-x=0.67&fp-y=0.5&fp-z=1.4&fit=crop"
-                          radius="full"
-                          fallback="T"
-                        />
-                        <Box>
-                          <Text as="div" size="2" color="gray">
-                            {msg.value || msg.message}
-                          </Text>
-                        </Box>
-                      </Flex>
-                    </Card>
+                    <>
+                      {!msg.url && (
+                        <Card
+                          style={{
+                            maxWidth: 240,
+                            marginTop: 10,
+                            marginBottom: 10,
+                          }}
+                          size="1"
+                        >
+                          <Flex gap="3" align="center">
+                            <Avatar
+                              size="3"
+                              src="https://images.unsplash.com/photo-1607346256330-dee7af15f7c5?&w=64&h=64&dpr=2&q=70&crop=focalpoint&fp-x=0.67&fp-y=0.5&fp-z=1.4&fit=crop"
+                              radius="full"
+                              fallback="T"
+                            />
+                            <Box>
+                              <Text as="div" size="2" color="gray">
+                                {msg.value || msg.message}
+                              </Text>
+                            </Box>
+                          </Flex>
+                        </Card>
+                      )}
+                      {msg.url && (
+                        <AspectRatio ratio={16 / 8}>
+                          <img
+                            src={msg.url}
+                            alt="A house in a forest"
+                            style={{
+                              objectFit: "cover",
+                              width: "30%",
+                              height: "30%",
+                              borderRadius: "var(--radius-2)",
+                            }}
+                          />
+                        </AspectRatio>
+                      )}
+                    </>
                   )}
                 </ContextMenu.Trigger>
                 <ContextMenu.Content>
@@ -416,12 +433,13 @@ const Chat = () => {
           <TextField.Input
             value={inputMessage}
             style={{
-              width: "900px",
+              width: "800px",
             }}
             size="3"
             onChange={(e) => setInputMessage(e.target.value)}
           />
           <Button onClick={sendMessage}>Send</Button>
+          {ws && <Uploader ws={ws} />}
         </div>
       </div>
     </>

@@ -14,6 +14,10 @@ const Message = db.define(
     },
     channel_id: Sequelize.INTEGER,
     user_id: Sequelize.INTEGER,
+    url: {
+      type: Sequelize.STRING,
+      allowNull: true,
+    },
   },
   {
     timestamps: true,

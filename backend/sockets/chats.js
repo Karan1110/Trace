@@ -3,7 +3,6 @@ const User = require("../models/user")
 const Chat = require("../models/chat")
 const ChatUser = require("../models/ChatUser")
 const auth = require("./utils/auth")
-
 const { produceMessage } = require("./utils/Kafka")
 const { startConsumingMessages } = require("./utils/Kafka")
 const { v4: uuidv4 } = require("uuid")
@@ -99,6 +98,8 @@ module.exports = function (app) {
       // Handle incoming messages
       ws.on("message", async (msg) => {
         const regex = /edit-message-karan112010/
+        const regex2 = /send-image-karan112010/
+
         if (regex.test(msg)) {
           const temp = msg.split("=")
           const message_id = temp[temp.length - 1]
@@ -115,7 +116,28 @@ module.exports = function (app) {
               )
             }
           )
-          produceMessage(Chats, msg, ws, req, true, message_id)
+          produceMessage(Chats, msg, ws, req, true, message_id, null, null)
+        } else if (regex2.test(msg)) {
+          const id = uuidv4().toString()
+          const temp = msg.split("=")
+          const url = temp[temp.length - 1]
+          Chats[`${req.params.chat}_${req.params.channel}`].forEach(
+            (connection) => {
+              console.log("the value of the message is", msg.value)
+              connection.send(
+                JSON.stringify({
+                  id: id,
+                  value: null,
+                  channel_id: req.channel.id,
+                  chat_id: req.params.chat,
+                  user_id: req.user.id,
+                  url: url,
+                })
+              )
+            }
+          )
+
+          produceMessage(Chats, msg, ws, req, null, null, id, url)
         } else {
           const id = uuidv4().toString()
           Chats[`${req.params.chat}_${req.params.channel}`].forEach(
@@ -132,7 +154,7 @@ module.exports = function (app) {
               )
             }
           )
-          produceMessage(Chats, msg, ws, req, null, null, id)
+          produceMessage(Chats, msg, ws, req, null, null, id, null)
         }
       })
       // Handle WebSocket connection closure
