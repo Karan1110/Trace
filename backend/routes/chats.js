@@ -80,7 +80,7 @@ import("livekit-server-sdk").then(({ AccessToken }) => {
       chat_id: req.body.chat_id,
     })
 
-    res.json({ channel: channel })
+    res.json(channel)
   })
 
   router.post("/joinChannel/:channel", auth, async (req, res) => {
@@ -102,7 +102,7 @@ import("livekit-server-sdk").then(({ AccessToken }) => {
     res.send(token)
   })
 
-  router.put("/promote/:chatId/:userId", auth, async (req, res) => {
+  router.put("/changeRole/:chatId/:userId", auth, async (req, res) => {
     if (req.body.role != "owner" || "moderator")
       return res.status(400).send("invalid role...")
 

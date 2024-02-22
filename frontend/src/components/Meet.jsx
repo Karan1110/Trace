@@ -12,10 +12,12 @@ import { useEffect, useState } from "react"
 import Spinner from "./Spinner"
 import axios from "axios"
 import { Track } from "livekit-client"
+import { useParams } from "react-router-dom"
 
-export default function ({ channel }) {
+export default function ({ channel, video }) {
   const serverUrl = "wss://trace-8rs0qfc2.livekit.cloud"
   const [token, setToken] = useState(null)
+  const { id } = useParams()
 
   useEffect(() => {
     const fetchToken = async () => {
@@ -31,7 +33,7 @@ export default function ({ channel }) {
       )
 
       const response = await axios.post(
-        `http://localhost:1111/chats/joinChannel/${channel || "my_room"}`,
+        `http://localhost:1111/chats/joinChannel/${channel || id}`,
         { participantName: response1.data.user.name },
         {
           headers: {
@@ -53,7 +55,7 @@ export default function ({ channel }) {
 
   return (
     <LiveKitRoom
-      video={true}
+      video={video}
       audio={true}
       token={token}
       serverUrl={serverUrl}

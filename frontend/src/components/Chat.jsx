@@ -11,16 +11,17 @@ import {
   TextField,
   Select,
   Dialog,
+  Heading,
 } from "@radix-ui/themes"
 import Meet from "./Meet"
 import Sidebar from "./Sidebar"
 import axios from "axios"
+import { toast } from "react-hot-toast"
 
 const Chat = () => {
   const [id, setId] = useState(null)
   const [inputMessage, setInputMessage] = useState("")
   const [messages, setMessages] = useState([])
-  const [isOpen, setIsOpen] = useState(false)
   const [editing, setEditing] = useState(null)
   const [ws, setWs] = useState(null)
   const [chatData, setChatData] = useState(null)
@@ -58,40 +59,63 @@ const Chat = () => {
     if (ws) {
       ws.close()
     }
+
     if (id) {
-      const newWs = new WebSocket(
-        `ws://localhost:1111/chat/${id}/${selectedChannel.name}?xAuthToken=${xAuthToken}`
-      )
+      const connectWebSocket = () => {
+        const newWs = new WebSocket(
+          `ws://localhost:1111/chat/${id}/${selectedChannel.name}?xAuthToken=${xAuthToken}`
+        )
 
-      setMessages([])
+        newWs.onmessage = (event) => {
+          const message = JSON.parse(event.data)
+          console.log(message)
+          if (message.edited) {
+            const indexToUpdate = messages.findIndex(
+              (_message) => _message.id === message.id
+            )
 
-      newWs.onmessage = (event) => {
-        const message = JSON.parse(event.data)
-        console.log(message)
-        if (message.edited) {
-          const indexToUpdate = messages.findIndex(
-            (_message) => _message.id == message.id
-          )
-
-          setMessages((prevMessages) => {
-            const updatedMessages = [...prevMessages]
-            updatedMessages[indexToUpdate] = {
-              ...updatedMessages[indexToUpdate],
-              value: message.value,
-            }
-            return updatedMessages
-          })
-        } else {
-          setMessages((prevMessages) => [...prevMessages, message])
+            setMessages((prevMessages) => {
+              const updatedMessages = [...prevMessages]
+              updatedMessages[indexToUpdate] = {
+                ...updatedMessages[indexToUpdate],
+                value: message.value,
+              }
+              return updatedMessages
+            })
+          } else {
+            setMessages((prevMessages) => [...prevMessages, message])
+          }
         }
+
+        newWs.onclose = () => {
+          toast("socket disconnected...")
+          reconnect()
+        }
+
+        newWs.onopen = () => {
+          toast.success("socket connected...")
+        }
+
+        setWs(newWs)
       }
 
-      setWs(newWs)
-      return () => {
-        newWs.close()
+      connectWebSocket()
+    }
+
+    const reconnect = () => {
+      setTimeout(() => {
+        if (!ws) {
+          connectWebSocket()
+        }
+      }, 60 * 1000)
+    }
+
+    return () => {
+      if (ws) {
+        ws.close()
       }
     }
-  }, [id, selectedChannel])
+  }, [id, selectedChannel, ws])
 
   const edit = (msgId) => {
     if (ws && msgId) {
@@ -101,9 +125,25 @@ const Chat = () => {
     }
   }
 
+  const changeRole = async (role, userId) => {
+    await axios.put(
+      `http://localhost:1111/chats/changeRole/${id}/${userId}`,
+      {
+        role: role,
+      },
+      {
+        headers: {
+          "x-auth-token": xAuthToken,
+        },
+      }
+    )
+
+    toast.success("modified the user's role!")
+  }
+
   const addChannel = async (e) => {
     e.preventDefault()
-    const token = localStorage.getItem("token")
+    const token = xAuthToken
 
     // Set up the request headers
     const config = {
@@ -118,7 +158,7 @@ const Chat = () => {
       config
     )
     console.log(response.data)
-    chatData.channels.push(response.data.channel.dataValues)
+    chatData.channels.push(response.data.dataValues)
 
     setNewChannel({
       name: "",
@@ -139,9 +179,10 @@ const Chat = () => {
       {chatData && (
         <aside
           id="default-sidebar"
-          className="sticky left-64 border-r border-double border-gray-100 z-40 w-64 h-screen transition-transform -translate-x-full sm:translate-x-0"
+          className="sticky left-64 border-r border-double border-gray-100 z-40 w-40 h-screen transition-transform -translate-x-full sm:translate-x-0"
         >
           <div className="h-full px-3 py-4 overflow-y-auto  dark:bg-gray-800">
+            <Heading>Channels</Heading>
             <ul className="space-y-2 font-medium">
               {chatData &&
                 chatData.channels &&
@@ -155,7 +196,7 @@ const Chat = () => {
                   >
                     <a
                       href="#"
-                      className="flex items-center border-2 mb-4 p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group"
+                      className="flex items-center  mb-4 p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group"
                     >
                       <svg
                         className="flex-shrink-0 w-5 h-5 text-gray-500 transition duration-75 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white"
@@ -242,14 +283,75 @@ const Chat = () => {
                 </Dialog.Content>
               </Dialog.Root>
             </ul>
+            <Heading>Members</Heading>
+            <ul className="space-y-2 font-medium">
+              {chatData &&
+                chatData.Users &&
+                chatData.Users.map((user, index) => (
+                  <ContextMenu.Root>
+                    <ContextMenu.Trigger>
+                      <li key={index}>
+                        <a
+                          href="#"
+                          className="flex items-center  mb-4 p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group"
+                        >
+                          <svg
+                            className="flex-shrink-0 w-5 h-5 text-gray-500 transition duration-75 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white"
+                            aria-hidden="true"
+                            xmlns="http://www.w3.org/2000/svg"
+                            fill="currentColor"
+                            viewBox="0 0 20 18"
+                          >
+                            {/* Replace the SVG path with the appropriate icon for each channel */}
+                            <path d="M14 2a3.963 3.963 0 0 0-1.4.267 6.439 6.439 0 0 1-1.331 6.638A4 4 0 1 0 14 2Zm1 9h-1.264A6.957 6.957 0 0 1 15 15v2a2.97 2.97 0 0 1-.184 1H19a1 1 0 0 0 1-1v-1a5.006 5.006 0 0 0-5-5ZM6.5 9a4.5 4.5 0 1 0 0-9 4.5 4.5 0 0 0 0 9ZM8 10H5a5.006 5.006 0 0 0-5 5v2a1 1 0 0 0 1 1h11a1 1 0 0 0 1-1v-2a5.006 5.006 0 0 0-5-5Z" />
+                          </svg>
+                          <span className="flex-1 ms-3 whitespace-nowrap">
+                            {user.name}
+                          </span>
+                        </a>
+                      </li>
+                    </ContextMenu.Trigger>
+                    <ContextMenu.Content>
+                      <ContextMenu.Separator />
+                      <ContextMenu.Sub>
+                        <ContextMenu.SubTrigger>Role</ContextMenu.SubTrigger>
+                        <ContextMenu.SubContent>
+                          {["owner", "moderator", "user"]
+                            .filter((role) => role !== user.chatData.role)
+                            .map((role) => {
+                              return (
+                                <>
+                                  <ContextMenu.Item
+                                    onClick={() => changeRole(role, user.id)}
+                                  >
+                                    {role}
+                                  </ContextMenu.Item>
+                                </>
+                              )
+                            })}
+                        </ContextMenu.SubContent>
+                      </ContextMenu.Sub>
+
+                      <ContextMenu.Separator />
+                      <ContextMenu.Item shortcut="⌘ ⌫" color="red">
+                        Kick
+                      </ContextMenu.Item>
+                    </ContextMenu.Content>
+                  </ContextMenu.Root>
+                ))}
+            </ul>
           </div>
         </aside>
       )}
       <div className="p-5 ">
         <div className="flex flex-col p-4 space-x-5 space-y-5 h-[500px] absolute top-5  left-96">
-          {selectedChannel && chatData && selectedChannel.type == "video" ? (
-            <div className="h-[480px] w-[500px] mx-5">
-              <Meet channel={selectedChannel} />
+          {(selectedChannel && chatData && selectedChannel.type == "video") ||
+          "audio" ? (
+            <div className="h-[400px] w-[500px] ml-40 ">
+              <Meet
+                channel={selectedChannel}
+                video={selectedChannel.type == "audio" ? false : true}
+              />
             </div>
           ) : (
             messages &&

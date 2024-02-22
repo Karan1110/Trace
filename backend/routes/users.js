@@ -10,7 +10,6 @@ const Meeting = require("../models/meeting.js")
 const Notification = require("../models/notification.js")
 const Department = require("../models/department.js")
 const { Sequelize, Op } = require("sequelize")
-const Review = require("../models/review.js")
 const Saved = require("../models/saved.js")
 const FollowUser = require("../models/followUser")
 const Channel = require("../models/channel.js")
@@ -96,7 +95,7 @@ router.get("/stats/:id", [auth], async (req, res) => {
   }
 })
 
-router.get("/stats", [auth], async (req, res) => {
+router.get("/stats", async (req, res) => {
   try {
     // Average time taken to complete a ticket
     const average_time_taken_to_complete_a_ticket = await Ticket.findAll({
@@ -185,10 +184,6 @@ router.get("/:id", [auth], async (req, res) => {
       id: req.params.id,
     },
     include: [
-      {
-        model: Review,
-        as: "Reviews",
-      },
       {
         as: "mySavedTickets",
         model: Saved,

@@ -20,6 +20,7 @@ import Spinner from "./Spinner"
 import { TrashIcon, CaretDownIcon, Pencil2Icon } from "@radix-ui/react-icons"
 import MarkdownEditor from "@uiw/react-markdown-editor"
 import { toast } from "react-hot-toast"
+import { useUser } from "../contexts/userContext"
 
 const Ticket = () => {
   const [ticket, setTicket] = useState(null)
@@ -43,6 +44,8 @@ const Ticket = () => {
       console.error(ex)
     }
   }
+
+  const user = useUser()
 
   useEffect(() => {
     const fetchTicket = async () => {
@@ -148,21 +151,62 @@ const Ticket = () => {
           <>
             <div>
               <Heading className="text-2xl mt-[75px] font-bold mb-4">
-                {ticket.name}
+                {ticket.name} assigned to -{" "}
+                {ticket.User.name ? (
+                  <HoverCard.Root>
+                    <HoverCard.Trigger>
+                      <Link href="https://twitter.com/radix_ui" target="_blank">
+                        @{ticket.User.name}
+                      </Link>
+                    </HoverCard.Trigger>
+                    <HoverCard.Content>
+                      <Flex gap="4">
+                        <Avatar
+                          size="3"
+                          fallback="R"
+                          radius="full"
+                          src="https://pbs.twimg.com/profile_images/1337055608613253126/r_eiMp2H_400x400.png"
+                        />
+                        <Box>
+                          <Heading size="3" as="h3">
+                            {ticket.User.name}
+                          </Heading>
+                          <Text as="div" size="2" color="gray">
+                            @{ticket.User.Department.name}
+                          </Text>
+
+                          <Text
+                            as="div"
+                            size="2"
+                            style={{ maxWidth: 300 }}
+                            mt="3"
+                          >
+                            {ticket.User.email}
+                          </Text>
+                        </Box>
+                      </Flex>
+                    </HoverCard.Content>
+                  </HoverCard.Root>
+                ) : (
+                  "nobody"
+                )}
               </Heading>
               <div className="my-2  space-x-3  ">
-                <Badge color={ticket.status == "open" ? "red" : "green"}>
+                <Badge color={ticket.status == "closed" ? "green" : "red"}>
                   {ticket.status}
                 </Badge>
                 <Text weight="medium"> Fri Jan 17 2023</Text>
               </div>
+
+              {ticket.videoUrl && (
+                <video className="w-[250px] h-[250px] mx-auto" controls>
+                  <source src={ticket.videoUrl} type="video/mp4" />
+                  Your browser does not support the video tag.
+                </video>
+              )}
               <div className="border-2 p-7 w-100 rounded-lg mb-0 mt-5 ">
                 <MarkdownEditor.Markdown source={ticket.description} />
               </div>
-              {/* <video className="w-[250px] h-[250px] mx-auto" controls>
-            <source src={ticket.videoUrl} type="video/mp4" />
-            Your browser does not support the video tag.
-          </video> */}
             </div>
           </>
         )}
@@ -197,7 +241,7 @@ const Ticket = () => {
           </Button>
           {ticket && (
             <Button variant="solid" color="violet" onClick={() => save()}>
-              {ticket.User.mySavedTickets.some((s) => s.ticket_id == ticket.id)
+              {user.mySavedTickets.some((t) => t.savedTicket.id == ticket.id)
                 ? "unsave"
                 : "save"}
               <svg
@@ -242,6 +286,41 @@ const Ticket = () => {
               </Flex>
             </AlertDialog.Content>
           </AlertDialog.Root>
+          {ticket && ticket.Before && (
+            <Text>
+              Should be completed after this
+              <HoverCard.Root>
+                <HoverCard.Trigger>
+                  <Link href="https://twitter.com/radix_ui" target="_blank">
+                    @ticket
+                  </Link>
+                </HoverCard.Trigger>
+                <HoverCard.Content>
+                  <Flex gap="4">
+                    <Avatar
+                      size="3"
+                      fallback="R"
+                      radius="full"
+                      src="https://pbs.twimg.com/profile_images/1337055608613253126/r_eiMp2H_400x400.png"
+                    />
+                    <Box>
+                      <Heading size="3" as="h3">
+                        {ticket.Before.id}
+                      </Heading>
+                      <Text as="div" size="2" color="gray">
+                        @{ticket.Before.User.name || "not-assigned"}
+                      </Text>
+
+                      <Text as="div" size="2" style={{ maxWidth: 300 }} mt="3">
+                        {ticket.Before.description}
+                      </Text>
+                    </Box>
+                  </Flex>
+                </HoverCard.Content>
+              </HoverCard.Root>{" "}
+              for updates.
+            </Text>
+          )}
         </div>
       </div>
       <div className="max-w-xl  flex flex-col my-10 mt-[40px] mx-[250px] ">

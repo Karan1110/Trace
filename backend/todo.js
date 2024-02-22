@@ -1,14 +1,14 @@
-//   READ, ADD and REMOVE - Reviews*
 //   UPDATE and DELETE users
 //   login  - frontend
 //   UPDATE and DELETE meetings*
+// add reccomendation system
 
 //   READ statistics
 //   task dependencies
 //   reminders
 //   github Integration
 //   time tracking
-// improve scoring system and leaderboard..
+//   improve scoring system and leaderboard..
 
 /* 
 features - 
@@ -22,7 +22,6 @@ Colleagues - done
 save post - done
 comment - done
 block user
-Review
 leaderboards
 statistics
 mardkdown edtior

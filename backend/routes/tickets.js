@@ -13,6 +13,7 @@ const Saved = require("../models/saved.js")
 const path = require("path")
 const multer = require("multer")
 const blockedUsers = require("../middlewares/blockedUsers.js")
+const Department = require("../models/department.js")
 
 const serviceAccount = require(path.join(
   __dirname,
@@ -320,18 +321,22 @@ router.get("/:id", async (req, res) => {
           model: User,
           as: "User",
           include: {
-            as: "mySavedTickets",
-            model: Saved,
+            as: "Department",
+            model: Department,
           },
         },
         {
           as: "Comments",
           model: Comment,
         },
-{
-as : "Before",
-model : Ticket
-}
+        {
+          as: "Before",
+          model: Ticket,
+          include: {
+            model: User,
+            as: "User",
+          },
+        },
       ],
     })
 
@@ -367,7 +372,7 @@ router.post("/", [auth, upload.single("video")], async (req, res) => {
     status: req.body.status,
     description: req.body.description,
     department_id: req.body.department_id,
-    before_id : req.body.before_id
+    before_id: req.body.before_id,
   })
 
   await Notification.create({

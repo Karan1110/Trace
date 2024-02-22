@@ -43,10 +43,13 @@ const Home = () => {
   const [followFeed, setFollowFeed] = useState([])
   const [pendingTickets, setPendingTickets] = useState([])
   const [departmentTickets, setDepartmentTickets] = useState([])
+  const [avgTime, setAvgTime] = useState("")
 
   useEffect(() => {
     const fetchTicketCounts = async () => {
       try {
+        const response0 = await axios.get("http://localhost:1111/users/stats")
+        setAvgTime(response0.data.average_time_taken)
         const response = await axios.get("http://localhost:1111/tickets")
         setTicketsCount(response.data)
         const response2 = await axios.get(
@@ -121,6 +124,9 @@ const Home = () => {
     <>
       <div className="container flex flex-row ml-[50px] mr-[40px] ">
         <div className="w-1/2 h-[450px] mt-10  ">
+          <Heading>
+            The average time taken to complete a ticket is ${avgTime}
+          </Heading>
           <div className="grid grid-cols-3  my-5  ">
             <span className="text-gray-900 font-medium  ">Closed Issues</span>
             <span className="text-gray-900 font-medium ">Open Issues</span>

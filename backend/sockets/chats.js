@@ -3,7 +3,7 @@ const User = require("../models/user")
 const Chat = require("../models/chat")
 const ChatUser = require("../models/ChatUser")
 const auth = require("./utils/auth")
-const addToChannels = require("./utils/addToChannels")
+
 const { produceMessage } = require("./utils/Kafka")
 const { startConsumingMessages } = require("./utils/Kafka")
 const { v4: uuidv4 } = require("uuid")
@@ -158,7 +158,7 @@ const User = require("../models/user");
 const Chat = require("../models/chat");
 const ChatUser = require("../models/ChatUser");
 const auth = require("./utils/auth");
-const addToChannels = require("./utils/addToChannels");
+
 const { produceMessage } = require("./utils/Kafka");
 const { startConsumingMessages } = require("./utils/Kafka");
 const { v4: uuidv4 } = require("uuid");

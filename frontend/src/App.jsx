@@ -43,7 +43,10 @@ const App = () => {
               <Route path="/tickets" element={<Tickets />} />
               <Route path="/leaderboard" element={<Leaderboard />} />
               <Route path="/users/:id" element={<User />} />
-              <Route path="/meet" element={<Meet />} />
+              <Route
+                path="/meet/:id"
+                element={<Meet video={true} channel={null} />}
+              />
             </Routes>
           </Router>
         </Theme>
