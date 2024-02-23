@@ -2,10 +2,11 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { toast } from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
-import { Badge, Button } from "@radix-ui/themes";
-import { ArrowRightIcon } from "@radix-ui/react-icons";
+import { Badge, Button, Select, Tabs, Box } from "@radix-ui/themes";
+import { ArrowRightIcon, CaretDownIcon } from "@radix-ui/react-icons";
 import Spinner from "./Spinner";
 import { useUser } from "../contexts/userContext";
+import moment from "moment";
 
 const Meetings = () => {
   const history = useNavigate();
@@ -39,7 +40,11 @@ const Meetings = () => {
       }
     };
     async function fetchDepartments() {
-      const response = await axios.get("http://localhost:1111/departments");
+      const response = await axios.get("http://localhost:1111/departments", {
+        headers: {
+          "x-auth-token": localStorage.getItem("token"),
+        },
+      });
       setDepartmentSuggestions(response.data);
     }
     fetchDepartments();
@@ -87,7 +92,7 @@ const Meetings = () => {
       <h2 className="text-2xl font-bold mb-4">Meetings</h2>
       <Button
         className="absolute top-20 right-10"
-        colorScheme="purple"
+        color="purple"
         onClick={() => {
           history("/meetings/new");
         }}
@@ -133,7 +138,7 @@ const Meetings = () => {
                       "Here are the biggest enterprise technology acquisitions of 2021 so far, in reverse chronological order."}
                   </p>
                   <p className="mb-3 space-x-3">
-                    <Badge colorScheme="red">
+                    <Badge color="red">
                       {Math.abs(
                         moment(meeting.startingOn).diff(
                           moment(meeting.endingOn),
@@ -143,7 +148,7 @@ const Meetings = () => {
                     </Badge>
 
                     <Badge
-                      colorScheme={
+                      color={
                         moment().isAfter(moment(meeting.startingOn))
                           ? "red"
                           : "green"
@@ -155,8 +160,9 @@ const Meetings = () => {
                     </Badge>
                   </p>
                   <div className="space-x-3">
-                    {user.Meeting.some((m) => m.id == meeting.id) ||
-                    moment().isBefore(moment(meeting.endingOn)) ? null : (
+                    {user.Meeting.some((m) => m.id == meeting.id) == true ||
+                    moment().isBefore(moment(meeting.endingOn)) ==
+                      true ? null : (
                       <Button
                         onClick={() =>
                           addMeetingToSchedule(meeting.id, meeting)
@@ -173,7 +179,7 @@ const Meetings = () => {
             </div>
           </Tabs.Content>
 
-          <Tabs.Content value="documents">
+          <Tabs.Content value="settings">
             <div className="flex items-center justify-center space-x-5 space-y-5">
               {departmentMeetings.map((meeting) => (
                 <div className=" max-w-md  p-6 bg-white border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700">
@@ -185,8 +191,8 @@ const Meetings = () => {
                       "Here are the biggest enterprise technology acquisitions of 2021 so far, in reverse chronological order."}
                   </p>
                   <p className="mb-3 space-x-3">
-                    <Badge colorScheme="red">{meeting.duration}</Badge>
-                    <Badge colorScheme="red">
+                    <Badge color="red">{meeting.duration}</Badge>
+                    <Badge color="red">
                       {meeting.Department?.name || "General"}
                     </Badge>
                   </p>
@@ -204,35 +210,40 @@ const Meetings = () => {
             </div>
           </Tabs.Content>
 
-          <Tabs.Content value="settings">
+          <Tabs.Content value="following">
             <div className="flex items-center justify-center space-x-5 space-y-5">
-              {user.Meeting.map((meeting) => (
-                <div className=" max-w-md  p-6 bg-white border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700">
-                  <h5 className="mb-2 text-2xl font-bold tracking-tight text-gray-900 dark:text-white">
-                    {meeting.name}
-                  </h5>
-                  <p className="mb-3 text-sm max-w-sm  text-gray-700 dark:text-gray-400">
-                    {meeting.description ||
-                      "Here are the biggest enterprise technology acquisitions of 2021 so far, in reverse chronological order."}
-                  </p>
-                  <p className="mb-3 space-x-3">
-                    <Badge colorScheme="red">{meeting.duration}</Badge>
-                    <Badge colorScheme="red">
-                      {meeting.Department?.name || "General"}
-                    </Badge>
-                  </p>
-                  <div className="space-x-3">
-                    {meeting.duration[1] >
-                    (
-                      <Button onClick={() => addMeetingToSchedule(meeting.id)}>
-                        Remove
-                        <ArrowRightIcon />
-                      </Button>
-                    )}
-                    <Button href={meeting.link}>Join</Button>
+              {user.Meeting.length.toString()}
+              {user &&
+                user.Meeting &&
+                user.Meeting.map((meeting) => (
+                  <div className=" max-w-md  p-6 bg-white border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700">
+                    <h5 className="mb-2 text-2xl font-bold tracking-tight text-gray-900 dark:text-white">
+                      {meeting.name}
+                    </h5>
+                    <p className="mb-3 text-sm max-w-sm  text-gray-700 dark:text-gray-400">
+                      {meeting.description ||
+                        "Here are the biggest enterprise technology acquisitions of 2021 so far, in reverse chronological order."}
+                    </p>
+                    <p className="mb-3 space-x-3">
+                      <Badge color="red">{meeting.duration}</Badge>
+                      <Badge color="red">
+                        {meeting.Department?.name || "General"}
+                      </Badge>
+                    </p>
+                    <div className="space-x-3">
+                      {meeting.duration[1] >
+                      (
+                        <Button
+                          onClick={() => addMeetingToSchedule(meeting.id)}
+                        >
+                          Remove
+                          <ArrowRightIcon />
+                        </Button>
+                      )}
+                      <Button href={meeting.link}>Join</Button>
+                    </div>
                   </div>
-                </div>
-              ))}
+                ))}
             </div>
           </Tabs.Content>
         </Box>

@@ -12,6 +12,7 @@
   "dependencies": {
     "@google-cloud/storage": "^7.7.0",
     "@ladjs/graceful": "^3.2.2",
+    "axios": "^1.6.7",
     "bcrypt": "^5.1.1",
     "bree": "^9.2.2",
     "cabin": "^13.2.5",

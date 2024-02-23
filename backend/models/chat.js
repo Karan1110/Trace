@@ -1,6 +1,6 @@
-const Sequelize = require("sequelize")
-const db = require("../startup/db")
-const Channel = require("./channel")
+const Sequelize = require("sequelize");
+const db = require("../startup/db");
+const Channel = require("./channel");
 
 const Chat = db.define(
   "Chat", // Specify the desired table name here
@@ -20,23 +20,23 @@ const Chat = db.define(
       defaultValue: "group",
     },
     inviteCode: {
-      type: Sequelize.UUIDV4,
-      allowNull: false,
+      type: Sequelize.UUID,
+      defaultValue: Sequelize.UUIDV4(),
     },
   },
   {
     timestamps: true,
   }
-)
+);
 
 Channel.belongsTo(Chat, {
   as: "chat",
   foreignKey: "chat_id",
-})
+});
 
 Chat.hasMany(Channel, {
   as: "channels",
   foreignKey: "chat_id",
-})
+});
 
-module.exports = Chat
+module.exports = Chat;

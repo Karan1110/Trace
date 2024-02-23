@@ -64,8 +64,9 @@ router.post("/", [auth], async (req, res) => {
     }
 
     const link = "http://localhost:5173/meet/" + req.body.link;
-    const startingOn = req.body.startingOn.toDate();
-    const duration = moment(req.body.endingOn).diff(startingOn, "hours");
+    const startingOn = moment(req.body.startingOn);
+    const endingOn = moment(req.body.endingOn);
+    const duration = endingOn.diff(startingOn, "hours");
 
     const meeting = await Meeting.create({
       name: req.body.name,
@@ -73,8 +74,8 @@ router.post("/", [auth], async (req, res) => {
       description: req.body.description,
       duration: parseInt(duration),
       department_id: req.body.department_id,
-      startingOn: req.body.startingOn,
-      endingOn: req.body.endingOn,
+      startingOn: startingOn,
+      endingOn: endingOn,
     });
 
     for (invitee of req.body.invitees) {

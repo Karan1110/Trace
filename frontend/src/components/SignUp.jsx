@@ -1,62 +1,61 @@
-import React, { useState, useEffect } from "react"
-import axios from "axios"
-import { useHotkeys } from "react-hotkeys-hook"
-import toast from "react-hot-toast"
-import { Button, TextField, DropdownMenu } from "@radix-ui/themes"
+import React, { useState, useEffect } from "react";
+import axios from "axios";
+import toast from "react-hot-toast";
+import { Button, TextField, DropdownMenu } from "@radix-ui/themes";
 
 const SignUp = () => {
-  const [name, setName] = useState("")
-  const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
-  const [confirmPassword, setConfirmPassword] = useState("")
-  const [departmentId, setDepartmentId] = useState("")
-  const [departmentSuggestions, setDepartmentSuggestions] = useState([])
-  const [department, setDepartment] = useState("none")
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [departmentId, setDepartmentId] = useState("");
+  const [departmentSuggestions, setDepartmentSuggestions] = useState([]);
+  const [department, setDepartment] = useState("none");
 
   const handleDepartmentSelect = (selectedDepartment) => {
-    setDepartmentId(selectedDepartment.id)
-    setDepartment(selectedDepartment.name)
-  }
+    setDepartmentId(selectedDepartment.id);
+    setDepartment(selectedDepartment.name);
+  };
   useEffect(() => {
     async function fetchDepartments() {
-      const response = await axios.get("http://localhost:1111/departments")
-      setDepartmentSuggestions(response.data)
+      const response = await axios.get("http://localhost:1111/departments");
+      setDepartmentSuggestions(response.data);
     }
-    fetchDepartments()
-  }, [])
+    fetchDepartments();
+  }, []);
 
   const handleSubmit = async (e) => {
-    e.preventDefault()
+    e.preventDefault();
 
     try {
       if (password != confirmPassword) {
         return toast(
           "the password should be the same as your confirmed password.."
-        )
+        );
       }
       const response = await axios.post("http://localhost:1111/users", {
         name,
         email,
         password,
         department_id: departmentId,
-      })
+      });
 
-      toast.success("Sign-up successful!")
-      localStorage.setItem("user_id", response.data.User.id)
-      localStorage.setItem("token", response.data.token)
-      console.log("User created:", response.data)
+      toast.success("Sign-up successful!");
+      localStorage.setItem("user_id", response.data.User.id);
+      localStorage.setItem("token", response.data.token);
+      console.log("User created:", response.data);
 
       // Reset the form after successful submission
-      setName("")
-      setEmail("")
-      setPassword("")
-      setConfirmPassword("")
-      setDepartmentId("")
+      setName("");
+      setEmail("");
+      setPassword("");
+      setConfirmPassword("");
+      setDepartmentId("");
     } catch (error) {
-      toast.error("Error signing up. Please try again.")
-      console.error("Error creating employee:", error)
+      toast.error("Error signing up. Please try again.");
+      console.error("Error creating employee:", error);
     }
-  }
+  };
 
   return (
     <div className="max-w-xl mx-auto mt-[40px] h-100">
@@ -166,7 +165,7 @@ const SignUp = () => {
         </div>
       </form>
     </div>
-  )
-}
+  );
+};
 
-export default SignUp
+export default SignUp;
