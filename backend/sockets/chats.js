@@ -88,6 +88,7 @@ module.exports = function (app) {
               user_id: msg.user_id,
               isRead: true, // Mark as read
               channel: msg.channel_id,
+              url: msg.url,
             })
           )
         }

@@ -15,7 +15,14 @@ const Chat = db.define(
       type: Sequelize.STRING,
       allowNull: false,
     },
-    type: Sequelize.ENUM("channel", "group"),
+    type: {
+      type: Sequelize.ENUM("channel", "group"),
+      defaultValue: "group",
+    },
+    inviteCode: {
+      type: Sequelize.UUIDV4,
+      allowNull: false,
+    },
   },
   {
     timestamps: true,

@@ -1,4 +1,4 @@
-import "@livekit/components-styles"
+import "@livekit/components-styles";
 import {
   ControlBar,
   GridLayout,
@@ -7,17 +7,17 @@ import {
   RoomAudioRenderer,
   VideoConference,
   useTracks,
-} from "@livekit/components-react"
-import { useEffect, useState } from "react"
-import Spinner from "./Spinner"
-import axios from "axios"
-import { Track } from "livekit-client"
-import { useParams } from "react-router-dom"
+} from "@livekit/components-react";
+import { useEffect, useState } from "react";
+import Spinner from "./Spinner";
+import axios from "axios";
+import { Track } from "livekit-client";
+import { useParams } from "react-router-dom";
 
 export default function ({ channel, video }) {
-  const serverUrl = "wss://trace-8rs0qfc2.livekit.cloud"
-  const [token, setToken] = useState(null)
-  const { id } = useParams()
+  const serverUrl = "wss://trace-8rs0qfc2.livekit.cloud";
+  const [token, setToken] = useState(null);
+  const { id } = useParams();
 
   useEffect(() => {
     const fetchToken = async () => {
@@ -30,7 +30,7 @@ export default function ({ channel, video }) {
             "x-auth-token": localStorage.getItem("token"),
           },
         }
-      )
+      );
 
       const response = await axios.post(
         `http://localhost:1111/chats/joinChannel/${channel || id}`,
@@ -40,17 +40,34 @@ export default function ({ channel, video }) {
             "x-auth-token": localStorage.getItem("token"),
           },
         }
-      )
+      );
 
-      setToken(response.data)
-      console.log(response.data)
+      setToken(response.data);
+      console.log(response.data);
+    };
+
+    const sendAttendance = async () => {
+      await axios.put(
+        "http://localhost:1111/meetings/",
+        {
+          meeting_id: id,
+        },
+        {
+          headers: {
+            "x-auth-token": localStorage.getItem("token"),
+          },
+        }
+      );
+    };
+
+    fetchToken();
+    if (id) {
+      sendAttendance();
     }
-
-    fetchToken()
-  }, [])
+  }, []);
 
   if (!token || token == "") {
-    return <Spinner />
+    return <Spinner />;
   }
 
   return (
@@ -66,7 +83,7 @@ export default function ({ channel, video }) {
       <RoomAudioRenderer />
       <ControlBar />
     </LiveKitRoom>
-  )
+  );
 }
 
 function MyVideoConference() {
@@ -76,7 +93,7 @@ function MyVideoConference() {
       { source: Track.Source.ScreenShare, withPlaceholder: false },
     ],
     { onlySubscribed: false }
-  )
+  );
   return (
     <GridLayout
       tracks={tracks}
@@ -84,5 +101,5 @@ function MyVideoConference() {
     >
       <ParticipantTile />
     </GridLayout>
-  )
+  );
 }

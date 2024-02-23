@@ -1,14 +1,13 @@
-const express = require("express")
-const router = express.Router()
-const auth = require("../middlewares/auth")
-const isadmin = require("../middlewares/isAdmin.js")
-const User = require("../models/user")
-const Sequelize = require("sequelize")
-const MeetingMember = require("../models/MeetingMember")
-const Meeting = require("../models/meeting")
-const winston = require("winston")
-const moment = require("moment")
-const Department = require("../models/department.js")
+const express = require("express");
+const router = express.Router();
+const auth = require("../middlewares/auth");
+const User = require("../models/user");
+const Sequelize = require("sequelize");
+const MeetingMember = require("../models/MeetingMember");
+const Meeting = require("../models/meeting");
+const winston = require("winston");
+const moment = require("moment");
+const Department = require("../models/department.js");
 
 router.get("/", auth, async (req, res) => {
   const meetings = await Meeting.findAll({
@@ -17,11 +16,11 @@ router.get("/", auth, async (req, res) => {
       model: Department,
       as: "MeetingDepartment",
     },
-  })
-  res.json(meetings)
-})
+  });
+  res.json(meetings);
+});
 
-router.get("/departments/:id", auth, async (req, res) => {
+router.get("/departments/:id", async (req, res) => {
   const meetings = await Meeting.findAll({
     order: [["createdAt", "DESC"]],
     where: {
@@ -31,9 +30,9 @@ router.get("/departments/:id", auth, async (req, res) => {
       model: Department,
       as: "MeetingDepartment",
     },
-  })
-  res.json(meetings)
-})
+  });
+  res.json(meetings);
+});
 
 router.get("/users/:id", auth, async (req, res) => {
   const meetings = await MeetingMember.findAll({
@@ -51,51 +50,71 @@ router.get("/users/:id", auth, async (req, res) => {
         as: "MeetingMemberMeeting",
       },
     ],
-  })
+  });
 
-  res.json(meetings)
-})
+  res.json(meetings);
+});
 
 router.post("/", [auth], async (req, res) => {
-  let meeting
   try {
-    const { meeting_id } = req.body
+    const user = await User.findByPk(req.user.id);
 
-    const user = await User.findByPk(req.user.id)
     if (!user) {
-      return res.status(400).send("user not found")
+      return res.status(400).send("user not found");
     }
 
-    const link = "http://localhost:42069/" + req.body.link
+    const link = "http://localhost:5173/meet/" + req.body.link;
+    const startingOn = req.body.startingOn.toDate();
+    const duration = moment(req.body.endingOn).diff(startingOn, "hours");
 
-    if (!meeting_id) {
-      meeting = await Meeting.create({
-        name: req.body.name,
-        link: link,
-        description: req.body.description,
-        duration: req.body.duration,
-        department_id: req.body.department_id,
-      })
-    } else {
-      meeting = await Meeting.findByPk(meeting_id)
-      if (!meeting)
-        return res.status(400).json({ message: "meeting not found..." })
-    }
+    const meeting = await Meeting.create({
+      name: req.body.name,
+      link: link,
+      description: req.body.description,
+      duration: parseInt(duration),
+      department_id: req.body.department_id,
+      startingOn: req.body.startingOn,
+      endingOn: req.body.endingOn,
+    });
 
-    const m_m = await MeetingMember.findOne({
-      where: {
-        user_id: req.user.id,
+    for (invitee of req.body.invitees) {
+      await MeetingMember.create({
+        user_id: invitee,
         meeting_id: meeting.dataValues.id,
-      },
-    })
-
-    if (m_m)
-      return res.status(400).json({ message: "already joined the meeting..." })
+      });
+    }
 
     await MeetingMember.create({
       user_id: req.user.id,
-      meeting_id: meeting.dataValues.id || meeting.id,
-    })
+      meeting_id: meeting.dataValues.id,
+    });
+
+    res.status(200).send(meeting);
+  } catch (error) {
+    console.log("error creating a meeting...", error);
+    res.status(500).send("Something failed.");
+  }
+});
+
+router.post("/addToSchedule/:id", auth, async (req, res) => {
+  try {
+    const meeting = await Meeting.findByPk(req.params.id);
+    if (!meeting) return res.status(404).send("meeting not found...");
+    const currentTime = moment.utc();
+    if (moment(meeting.dataValues.endingOn).utc().isAfter(currentTime))
+      return res.status(400).send("meeting has already ended...");
+
+    const m_m = await MeetingMember.findOne({
+      meeting_id: req.params.id,
+      user_id: req.user.id,
+    });
+
+    if (m_m) return res.status(400).send("already added to your schedule...");
+
+    const meeting_member = await MeetingMember.create({
+      meeting_id: req.params.id,
+      user_id: req.user.id,
+    });
 
     await User.update(
       {
@@ -106,40 +125,51 @@ router.post("/", [auth], async (req, res) => {
           id: req.user.id,
         },
       }
-    )
+    );
 
-    res.status(200).send(meeting)
-  } catch (error) {
-    console.log("error creating a meeting...", error)
-    res.status(500).send("Something failed.")
+    res.json(meeting_member);
+  } catch (ex) {
+    console.error(ex.message, ex);
+    res.status(500).send("something failed...");
   }
-})
+});
 
 router.put("/", auth, async (req, res) => {
-  const user = await User.findByPk(req.user.id)
+  const user = await User.findByPk(req.user.id);
   if (!user) {
-    return res.status(404).json({ message: "User not found..." })
-  }
-  const meeting = await Meeting.findByPk(req.body.meeting_id)
-  if (!meeting) return res.status(404).json({ message: "Meeting not found..." })
-
-  if (user.attended_meetings) {
-    if (user.attended_meetings === user.total_meetings) {
-      return res.status(400).json({
-        message: "Attended meetings can't be more than total meetings",
-      })
-    }
+    return res.status(404).json({ message: "User not found..." });
   }
 
-  const currentTime = moment()
-  const targetTime = moment(meeting.from)
-  const isPast = currentTime.isAfter(targetTime)
+  const meeting = await Meeting.findByPk(req.body.meeting_id);
+  if (!meeting)
+    return res.status(404).json({ message: "Meeting not found..." });
 
-  if (!isPast) {
-    return res.status(400).json({
-      message:
-        "cannot update meeting attendance before the start of the meeting...",
-    })
+  const currentDate = moment.utc();
+  if (
+    moment(meeting.dataValues.startingOn).utc().isAfter(currentDate) ||
+    moment(meeting.dataValues.endingOn).utc().isBefore(currentDate)
+  )
+    return res
+      .status(400)
+      .send("the meeting has already ended or not yet started...");
+
+  let meeting_member = await MeetingMember.findOne({
+    where: {
+      meeting_id: meeting.dataValues.id,
+      user_id: req.user.id,
+    },
+  });
+  if (!meeting_member) {
+    meeting_member = await MeetingMember.create({
+      user_id: req.user.id,
+      meeting_id: req.body.meeting_id,
+    });
+  }
+
+  if (meeting_member.dataValues.attended == true) {
+    return res
+      .status(400)
+      .send("meeting member not found or has already attended the meeting...");
   }
 
   await User.update(
@@ -151,15 +181,28 @@ router.put("/", auth, async (req, res) => {
         id: req.user.id,
       },
     }
-  )
-  res.send("updated successfully...")
-})
+  );
 
-router.put("/:id", [auth, isadmin], async (req, res) => {
+  await MeetingMember.update(
+    {
+      attended: true,
+    },
+    {
+      where: {
+        user_id: req.user.id,
+        meeting_id: meeting.dataValues.id,
+      },
+    }
+  );
+
+  res.send("updated successfully...");
+});
+// not used in frontend...
+router.put("/:id", [auth], async (req, res) => {
   try {
-    const startDate = moment(req.body.from)
-    const endDate = moment(req.body.to)
-    const durationInHours = endDate.diff(startDate, "hours")
+    const startDate = moment(req.body.startingOn);
+    const endDate = moment(req.body.endingOn);
+    const durationInHours = endDate.diff(startDate, "hours");
 
     const meeting = await Meeting.update(
       {
@@ -173,28 +216,28 @@ router.put("/:id", [auth, isadmin], async (req, res) => {
           id: req.body.mm_id,
         },
       }
-    )
+    );
 
-    res.status(200).send(meeting)
+    res.status(200).send(meeting);
   } catch (ex) {
-    winston.error(ex)
-    res.status(500).send("Something failed.")
+    winston.error(ex);
+    res.status(500).send("Something failed.");
   }
-})
-
-router.delete("/:id", [auth, isadmin], async (req, res) => {
+});
+// not used in frontend...
+router.delete("/:id", [auth], async (req, res) => {
   try {
     await Meeting.destroy({
       where: {
         id: req.params.id,
       },
-    })
+    });
 
-    res.status(200).send("Deleted successfully")
+    res.status(200).send("Deleted successfully");
   } catch (ex) {
-    winston.error(ex)
-    res.status(500).send("something failed")
+    winston.error(ex);
+    res.status(500).send("something failed");
   }
-})
+});
 
-module.exports = router
+module.exports = router;

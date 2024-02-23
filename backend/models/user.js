@@ -1,7 +1,7 @@
-const Sequelize = require("sequelize")
-const db = require("../startup/db")
-const jwt = require("jsonwebtoken")
-const Notification = require("./notification")
+const Sequelize = require("sequelize");
+const db = require("../startup/db");
+const jwt = require("jsonwebtoken");
+const Notification = require("./notification");
 
 const User = db.define(
   "User",
@@ -37,21 +37,18 @@ const User = db.define(
   {
     timestamps: true,
   }
-)
+);
 
 User.hasMany(Notification, {
   as: "Notification",
   foreignKey: "user_id",
   onDelete: "CASCADE",
   onUpdate: "CASCADE",
-})
+});
 
 User.prototype.generateAuthToken = function () {
-  const token = jwt.sign(
-    { id: this.getDataValue("id"), isadmin: this.getDataValue("isadmin") },
-    "karan112010"
-  )
-  return token
-}
+  const token = jwt.sign({ id: this.getDataValue("id") }, "karan112010");
+  return token;
+};
 
-module.exports = User
+module.exports = User;

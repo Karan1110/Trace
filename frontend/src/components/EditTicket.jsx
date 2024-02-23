@@ -1,41 +1,35 @@
-import React, { useState, useEffect, useRef } from "react"
-import axios from "axios"
-import moment from "moment"
-import { toast } from "react-hot-toast"
-// import JoditEditor from "jodit-react"
-import { useParams } from "react-router-dom"
+import React, { useState, useEffect, useRef } from "react";
+import axios from "axios";
+import moment from "moment";
+import { toast } from "react-hot-toast";
+import { useParams } from "react-router-dom";
+import { TextField } from "@radix-ui/themes";
+import MarkdownEditor from "@uiw/react-markdown-editor";
 
 const EditTicket = () => {
-  const editor = useRef(null)
-  const { id } = useParams()
-  const [users, setUsers] = useState([])
+  const [mdStr, setMdStr] = useState(
+    `
+  # This is a H1
+  ## This is a H2
+  ###### This is a H6
+  ## you can start typing the description!
+  ## include html!
+  ## include code blocks:
+\`onClick={() => setFormData({ ...formData})\`
+`
+  );
+
+  const { id } = useParams();
   const [formData, setFormData] = useState({
     name: "",
-    description: "",
+    description: mdStr,
     deadline: moment().add(2, "days").format("YYYY-MM-DD"),
-    status: "open",
-  })
+  });
 
   useEffect(() => {
-    const fetchUsers = async () => {
-      try {
-        const authToken = localStorage.getItem("token")
-        const response = await axios.get("http://localhost:1111/users", {
-          headers: {
-            "x-auth-token": authToken,
-          },
-        })
-
-        setUsers(response.data)
-      } catch (error) {
-        toast.error("Error fetching users: " + error.message)
-        console.error("Error fetching users:", error)
-      }
-    }
-
     const fetchTicketDetails = async () => {
       try {
-        const authToken = localStorage.getItem("token")
+        const authToken = localStorage.getItem("token");
         const response = await axios.get(
           `http://localhost:1111/tickets/${id}`,
           {
@@ -43,35 +37,33 @@ const EditTicket = () => {
               "x-auth-token": authToken,
             },
           }
-        )
+        );
 
         // Pre-fill the form data with existing ticket details
         setFormData({
           name: response.data.name,
-          description: response.data.body,
+          description: response.data.description,
           deadline: moment(response.data.deadline).format("YYYY-MM-DD"),
-          status: response.data.status,
-        })
+        });
       } catch (error) {
-        toast.error("Error fetching ticket details: " + error.message)
-        console.error("Error fetching ticket details:", error)
+        toast.error("Error fetching ticket details: " + error.message);
+        console.error("Error fetching ticket details:", error);
       }
-    }
+    };
 
-    fetchUsers()
-    fetchTicketDetails()
-  }, [id])
+    fetchTicketDetails();
+  }, [id]);
 
   const handleChange = (e) => {
-    const { name, value } = e.target
+    const { name, value } = e.target;
     setFormData({
       ...formData,
       [name]: value,
-    })
-  }
+    });
+  };
 
   const handleSubmit = async (e) => {
-    e.preventDefault()
+    e.preventDefault();
 
     try {
       // Assuming your API endpoint for updating a ticket is /tickets/:id
@@ -85,63 +77,45 @@ const EditTicket = () => {
             "x-auth-token": localStorage.getItem("token"),
           },
         }
-      )
+      );
 
-      console.log("Ticket updated successfully:", response.data)
-      toast.success("Ticket updated successfully!")
+      console.log(response.data);
+      toast.success("Ticket updated successfully!");
       // Additional actions or redirect can be added here
     } catch (error) {
-      toast.error("Error updating ticket. Please try again.")
-      console.error("Error updating ticket:", error)
+      toast.error("Error updating ticket. Please try again.");
+      console.error("Error updating ticket:", error);
     }
-  }
+  };
 
   return (
     <div className="max-w-2xl mt-[75px] mx-auto">
-      <h2 className="text-2xl font-bold mb-4">Edit Ticket</h2>
+      <Heading>Edit Ticket</Heading>
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
           <label className="block text-sm font-medium text-gray-700">
             Name
           </label>
-          <input
+          <TextField.Input
             type="text"
             name="name"
             value={formData.name}
             onChange={handleChange}
-            className="mt-1 p-2 border rounded-md w-full"
+            color="purple"
           />
         </div>
 
         <div>
           <label className="block text-sm font-medium text-gray-700">
-            Body
+            Description
           </label>
-          {/* <JoditEditor
-            ref={editor}
-            value={formData.body}
-            tabIndex={1}
-            onBlur={(newContent) => {
-              setFormData({ ...formData, body: newContent })
+          <MarkdownEditor
+            value={mdStr}
+            onChange={(value) => {
+              setMdStr(value);
+              console.log(value);
             }}
-            onChange={(newContent) => {}}
-          /> */}
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700">
-            Status
-          </label>
-          <select
-            name="status"
-            value={formData.status}
-            onChange={handleChange}
-            className="mt-1 p-2 border rounded-md w-full"
-          >
-            <option value="open">Open</option>
-            <option value="in-progress">In-Progress</option>
-            <option value="closed">Closed</option>
-          </select>
+          />
         </div>
 
         <div>
@@ -149,23 +123,21 @@ const EditTicket = () => {
             Deadline
           </label>
           <input
+            datepicker
             type="date"
             name="deadline"
             value={formData.deadline}
-            onChange={handleChange}
-            className="mt-1 p-2 border rounded-md w-full"
+            className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full ps-10 p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+            placeholder="Select date"
+            onChange={onChange}
           />
         </div>
-
-        <button
-          type="submit"
-          className="bg-blue-500 mb-5 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
-        >
+        <Button type="submit" color="purple">
           Update Ticket
-        </button>
+        </Button>
       </form>
     </div>
-  )
-}
+  );
+};
 
-export default EditTicket
+export default EditTicket;

@@ -1,12 +1,13 @@
-const Chat = require("../models/chat")
-const ChatUser = require("../models/ChatUser")
-const Message = require("../models/message")
-const router = require("express").Router()
-const auth = require("../middlewares/auth")
+const Chat = require("../models/chat");
+const ChatUser = require("../models/ChatUser");
+const Message = require("../models/message");
+const router = require("express").Router();
+const auth = require("../middlewares/auth");
+const config = require("config");
+const Channel = require("../models/channel");
+const User = require("../models/user");
+const { v4: uuidv4 } = require("uuid");
 
-const config = require("config")
-const Channel = require("../models/channel")
-const User = require("../models/user")
 import("livekit-server-sdk").then(({ AccessToken }) => {
   router.get("/", async (req, res) => {
     try {
@@ -18,14 +19,14 @@ import("livekit-server-sdk").then(({ AccessToken }) => {
         limit: 20,
         offset: req.query.page * 20,
         order: [["createdAt", "ASC"]],
-      })
+      });
 
-      res.json({ messages })
+      res.json({ messages });
     } catch (error) {
-      console.error("Error fetching messages:", error)
-      res.status(500).json({ error: "Internal Server Error" })
+      console.error("Error fetching messages:", error);
+      res.status(500).json({ error: "Internal Server Error" });
     }
-  })
+  });
 
   router.get("/:id", async (req, res) => {
     let chat = await Chat.findByPk(req.params.id, {
@@ -39,53 +40,77 @@ import("livekit-server-sdk").then(({ AccessToken }) => {
           as: "Users",
         },
       ],
-    })
+    });
 
-    res.send(chat)
-  })
+    res.send(chat);
+  });
 
   router.post("/", auth, async (req, res) => {
     const chat = await Chat.create({
       id: req.params.chat,
       type: req.body.type,
       name: req.body.name,
-    })
+      inviteCode: uuidv4().toString(),
+    });
 
     const chat_user = await ChatUser.create({
       user_id: req.user.id,
       chat_id: chat.dataValues.id,
       role: "owner",
-    })
+    });
     const channel = await Channel.create({
       name: "general",
       chat_id: chat.dataValues.id,
       type: "text",
-    })
+    });
 
-    res.json({ chat, chat_user, channel })
-  })
+    res.json({ chat, chat_user, channel });
+  });
 
-  router.post("/join/:chatId", auth, async (req, res) => {
+  router.post("/join/:inviteCode", auth, async (req, res) => {
+    const chat = await Chat.findOne({
+      where: {
+        inviteCode: req.params.inviteCode,
+      },
+    });
+
+    if (!chat)
+      return res
+        .status(404)
+        .send("server not found with the given invite code...");
+
+    const already_joined = await ChatUser.findOne({
+      where: {
+        user_id: req.user.id,
+        chat_id: chat.id || chat.dataValues.id,
+      },
+    });
+
+    if (already_joined) {
+      return res.status(400).send("already joined...");
+    }
+
     const chat_user = await ChatUser.create({
       user_id: req.user.id,
-      chat_id: req.params.chatId,
-    })
-    res.json(chat_user)
-  })
+      chat_id: chat.id || chat.dataValues.id,
+    });
+
+    res.json(chat_user);
+  });
 
   router.post("/createChannel", auth, async (req, res) => {
     const channel = Channel.create({
       type: req.body.channel_type,
       name: req.body.name,
       chat_id: req.body.chat_id,
-    })
+    });
 
-    res.json(channel)
-  })
+    res.json(channel);
+  });
 
   router.post("/joinChannel/:channel", auth, async (req, res) => {
-    const roomName = req.params.channel
-    const participantName = req.body.participantName
+    const roomName = req.params.channel;
+    const participantName = req.body.participantName;
 
     const at = new AccessToken(
       config.get("LIVEKIT_API_KEY"),
@@ -93,25 +118,25 @@ import("livekit-server-sdk").then(({ AccessToken }) => {
       {
         identity: participantName,
       }
-    )
+    );
 
-    at.addGrant({ roomJoin: true, room: roomName })
+    at.addGrant({ roomJoin: true, room: roomName });
 
-    const token = await at.toJwt()
-    console.log(token)
-    res.send(token)
-  })
+    const token = await at.toJwt();
+    console.log(token);
+    res.send(token);
+  });
 
   router.put("/changeRole/:chatId/:userId", auth, async (req, res) => {
     if (req.body.role != "owner" || "moderator")
-      return res.status(400).send("invalid role...")
+      return res.status(400).send("invalid role...");
 
     const owner = await ChatUser.findOne({
       chat_id: req.params.chatId,
       user_id: req.user.id,
       role: "owner",
-    })
-    if (!owner) return res.status(403).send("not authorized...")
+    });
+    if (!owner) return res.status(403).send("not authorized...");
 
     await ChatUser.update(
       {
@@ -123,12 +148,12 @@ import("livekit-server-sdk").then(({ AccessToken }) => {
           chat_id: req.params.chatId,
         },
       }
-    )
+    );
 
     res
       .status(200)
-      .send(`promoted user ${req.params.userId} to ${req.body.role}`)
-  })
-})
+      .send(`promoted user ${req.params.userId} to ${req.body.role}`);
+  });
+});
 
-module.exports = router
+module.exports = router;

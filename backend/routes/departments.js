@@ -1,24 +1,22 @@
-const express = require("express")
-const router = express.Router()
-const isadmin = require("../middlewares/isAdmin.js")
-const auth = require("../middlewares/auth")
-const Department = require("../models/department")
-const Sequelize = require("sequelize")
-// auth,
-router.get("/", async (req, res) => {
-  const departments = await Department.findAll()
-  res.json(departments)
-})
+const express = require("express");
+const router = express.Router();
+const auth = require("../middlewares/auth");
+const Department = require("../models/department");
 
-router.post("/", async (req, res) => {
+router.get("/", auth, async (req, res) => {
+  const departments = await Department.findAll();
+  res.json(departments);
+});
+
+router.post("/", auth, async (req, res) => {
   const department = await Department.create({
     name: req.body.name,
-  })
+  });
 
-  res.status(200).send(department)
-})
+  res.status(200).send(department);
+});
 
-router.put("/:id", [auth, isadmin], async (req, res) => {
+router.put("/:id", [auth], async (req, res) => {
   const department = await Department.update(
     {
       name: req.body.name,
@@ -28,19 +26,19 @@ router.put("/:id", [auth, isadmin], async (req, res) => {
         id: req.params.id,
       },
     }
-  )
+  );
 
-  res.status(200).send(department)
-})
+  res.status(200).send(department);
+});
 
-router.delete("/:id", [auth, isadmin], async (req, res) => {
+router.delete("/:id", [auth], async (req, res) => {
   await Department.destroy({
     where: {
       id: req.params.id,
     },
-  })
+  });
 
-  res.status(200).send("Deleted successfully")
-})
+  res.status(200).send("Deleted successfully");
+});
 
-module.exports = router
+module.exports = router;

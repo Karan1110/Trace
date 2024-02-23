@@ -1,7 +1,7 @@
-import React, { useEffect, useState } from "react"
-import axios from "axios"
-import { DropdownMenu, TextArea, TextField, Button } from "@radix-ui/themes"
-import DurationPicker from "react-duration-picker"
+import React, { useEffect, useState } from "react";
+import axios from "axios";
+import { DropdownMenu, TextArea, TextField, Button } from "@radix-ui/themes";
+import DurationPicker from "react-duration-picker";
 
 const NewMeeting = () => {
   const [formData, setFormData] = useState({
@@ -11,12 +11,15 @@ const NewMeeting = () => {
     department_id: null,
     description: "",
     department: "",
-  })
-  const [isOpen, setIsOpen] = useState(false)
-  const [departmentSuggestions, setDepartmentSuggestions] = useState([])
+    startingOn: new Date(),
+    endingOn: new Date(),
+  });
+
+  const [isOpen, setIsOpen] = useState(false);
+  const [departmentSuggestions, setDepartmentSuggestions] = useState([]);
 
   const handleSubmit = async (e) => {
-    e.preventDefault()
+    e.preventDefault();
 
     try {
       const response = await axios.post(
@@ -27,36 +30,32 @@ const NewMeeting = () => {
             "x-auth-token": localStorage.getItem("token"),
           },
         }
-      )
+      );
 
-      console.log("Meeting created successfully:", response.data)
+      console.log("Meeting created successfully:", response.data);
       // Additional actions or redirect can be added here
     } catch (error) {
-      console.error("Error creating meeting:", error)
+      console.error("Error creating meeting:", error);
     }
-  }
+  };
 
   useEffect(() => {
     async function fetchDepartments() {
-      const response = await axios.get("http://localhost:1111/departments")
-      setDepartmentSuggestions(response.data)
+      const response = await axios.get("http://localhost:1111/departments");
+      setDepartmentSuggestions(response.data);
     }
-    fetchDepartments()
-    console.log(formData.duration[0])
-  }, [])
+    fetchDepartments();
+    console.log(formData.duration[0]);
+  }, []);
 
   const handleChange = (e) => {
-    const { name, value } = e.target
+    const { name, value } = e.target;
     setFormData({
       ...formData,
       [name]: value,
-    })
-  }
-  const onDurationChange = (duration) => {
-    const { hours, minutes } = duration
-    setFormData({ ...formData, duration: { hours, minutes } })
-    console.log([hours, minutes])
-  }
+    });
+  };
+
   return (
     <div className="max-w-xl mx-auto p-6 ">
       <h2 className="text-2xl font-bold mb-4">Create New Meeting</h2>
@@ -81,29 +80,6 @@ const NewMeeting = () => {
           />
         </div>
         <div>
-          <Button className="w-full" onClick={() => setIsOpen(!isOpen)}>
-            {formData.duration[0].toString()} hours
-            {" " + formData.duration[0].toString() + " "} minutes
-          </Button>
-          {isOpen && (
-            <div className="shadow-2xl p-4 flex flex-col items-center justify-center  ">
-              <DurationPicker
-                onChange={onDurationChange}
-                initialDuration={{ hours: 1, minutes: 2 }}
-                maxHours={5}
-                style={{
-                  marginBottom: 5,
-                }}
-              />
-              <Button className="" onClick={() => setIsOpen(false)}>
-                {" "}
-                Done
-              </Button>
-            </div>
-          )}
-        </div>
-
-        <div>
           <TextArea
             size="3"
             name="description"
@@ -112,7 +88,24 @@ const NewMeeting = () => {
             onChange={handleChange}
           />
         </div>
-
+        <div>
+          <DateTimePicker
+            name="startingOn"
+            value={formData.startingOn}
+            placeholder="select starting date-time"
+            onChange={(value) =>
+              setFormData({ ...formData, startingOn: value })
+            }
+          />
+        </div>
+        <div>
+          <DateTimePicker
+            name="endingOn"
+            value={formData.endingOn}
+            placeholder="select ending date-time"
+            onChange={(value) => setFormData({ ...formData, endingOn: value })}
+          />
+        </div>
         <div className="mx-auto w-full text-center">
           <DropdownMenu.Root>
             <DropdownMenu.Trigger>
@@ -127,7 +120,7 @@ const NewMeeting = () => {
                       ...formData,
                       department_id: d.id,
                       department: d.name,
-                    })
+                    });
                   }}
                 >
                   {" "}
@@ -147,7 +140,7 @@ const NewMeeting = () => {
         </div>
       </form>
     </div>
-  )
-}
+  );
+};
 
-export default NewMeeting
+export default NewMeeting;
