@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from "react"
-import { CaretDownIcon } from "@radix-ui/react-icons"
+import React, { useState, useEffect } from "react";
+import { CaretDownIcon } from "@radix-ui/react-icons";
 import {
   Box,
   Text,
@@ -13,112 +13,113 @@ import {
   Dialog,
   Heading,
   AspectRatio,
-} from "@radix-ui/themes"
-import Meet from "./Meet"
-import Sidebar from "./Sidebar"
-import axios from "axios"
-import { toast } from "react-hot-toast"
-import Uploader from "./Uploader.jsx"
+} from "@radix-ui/themes";
+import Meet from "./Meet";
+import Sidebar from "./Sidebar";
+import axios from "axios";
+import { toast } from "react-hot-toast";
+import Uploader from "./Uploader.jsx";
+import { Sparkles } from "./Sparkles.jsx";
 
 const Chat = () => {
-  const [id, setId] = useState(null)
-  const [inputMessage, setInputMessage] = useState("")
-  const [messages, setMessages] = useState([])
-  const [editing, setEditing] = useState(null)
-  const [ws, setWs] = useState(null)
-  const [chatData, setChatData] = useState(null)
+  const [id, setId] = useState(null);
+  const [inputMessage, setInputMessage] = useState("");
+  const [messages, setMessages] = useState([]);
+  const [editing, setEditing] = useState(null);
+  const [ws, setWs] = useState(null);
+  const [chatData, setChatData] = useState(null);
   const [selectedChannel, setSelectedChannel] = useState({
     name: "general",
     channel_type: "text",
-  })
+  });
   const [newChannel, setNewChannel] = useState({
     channel_type: "audio",
     name: "",
-  })
-  const [editMessage, setEditMessage] = useState(null)
-  const xAuthToken = localStorage.getItem("token")
+  });
+  const [editMessage, setEditMessage] = useState(null);
+  const xAuthToken = localStorage.getItem("token");
 
   useEffect(() => {
     const fetchChatData = async () => {
       try {
-        const response = await fetch(`http://localhost:1111/chats/${id}`)
+        const response = await fetch(`http://localhost:1111/chats/${id}`);
         if (response.ok) {
-          const data = await response.json()
-          console.log(data)
-          setChatData(data)
+          const data = await response.json();
+          console.log(data);
+          setChatData(data);
         } else {
-          console.error("Failed to fetch chat data")
+          console.error("Failed to fetch chat data");
         }
       } catch (error) {
-        console.error("Error fetching chat data:", error)
+        console.error("Error fetching chat data:", error);
       }
-    }
+    };
     if (id) {
-      fetchChatData()
+      fetchChatData();
     }
-  }, [id])
+  }, [id]);
 
   useEffect(() => {
     if (ws) {
-      ws.close()
+      ws.close();
     }
 
     if (id) {
       const connectWebSocket = () => {
         const newWs = new WebSocket(
           `ws://localhost:1111/chat/${id}/${selectedChannel.name}?xAuthToken=${xAuthToken}`
-        )
+        );
 
         newWs.onmessage = (event) => {
-          const message = JSON.parse(event.data)
-          console.log(message)
+          const message = JSON.parse(event.data);
+          console.log(message);
           if (message.edited) {
             const indexToUpdate = messages.findIndex(
               (_message) => _message.id === message.id
-            )
+            );
 
             setMessages((prevMessages) => {
-              const updatedMessages = [...prevMessages]
+              const updatedMessages = [...prevMessages];
               updatedMessages[indexToUpdate] = {
                 ...updatedMessages[indexToUpdate],
                 value: message.value,
-              }
-              return updatedMessages
-            })
+              };
+              return updatedMessages;
+            });
           } else {
-            setMessages((prevMessages) => [...prevMessages, message])
+            setMessages((prevMessages) => [...prevMessages, message]);
           }
-        }
+        };
 
         newWs.onclose = () => {
-          toast("socket disconnected...")
-          setTimeout(connectWebSocket, 60 * 1000) // Reconnect after 60 seconds
-        }
+          toast("socket disconnected...");
+          setTimeout(connectWebSocket, 60 * 1000); // Reconnect after 60 seconds
+        };
 
         newWs.onopen = () => {
-          toast.success("socket connected...")
-        }
+          toast.success("socket connected...");
+        };
 
-        setWs(newWs)
-      }
+        setWs(newWs);
+      };
 
-      connectWebSocket()
+      connectWebSocket();
     }
 
     return () => {
       if (ws) {
-        ws.close()
+        ws.close();
       }
-    }
-  }, [id, selectedChannel])
+    };
+  }, [id, selectedChannel]);
 
   const edit = (msgId) => {
     if (ws && msgId) {
-      ws.send(`${editMessage}~edit-message-karan112010=${msgId}`)
-      setEditing(null)
-      setEditMessage(null)
+      ws.send(`${editMessage}~edit-message-karan112010=${msgId}`);
+      setEditing(null);
+      setEditMessage(null);
     }
-  }
+  };
 
   const changeRole = async (role, userId) => {
     await axios.put(
@@ -131,14 +132,14 @@ const Chat = () => {
           "x-auth-token": xAuthToken,
         },
       }
-    )
+    );
 
-    toast.success("modified the user's role!")
-  }
+    toast.success("modified the user's role!");
+  };
 
   const addChannel = async (e) => {
-    e.preventDefault()
-    const token = xAuthToken
+    e.preventDefault();
+    const token = xAuthToken;
 
     // Set up the request headers
     const config = {
@@ -146,27 +147,27 @@ const Chat = () => {
         "Content-Type": "application/json",
         "x-auth-token": token,
       },
-    }
+    };
     const response = await axios.post(
       "http://localhost:1111/chats/createChannel",
       { ...newChannel, chat_id: id },
       config
-    )
-    console.log(response.data)
-    chatData.channels.push(response.data.dataValues)
+    );
+    console.log(response.data);
+    chatData.channels.push(response.data.dataValues);
 
     setNewChannel({
       name: "",
       channel_type: "",
-    })
-  }
+    });
+  };
 
   const sendMessage = () => {
     if (ws) {
-      ws.send(inputMessage)
-      setInputMessage("")
+      ws.send(inputMessage);
+      setInputMessage("");
     }
-  }
+  };
 
   return (
     <>
@@ -185,8 +186,8 @@ const Chat = () => {
                   <li
                     key={index}
                     onClick={() => {
-                      setSelectedChannel(channel)
-                      console.log(channel)
+                      setSelectedChannel(channel);
+                      console.log(channel);
                     }}
                   >
                     <a
@@ -241,8 +242,8 @@ const Chat = () => {
                       <Select.Root
                         defaultValue="text"
                         onValueChange={(value) => {
-                          setNewChannel({ ...newChannel, channel_type: value })
-                          console.log(value)
+                          setNewChannel({ ...newChannel, channel_type: value });
+                          console.log(value);
                         }}
                       >
                         <Select.Trigger>
@@ -322,7 +323,7 @@ const Chat = () => {
                                     {role}
                                   </ContextMenu.Item>
                                 </>
-                              )
+                              );
                             })}
                         </ContextMenu.SubContent>
                       </ContextMenu.Sub>
@@ -338,112 +339,117 @@ const Chat = () => {
           </div>
         </aside>
       )}
-      <div className="p-5 ">
-        <div className="flex flex-col p-4 space-x-5 space-y-5 h-[500px] absolute top-5  left-96">
-          {selectedChannel &&
-          chatData &&
-          selectedChannel.type == ("video" || "audio") ? (
-            <div className="h-[400px] w-[500px] ml-40 ">
-              <Meet
-                channel={selectedChannel}
-                video={selectedChannel.type == "audio" ? false : true}
-              />
-            </div>
-          ) : (
-            messages &&
-            messages.map((msg) => (
-              <ContextMenu.Root key={msg.id} size="1">
-                <ContextMenu.Trigger>
-                  {msg && msg.id && editing == msg?.id ? (
-                    <Flex direction="row">
-                      <TextField.Input
-                        style={{
-                          width: "500px",
-                        }}
-                        size="2"
-                        onChange={(e) => setEditMessage(e.target.value)}
-                      />
-                      <Button
-                        color="purple"
-                        onClick={() => edit(msg.id, editMessage)}
-                      >
-                        Edit
-                      </Button>
-                    </Flex>
-                  ) : (
-                    <>
-                      {!msg.url && (
-                        <Card
-                          style={{
-                            maxWidth: 240,
-                            marginTop: 10,
-                            marginBottom: 10,
-                          }}
-                          size="1"
-                        >
-                          <Flex gap="3" align="center">
-                            <Avatar
-                              size="3"
-                              src="https://images.unsplash.com/photo-1607346256330-dee7af15f7c5?&w=64&h=64&dpr=2&q=70&crop=focalpoint&fp-x=0.67&fp-y=0.5&fp-z=1.4&fit=crop"
-                              radius="full"
-                              fallback="T"
-                            />
-                            <Box>
-                              <Text as="div" size="2" color="gray">
-                                {msg.value || msg.message}
-                              </Text>
-                            </Box>
-                          </Flex>
-                        </Card>
-                      )}
-                      {msg.url && (
-                        <AspectRatio ratio={16 / 8}>
-                          <img
-                            src={msg.url}
-                            alt="A house in a forest"
-                            style={{
-                              objectFit: "cover",
-                              width: "30%",
-                              height: "30%",
-                              borderRadius: "var(--radius-2)",
-                            }}
-                          />
-                        </AspectRatio>
-                      )}
-                    </>
-                  )}
-                </ContextMenu.Trigger>
-                <ContextMenu.Content>
-                  <ContextMenu.Item
-                    shortcut="⌘ E"
-                    onClick={() => setEditing(msg.id)}
-                  >
-                    Edit
-                  </ContextMenu.Item>
-                  <ContextMenu.Separator />
-                  <ContextMenu.Item shortcut="⌘ ⌫" color="red">
-                    Delete
-                  </ContextMenu.Item>
-                </ContextMenu.Content>
-              </ContextMenu.Root>
-            ))
-          )}
-        </div>
-        <div className="flex flex-row  items-center justify-center    space-x-4 fixed bottom-5 left-96 ">
-          <TextField.Input
-            value={inputMessage}
-            style={{
-              width: "800px",
-            }}
-            size="3"
-            onChange={(e) => setInputMessage(e.target.value)}
-          />
-          <Button onClick={sendMessage}>Send</Button>
-          {ws && <Uploader ws={ws} />}
-        </div>
-      </div>
-    </>
-  )
-}
 
-export default Chat
+      {id !== null ? (
+        <div className="p-5 ">
+          <div className="flex flex-col p-4 space-x-5 space-y-5 h-[500px] absolute top-5  left-96">
+            {selectedChannel &&
+            chatData &&
+            selectedChannel.type == ("video" || "audio") ? (
+              <div className="h-[400px] w-[500px] ml-40 ">
+                <Meet
+                  channel={selectedChannel}
+                  video={selectedChannel.type == "audio" ? false : true}
+                />
+              </div>
+            ) : (
+              messages &&
+              messages.map((msg) => (
+                <ContextMenu.Root key={msg.id} size="1">
+                  <ContextMenu.Trigger>
+                    {msg && msg.id && editing == msg?.id ? (
+                      <Flex direction="row">
+                        <TextField.Input
+                          style={{
+                            width: "500px",
+                          }}
+                          size="2"
+                          onChange={(e) => setEditMessage(e.target.value)}
+                        />
+                        <Button
+                          color="purple"
+                          onClick={() => edit(msg.id, editMessage)}
+                        >
+                          Edit
+                        </Button>
+                      </Flex>
+                    ) : (
+                      <>
+                        {!msg.url && (
+                          <Card
+                            style={{
+                              maxWidth: 240,
+                              marginTop: 10,
+                              marginBottom: 10,
+                            }}
+                            size="1"
+                          >
+                            <Flex gap="3" align="center">
+                              <Avatar
+                                size="3"
+                                src="https://images.unsplash.com/photo-1607346256330-dee7af15f7c5?&w=64&h=64&dpr=2&q=70&crop=focalpoint&fp-x=0.67&fp-y=0.5&fp-z=1.4&fit=crop"
+                                radius="full"
+                                fallback="T"
+                              />
+                              <Box>
+                                <Text as="div" size="2" color="gray">
+                                  {msg.value || msg.message}
+                                </Text>
+                              </Box>
+                            </Flex>
+                          </Card>
+                        )}
+                        {msg.url && (
+                          <AspectRatio ratio={16 / 8}>
+                            <img
+                              src={msg.url}
+                              alt="A house in a forest"
+                              style={{
+                                objectFit: "cover",
+                                width: "30%",
+                                height: "30%",
+                                borderRadius: "var(--radius-2)",
+                              }}
+                            />
+                          </AspectRatio>
+                        )}
+                      </>
+                    )}
+                  </ContextMenu.Trigger>
+                  <ContextMenu.Content>
+                    <ContextMenu.Item
+                      shortcut="⌘ E"
+                      onClick={() => setEditing(msg.id)}
+                    >
+                      Edit
+                    </ContextMenu.Item>
+                    <ContextMenu.Separator />
+                    <ContextMenu.Item shortcut="⌘ ⌫" color="red">
+                      Delete
+                    </ContextMenu.Item>
+                  </ContextMenu.Content>
+                </ContextMenu.Root>
+              ))
+            )}
+          </div>
+          <div className="flex flex-row  items-center justify-center    space-x-4 fixed bottom-5 left-96 ">
+            <TextField.Input
+              value={inputMessage}
+              style={{
+                width: "800px",
+              }}
+              size="3"
+              onChange={(e) => setInputMessage(e.target.value)}
+            />
+            <Button onClick={sendMessage}>Send</Button>
+            {ws && <Uploader ws={ws} />}
+          </div>
+        </div>
+      ) : (
+        <Sparkles />
+      )}
+    </>
+  );
+};
+
+export default Chat;

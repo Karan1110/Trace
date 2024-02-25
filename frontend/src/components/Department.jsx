@@ -8,15 +8,10 @@ import MeetingCard from "./MeetingCard";
 const Department = () => {
   const { id } = useParams();
   const [name, setName] = useState("");
-  const [selectedFile, setSelectedFile] = useState(null);
   const token = localStorage.getItem("token");
   const [department, setDepartment] = useState(null);
   const [followersInCommon, setFollowersInCommon] = useState(null);
   const navigate = useNavigate();
-
-  const handleFileChange = (event) => {
-    setSelectedFile(event.target.files[0]);
-  };
 
   useEffect(() => {
     const fetchDepartment = async () => {
@@ -46,8 +41,9 @@ const Department = () => {
     e.preventDefault();
 
     try {
+      const videoFile = document.getElementById("image").files[0];
       const formData = new FormData();
-      formData.append("profile_pic", selectedFile);
+      formData.append("profile_pic", videoFile);
       formData.append("name", name);
 
       const response = await axios.post(
@@ -112,8 +108,7 @@ const Department = () => {
           file:bg-gray-100 file:me-4
           file:py-3 file:px-4
           dark:file:bg-gray-700 dark:file:text-gray-400"
-                  onChange={handleFileChange}
-                  value={selectedFile}
+                  id="image"
                 />
               </div>
               <div className="flex items-center justify-between">

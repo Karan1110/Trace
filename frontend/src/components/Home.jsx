@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from "react"
-import axios from "axios"
+import React, { useState, useEffect } from "react";
+import axios from "axios";
 import {
   Chart,
   LineController,
@@ -10,7 +10,8 @@ import {
   CategoryScale,
   BarController,
   BarElement,
-} from "chart.js"
+} from "chart.js";
+import Typewriter from "./Typewriter";
 
 Chart.register(
   LineController,
@@ -21,8 +22,8 @@ Chart.register(
   CategoryScale,
   BarController,
   BarElement
-)
-import { Bar } from "react-chartjs-2"
+);
+import { Bar } from "react-chartjs-2";
 import {
   Table,
   Badge,
@@ -33,25 +34,25 @@ import {
   Box,
   ScrollArea,
   Flex,
-} from "@radix-ui/themes"
-import { Link } from "react-router-dom"
+} from "@radix-ui/themes";
+import { Link } from "react-router-dom";
 
 const Home = () => {
-  const [ticketCounts, setTicketsCount] = useState([])
-  const [tickets, setTickets] = useState([])
-  const [feed, setFeed] = useState([])
-  const [followFeed, setFollowFeed] = useState([])
-  const [pendingTickets, setPendingTickets] = useState([])
-  const [departmentTickets, setDepartmentTickets] = useState([])
-  const [avgTime, setAvgTime] = useState("")
+  const [ticketCounts, setTicketsCount] = useState([]);
+  const [tickets, setTickets] = useState([]);
+  const [feed, setFeed] = useState([]);
+  const [followFeed, setFollowFeed] = useState([]);
+  const [pendingTickets, setPendingTickets] = useState([]);
+  const [departmentTickets, setDepartmentTickets] = useState([]);
+  const [avgTime, setAvgTime] = useState("");
 
   useEffect(() => {
     const fetchTicketCounts = async () => {
       try {
-        const response0 = await axios.get("http://localhost:1111/users/stats")
-        setAvgTime(response0.data.average_time_taken)
-        const response = await axios.get("http://localhost:1111/tickets")
-        setTicketsCount(response.data)
+        const response0 = await axios.get("http://localhost:1111/users/stats");
+        setAvgTime(response0.data.average_time_taken);
+        const response = await axios.get("http://localhost:1111/tickets");
+        setTicketsCount(response.data);
         const response2 = await axios.get(
           "http://localhost:1111/tickets/latest",
           {
@@ -59,8 +60,8 @@ const Home = () => {
               "x-auth-token": localStorage.getItem("token"),
             },
           }
-        )
-        setTickets(response2.data)
+        );
+        setTickets(response2.data);
         const response3 = await axios.get(
           "http://localhost:1111/tickets/feed",
           {
@@ -68,9 +69,9 @@ const Home = () => {
               "x-auth-token": localStorage.getItem("token"),
             },
           }
-        )
+        );
 
-        setFeed(response3.data)
+        setFeed(response3.data);
         const response4 = await axios.get(
           "http://localhost:1111/tickets/pending",
           {
@@ -78,9 +79,9 @@ const Home = () => {
               "x-auth-token": localStorage.getItem("token"),
             },
           }
-        )
-        console.log(response4)
-        setPendingTickets(response4.data)
+        );
+        console.log(response4);
+        setPendingTickets(response4.data);
         const response5 = await axios.get(
           "http://localhost:1111/tickets/departments",
           {
@@ -88,9 +89,9 @@ const Home = () => {
               "x-auth-token": localStorage.getItem("token"),
             },
           }
-        )
-        setDepartmentTickets(response5.data)
-        console.log(response5.data)
+        );
+        setDepartmentTickets(response5.data);
+        console.log(response5.data);
 
         const response6 = await axios.get(
           "http://localhost:1111/tickets/followingFeed",
@@ -99,15 +100,15 @@ const Home = () => {
               "x-auth-token": localStorage.getItem("token"),
             },
           }
-        )
-        setFollowFeed(response6.data)
+        );
+        setFollowFeed(response6.data);
       } catch (error) {
-        console.error("Error fetching ticket counts:", error)
-        return []
+        console.error("Error fetching ticket counts:", error);
+        return [];
       }
-    }
-    fetchTicketCounts()
-  }, [])
+    };
+    fetchTicketCounts();
+  }, []);
   const options = {
     responsive: true,
     plugins: {
@@ -119,14 +120,12 @@ const Home = () => {
         },
       },
     },
-  }
+  };
   return (
     <>
+      <Typewriter avgTime={avgTime} />
       <div className="container flex flex-row ml-[50px] mr-[40px] ">
         <div className="w-1/2 h-[450px] mt-10  ">
-          <Heading>
-            The average time taken to complete a ticket is ${avgTime}
-          </Heading>
           <div className="grid grid-cols-3  my-5  ">
             <span className="text-gray-900 font-medium  ">Closed Issues</span>
             <span className="text-gray-900 font-medium ">Open Issues</span>
@@ -260,7 +259,7 @@ const Home = () => {
                       </Box>
                     </Flex>
                   </Card>
-                )
+                );
               })}
             </Tabs.Content>
 
@@ -287,7 +286,7 @@ const Home = () => {
                         </Box>
                       </Flex>
                     </Card>
-                  )
+                  );
                 })}
             </Tabs.Content>
             <Tabs.Content value="following">
@@ -313,14 +312,14 @@ const Home = () => {
                         </Box>
                       </Flex>
                     </Card>
-                  )
+                  );
                 })}
             </Tabs.Content>
           </Box>
         </Tabs.Root>
       </div>
     </>
-  )
-}
+  );
+};
 
-export default Home
+export default Home;
