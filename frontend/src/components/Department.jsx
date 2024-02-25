@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { toast } from "react-hot-toast";
-import { TextField, TextFieldInput } from "@radix-ui/themes";
+import { TextField } from "@radix-ui/themes";
 import { useNavigate, useParams } from "react-router-dom";
+import MeetingCard from "./MeetingCard";
 
 const Department = () => {
   const { id } = useParams();
@@ -157,6 +158,7 @@ const Department = () => {
           <Tabs.Trigger value="tickets">Tickets</Tabs.Trigger>
           <Tabs.Trigger value="in-common">In-common</Tabs.Trigger>
           <Tabs.Trigger value="users">Users</Tabs.Trigger>
+          <Tabs.Trigger value="meetings">Meetings</Tabs.Trigger>
         </Tabs.List>
 
         <Box px="4" pt="3" pb="2">
@@ -244,6 +246,21 @@ const Department = () => {
                         </Table.Cell>
                       </Table.Row>
                     ))}
+                </Table.Body>
+              </Table.Root>
+            </div>
+          </Tabs.Content>
+          <Tabs.Content value="meetings">
+            <div className="flow-root w-[600px] rounded-md relative top-0 right-60 p-5 border-2  ml-80 h-auto ">
+              <h5 className="text-xl font-bold  mb-5 leading-none text-gray-900 dark:text-white">
+                Department Meetings
+              </h5>
+              <Table.Root className="w-[550px]">
+                <Table.Body size="3">
+                  {department &&
+                    department.meetings.length > 0 &&
+                    department.meetings.map((ticket) => <MeetingCard />)}
+                  <MeetingCard />
                 </Table.Body>
               </Table.Root>
             </div>
