@@ -1,29 +1,29 @@
-const express = require("express")
-const router = express.Router()
-const bcrypt = require("bcrypt")
-const auth = require("../middlewares/auth.js")
-const blockedUsers = require("../middlewares/blockedUsers.js")
-const Chat = require("../models/chat.js")
-const User = require("../models/user.js")
-const Ticket = require("../models/ticket.js")
-const Meeting = require("../models/meeting.js")
-const Notification = require("../models/notification.js")
-const Department = require("../models/department.js")
-const { Sequelize, Op } = require("sequelize")
-const Saved = require("../models/saved.js")
-const FollowUser = require("../models/followUser")
-const Channel = require("../models/channel.js")
+const express = require("express");
+const router = express.Router();
+const bcrypt = require("bcrypt");
+const auth = require("../middlewares/auth.js");
+const blockedUsers = require("../middlewares/blockedUsers.js");
+const Chat = require("../models/chat.js");
+const User = require("../models/user.js");
+const Ticket = require("../models/ticket.js");
+const Meeting = require("../models/meeting.js");
+const Notification = require("../models/notification.js");
+const Department = require("../models/department.js");
+const { Sequelize, Op } = require("sequelize");
+const Saved = require("../models/saved.js");
+const FollowUser = require("../models/followUser");
+const Channel = require("../models/channel.js");
 
 router.get("/", auth, async (req, res) => {
   try {
-    const users = await User.findAll()
-    res.json(users)
+    const users = await User.findAll();
+    res.json(users);
   } catch (ex) {
-    console.log("ERROR : ")
-    console.log(ex)
-    res.send("Someting failed.")
+    console.log("ERROR : ");
+    console.log(ex);
+    res.send("Someting failed.");
   }
-})
+});
 
 router.get("/suggested", [auth, blockedUsers], async (req, res) => {
   const users = await User.findAll({
@@ -32,11 +32,11 @@ router.get("/suggested", [auth, blockedUsers], async (req, res) => {
         [Op.notIn]: req.blockedUsers,
       },
     },
-  })
+  });
 
-  users.sort(() => Math.random() - 0.5)
-  res.json(users)
-})
+  users.sort(() => Math.random() - 0.5);
+  res.json(users);
+});
 
 router.get("/search", auth, async (req, res) => {
   const users = await User.findAll({
@@ -54,12 +54,12 @@ router.get("/search", auth, async (req, res) => {
         },
       ],
     },
-  })
-  res.json(users)
-})
+  });
+  res.json(users);
+});
 
 router.get("/colleagues", auth, async (req, res) => {
-  const me = await User.findByPk(req.user.id)
+  const me = await User.findByPk(req.user.id);
 
   const users = await User.findAll({
     where: {
@@ -68,10 +68,10 @@ router.get("/colleagues", auth, async (req, res) => {
         id: [req.user.id],
       },
     },
-  })
+  });
 
-  res.json(users)
-})
+  res.json(users);
+});
 
 router.get("/stats/:id", async (req, res) => {
   try {
@@ -86,14 +86,14 @@ router.get("/stats/:id", async (req, res) => {
       where: {
         user_id: req.params.id,
       },
-    })
-    console.log(average_time_taken_to_complete_a_ticket)
-    res.status(200).send(average_time_taken_to_complete_a_ticket)
+    });
+    console.log(average_time_taken_to_complete_a_ticket);
+    res.status(200).send(average_time_taken_to_complete_a_ticket);
   } catch (error) {
-    console.error("Error in statistics endpoint:", error.message, error)
-    res.status(500).send("Internal Server Error")
+    console.error("Error in statistics endpoint:", error.message, error);
+    res.status(500).send("Internal Server Error");
   }
-})
+});
 
 router.get("/stats", async (req, res) => {
   try {
@@ -105,30 +105,30 @@ router.get("/stats", async (req, res) => {
           "average_time_taken",
         ],
       ],
-    })
-    console.log(average_time_taken_to_complete_a_ticket)
-    res.status(200).send(average_time_taken_to_complete_a_ticket)
+    });
+    console.log(average_time_taken_to_complete_a_ticket);
+    res.status(200).send(average_time_taken_to_complete_a_ticket);
   } catch (error) {
-    console.error("Error in statistics endpoint:", error.message, error)
-    res.status(500).send("Internal Server Error")
+    console.error("Error in statistics endpoint:", error.message, error);
+    res.status(500).send("Internal Server Error");
   }
-})
+});
 
 router.get("/leaderboard", async (req, res) => {
   try {
     const AllTimeRankedUsers = await User.findAll({
       sort: [["points", "DESC"]],
-    })
+    });
 
-    const currentDate = new Date()
+    const currentDate = new Date();
 
     // Calculate the date one month ago
-    const oneMonthAgo = new Date()
-    oneMonthAgo.setMonth(currentDate.getMonth() - 1)
+    const oneMonthAgo = new Date();
+    oneMonthAgo.setMonth(currentDate.getMonth() - 1);
 
     // Calculate the date one year ago
-    const oneYearAgo = new Date()
-    oneYearAgo.setFullYear(currentDate.getFullYear() - 1)
+    const oneYearAgo = new Date();
+    oneYearAgo.setFullYear(currentDate.getFullYear() - 1);
 
     // Fetch users along with their associated closed tickets in the last month
     const LastMonthRankedUsers = await User.findAll({
@@ -143,7 +143,7 @@ router.get("/leaderboard", async (req, res) => {
         },
         required: false, // This will ensure that users without closed tickets in the last month are also included
       },
-    })
+    });
 
     // Fetch users along with their associated closed tickets in the last year
     const LastYearRankedUsers = await User.findAll({
@@ -158,25 +158,25 @@ router.get("/leaderboard", async (req, res) => {
         },
         required: false, // This will ensure that users without closed tickets in the last year are also included
       },
-    })
+    });
 
     // Sort users based on the count of closed tickets for last month
-    LastMonthRankedUsers.sort((a, b) => b.Tickets.length - a.Tickets.length)
+    LastMonthRankedUsers.sort((a, b) => b.Tickets.length - a.Tickets.length);
 
     // Sort users based on the count of closed tickets for last year
-    LastYearRankedUsers.sort((a, b) => b.Tickets.length - a.Tickets.length)
+    LastYearRankedUsers.sort((a, b) => b.Tickets.length - a.Tickets.length);
 
     res.json({
       users1: AllTimeRankedUsers,
       users2: LastMonthRankedUsers,
       users3: LastYearRankedUsers,
-    })
+    });
   } catch (ex) {
-    res.status(500).send(ex.message)
-    console.log("ERROR : ")
-    console.log(ex)
+    res.status(500).send(ex.message);
+    console.log("ERROR : ");
+    console.log(ex);
   }
-})
+});
 
 router.get("/:id", [auth], async (req, res) => {
   const user = await User.findOne({
@@ -206,6 +206,10 @@ router.get("/:id", [auth], async (req, res) => {
       {
         model: Meeting,
         as: "Meeting",
+        include: {
+          model: User,
+          as: "Participants",
+        },
       },
       {
         model: Department,
@@ -220,8 +224,8 @@ router.get("/:id", [auth], async (req, res) => {
         },
       },
     ],
-  })
-  if (!user) return res.status(404).send("user not found")
+  });
+  if (!user) return res.status(404).send("user not found");
 
   const following = await FollowUser.findAll({
     where: {
@@ -232,8 +236,8 @@ router.get("/:id", [auth], async (req, res) => {
       as: "following",
       attributes: ["name", "email"],
     },
-  })
-  user.following = following
+  });
+  user.following = following;
 
   const followedBy = await FollowUser.findAll({
     where: {
@@ -244,38 +248,38 @@ router.get("/:id", [auth], async (req, res) => {
       as: "followedBy",
       attributes: ["name", "email"],
     },
-  })
-  user.followedBy = followedBy
+  });
+  user.followedBy = followedBy;
 
-  res.status(200).send({ user, followedBy, following })
-})
+  res.status(200).send({ user, followedBy, following });
+});
 
 router.post("/", async (req, res) => {
   try {
-    const salt = await bcrypt.genSalt(10)
-    const p = await bcrypt.hash(req.body.password, salt)
+    const salt = await bcrypt.genSalt(10);
+    const p = await bcrypt.hash(req.body.password, salt);
 
     const user = await User.create({
       name: req.body.name,
       email: req.body.email,
       password: p,
       department_id: req.body.department_id,
-    })
+    });
 
-    const token = user.generateAuthToken()
+    const token = user.generateAuthToken();
 
-    res.status(201).send({ token: token, User: user })
+    res.status(201).send({ token: token, User: user });
   } catch (ex) {
-    console.log(ex, ex.message)
+    console.log(ex, ex.message);
   }
-})
+});
 
 router.put("/:id", auth, async (req, res) => {
   try {
-    const authenticatedUser = await User.findByPk(req.user.id)
+    const authenticatedUser = await User.findByPk(req.user.id);
 
     if (!authenticatedUser) {
-      return res.status(404).send("User Not Found.")
+      return res.status(404).send("User Not Found.");
     }
 
     // const isPasswordValid = await bcrypt.compare(
@@ -289,23 +293,23 @@ router.put("/:id", auth, async (req, res) => {
 
     await authenticatedUser.update({
       name: req.body.name,
-    })
+    });
 
-    res.status(200).send("updated!")
+    res.status(200).send("updated!");
   } catch (ex) {
-    console.log(ex)
-    res.status(500).send("Internal Server Error")
+    console.log(ex);
+    res.status(500).send("Internal Server Error");
   }
-})
+});
 
 router.delete("/:id", auth, async (req, res) => {
   const user = await User.destroy({
     where: {
       id: req.params.id,
     },
-  })
+  });
 
-  res.status(200).send({ Deleted: user })
-})
+  res.status(200).send({ Deleted: user });
+});
 
-module.exports = router
+module.exports = router;

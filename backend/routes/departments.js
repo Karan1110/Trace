@@ -2,15 +2,99 @@ const express = require("express");
 const router = express.Router();
 const auth = require("../middlewares/auth");
 const Department = require("../models/department");
+const uploader = require("../utils/uploader");
+const User = require("../models/user");
+const Meeting = require("../models/meeting");
+const Ticket = require("../models/ticket");
+const storage = multer.memoryStorage();
+const upload = multer({ storage });
+
+// router.get("/", auth, async (req, res) => {
+//   const departments = await Department.findAll({
+//     include: [
+//       {
+//         model: User,
+//         as: "users",
+//       },
+//       {
+//         model: Meeting,
+//         as: "meetings",
+//       },
+//       {
+//         model: Ticket,
+//         as: "tickets",
+//       },
+//     ],
+//   });
+//   res.json(departments);
+// });
+
+router.get("/:id", auth, async (req, res) => {
+  const department = await Department.findByPk(req.params.id, {
+    include: [
+      {
+        model: User,
+        as: "users",
+      },
+      {
+        model: Meeting,
+        as: "meetings",
+      },
+      {
+        model: Ticket,
+        as: "tickets",
+      },
+    ],
+  });
+
+  const followingInCommon = await FollowUser.findAll({
+    where: {
+      followedBy_id: req.user.id,
+      following_id: {
+        [Op.In]: department.dataValues.users.map((u) => u.id),
+      },
+    },
+    include: [
+      {
+        model: User,
+        as: "following",
+      },
+    ],
+  });
+
+  res.json({
+    department,
+    followingInCommon: followingInCommon.map((f) => {
+      return { name: f.following.name, email: f.following.email };
+    }),
+  });
+});
 
 router.get("/", auth, async (req, res) => {
-  const departments = await Department.findAll();
+  const departments = await Department.findAll({
+    include: [
+      {
+        model: User,
+        as: "users",
+      },
+      {
+        model: Meeting,
+        as: "meetings",
+      },
+    ],
+  });
   res.json(departments);
 });
 
-router.post("/", auth, async (req, res) => {
+router.post("/", [auth, upload.single("profile_pic")], async (req, res) => {
+  let url;
+  if (req.file) {
+    url = uploader(req.file);
+  }
+
   const department = await Department.create({
     name: req.body.name,
+    url: url,
   });
 
   res.status(200).send(department);

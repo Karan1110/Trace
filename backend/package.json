@@ -11,11 +11,9 @@
   "license": "ISC",
   "dependencies": {
     "@google-cloud/storage": "^7.7.0",
-    "@ladjs/graceful": "^3.2.2",
     "axios": "^1.6.7",
     "bcrypt": "^5.1.1",
-    "bree": "^9.2.2",
-    "cabin": "^13.2.5",
+    "cloudinary": "^2.0.1",
     "config": "^3.3.9",
     "cors": "^2.8.5",
     "debug": "^4.3.4",
@@ -23,7 +21,6 @@
     "express-async-errors": "^3.1.1",
     "express-ws": "^5.0.2",
     "firebase-admin": "^12.0.0",
-    "fluent-ffmpeg": "^2.1.2",
     "helmet": "^7.0.0",
     "install": "^0.13.0",
     "jsonwebtoken": "^9.0.0",
@@ -39,16 +36,10 @@
     "prettier": "^2.8.8",
     "random-number-range": "^1.0.1",
     "sequelize": "^6.31.1",
-    "socket.io": "^2.3.0",
     "sqlite3": "^5.1.6",
-    "toad-scheduler": "^3.0.0",
     "uuid": "^9.0.1",
     "winston": "^2.4.0"
   },
   "keywords": [],
-  "description": "",
-  "devDependencies": {
-    "jest": "^29.5.0",
-    "supertest": "^6.3.3"
-  }
+  "description": ""
 }

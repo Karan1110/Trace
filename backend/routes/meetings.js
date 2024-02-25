@@ -12,10 +12,16 @@ const Department = require("../models/department.js");
 router.get("/", auth, async (req, res) => {
   const meetings = await Meeting.findAll({
     order: [["createdAt", "DESC"]],
-    include: {
-      model: Department,
-      as: "MeetingDepartment",
-    },
+    include: [
+      {
+        model: Department,
+        as: "MeetingDepartment",
+      },
+      {
+        model: User,
+        as: "Participants",
+      },
+    ],
   });
   res.json(meetings);
 });
@@ -26,32 +32,17 @@ router.get("/departments/:id", async (req, res) => {
     where: {
       department_id: req.params.id,
     },
-    include: {
-      model: Department,
-      as: "MeetingDepartment",
-    },
-  });
-  res.json(meetings);
-});
-
-router.get("/users/:id", auth, async (req, res) => {
-  const meetings = await MeetingMember.findAll({
-    order: [["createdAt", "DESC"]],
-    where: {
-      user_id: req.params.id,
-    },
     include: [
       {
-        model: User,
-        as: "MeetingMemberUser",
+        model: Department,
+        as: "MeetingDepartment",
       },
       {
-        model: Meeting,
-        as: "MeetingMemberMeeting",
+        model: User,
+        as: "Participants",
       },
     ],
   });
-
   res.json(meetings);
 });
 

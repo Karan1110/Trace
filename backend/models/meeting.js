@@ -23,6 +23,11 @@ const Meeting = db.define(
   }
 );
 
+Department.hasMany(Meeting, {
+  as: "meeetings",
+  foreignKey: "department_id",
+});
+
 Meeting.belongsTo(Department, {
   as: "MeetingDepartment",
   foreignKey: "department_id",
