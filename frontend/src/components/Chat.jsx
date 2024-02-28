@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { CaretDownIcon } from "@radix-ui/react-icons";
+import { CaretDownIcon, PlusIcon } from "@radix-ui/react-icons";
 import {
   Box,
   Text,
@@ -13,6 +13,7 @@ import {
   Dialog,
   Heading,
   AspectRatio,
+  IconButton,
 } from "@radix-ui/themes";
 import Meet from "./Meet";
 import Sidebar from "./Sidebar";
@@ -20,6 +21,9 @@ import axios from "axios";
 import { toast } from "react-hot-toast";
 import Uploader from "./Uploader.jsx";
 import { Sparkles } from "./Sparkles.jsx";
+import { useUser } from "../contexts/userContext.jsx";
+import moment from "moment";
+import { Image } from "antd";
 
 const Chat = () => {
   const [id, setId] = useState(null);
@@ -38,6 +42,7 @@ const Chat = () => {
   });
   const [editMessage, setEditMessage] = useState(null);
   const xAuthToken = localStorage.getItem("token");
+  const user = useUser();
 
   useEffect(() => {
     const fetchChatData = async () => {
@@ -66,6 +71,7 @@ const Chat = () => {
 
     if (id) {
       const connectWebSocket = () => {
+        setMessages([]);
         const newWs = new WebSocket(
           `ws://localhost:1111/chat/${id}/${selectedChannel.name}?xAuthToken=${xAuthToken}`
         );
@@ -171,50 +177,21 @@ const Chat = () => {
 
   return (
     <>
-      <Sidebar setId={setId} />
+      {user && <Sidebar setId={setId} />}
       {chatData && (
         <aside
           id="default-sidebar"
-          className="sticky left-64 border-r border-double border-gray-100 z-40 w-40 h-screen transition-transform -translate-x-full sm:translate-x-0"
+          className="sticky left-64 border-r border-double border-gray-100 z-40 w-[8rem] h-screen transition-transform -translate-x-full sm:translate-x-0"
         >
-          <div className="h-full px-3 py-4 overflow-y-auto  dark:bg-gray-800">
-            <Heading>Channels</Heading>
-            <ul className="space-y-2 font-medium">
-              {chatData &&
-                chatData.channels &&
-                chatData.channels.map((channel, index) => (
-                  <li
-                    key={index}
-                    onClick={() => {
-                      setSelectedChannel(channel);
-                      console.log(channel);
-                    }}
-                  >
-                    <a
-                      href="#"
-                      className="flex items-center  mb-4 p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group"
-                    >
-                      <svg
-                        className="flex-shrink-0 w-5 h-5 text-gray-500 transition duration-75 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white"
-                        aria-hidden="true"
-                        xmlns="http://www.w3.org/2000/svg"
-                        fill="currentColor"
-                        viewBox="0 0 20 18"
-                      >
-                        {/* Replace the SVG path with the appropriate icon for each channel */}
-                        <path d="M14 2a3.963 3.963 0 0 0-1.4.267 6.439 6.439 0 0 1-1.331 6.638A4 4 0 1 0 14 2Zm1 9h-1.264A6.957 6.957 0 0 1 15 15v2a2.97 2.97 0 0 1-.184 1H19a1 1 0 0 0 1-1v-1a5.006 5.006 0 0 0-5-5ZM6.5 9a4.5 4.5 0 1 0 0-9 4.5 4.5 0 0 0 0 9ZM8 10H5a5.006 5.006 0 0 0-5 5v2a1 1 0 0 0 1 1h11a1 1 0 0 0 1-1v-2a5.006 5.006 0 0 0-5-5Z" />
-                      </svg>
-                      <span className="flex-1 ms-3 whitespace-nowrap">
-                        {channel.name}
-                      </span>
-                    </a>
-                  </li>
-                ))}
+          <div className="h-full  py-4 text-center absolute left-[-3rem] overflow-y-auto  dark:bg-gray-800">
+            <div className="flex flex-row space-x-4 items-center">
+              <Heading>Channels</Heading>
               <Dialog.Root>
                 <Dialog.Trigger>
-                  <Button>Edit profile</Button>
+                  <IconButton size="1">
+                    <PlusIcon width="18" height="18" />
+                  </IconButton>
                 </Dialog.Trigger>
-
                 <Dialog.Content style={{ maxWidth: 450 }}>
                   <Dialog.Title>Edit profile</Dialog.Title>
                   <Dialog.Description size="2" mb="4">
@@ -278,6 +255,38 @@ const Chat = () => {
                   </Flex>
                 </Dialog.Content>
               </Dialog.Root>
+            </div>
+            <ul className=" font-medium">
+              {chatData &&
+                chatData.channels &&
+                chatData.channels.map((channel, index) => (
+                  <li
+                    key={index}
+                    onClick={() => {
+                      setSelectedChannel(channel);
+                      console.log(channel);
+                    }}
+                  >
+                    <a
+                      href="#"
+                      className="flex items-center  mb-4 p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group"
+                    >
+                      <svg
+                        className="flex-shrink-0 w-5 h-5 text-gray-500 transition duration-75 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white"
+                        aria-hidden="true"
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="currentColor"
+                        viewBox="0 0 20 18"
+                      >
+                        {/* Replace the SVG path with the appropriate icon for each channel */}
+                        <path d="M14 2a3.963 3.963 0 0 0-1.4.267 6.439 6.439 0 0 1-1.331 6.638A4 4 0 1 0 14 2Zm1 9h-1.264A6.957 6.957 0 0 1 15 15v2a2.97 2.97 0 0 1-.184 1H19a1 1 0 0 0 1-1v-1a5.006 5.006 0 0 0-5-5ZM6.5 9a4.5 4.5 0 1 0 0-9 4.5 4.5 0 0 0 0 9ZM8 10H5a5.006 5.006 0 0 0-5 5v2a1 1 0 0 0 1 1h11a1 1 0 0 0 1-1v-2a5.006 5.006 0 0 0-5-5Z" />
+                      </svg>
+                      <span className="flex-1 ms-3 whitespace-nowrap">
+                        {channel.name}
+                      </span>
+                    </a>
+                  </li>
+                ))}
             </ul>
             <Heading>Members</Heading>
             <ul className="space-y-2 font-medium">
@@ -375,7 +384,7 @@ const Chat = () => {
                       </Flex>
                     ) : (
                       <>
-                        {!msg.url && (
+                        {!msg.url ? (
                           <Card
                             style={{
                               maxWidth: 240,
@@ -392,26 +401,17 @@ const Chat = () => {
                                 fallback="T"
                               />
                               <Box>
-                                <Text as="div" size="2" color="gray">
-                                  {msg.value || msg.message}
+                                <Text as="div" size="3" color="gray">
+                                  {msg.value.toString()}
+                                </Text>
+                                <Text as="div" size="1" color="gray">
+                                  {moment(msg.createdAt).fromNow()}
                                 </Text>
                               </Box>
                             </Flex>
                           </Card>
-                        )}
-                        {msg.url && (
-                          <AspectRatio ratio={16 / 8}>
-                            <img
-                              src={msg.url}
-                              alt="A house in a forest"
-                              style={{
-                                objectFit: "cover",
-                                width: "30%",
-                                height: "30%",
-                                borderRadius: "var(--radius-2)",
-                              }}
-                            />
-                          </AspectRatio>
+                        ) : (
+                          <Image width={200} src={msg.url} />
                         )}
                       </>
                     )}

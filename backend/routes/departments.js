@@ -6,28 +6,14 @@ const uploader = require("../utils/uploader");
 const User = require("../models/user");
 const Meeting = require("../models/meeting");
 const Ticket = require("../models/ticket");
+const multer = require("multer");
 const storage = multer.memoryStorage();
 const upload = multer({ storage });
 
-// router.get("/", auth, async (req, res) => {
-//   const departments = await Department.findAll({
-//     include: [
-//       {
-//         model: User,
-//         as: "users",
-//       },
-//       {
-//         model: Meeting,
-//         as: "meetings",
-//       },
-//       {
-//         model: Ticket,
-//         as: "tickets",
-//       },
-//     ],
-//   });
-//   res.json(departments);
-// });
+router.get("/", auth, async (req, res) => {
+  const departments = await Department.findAll({ attributes: ["name"] });
+  res.json(departments);
+});
 
 router.get("/:id", auth, async (req, res) => {
   const department = await Department.findByPk(req.params.id, {
@@ -68,22 +54,6 @@ router.get("/:id", auth, async (req, res) => {
       return { name: f.following.name, email: f.following.email };
     }),
   });
-});
-
-router.get("/", auth, async (req, res) => {
-  const departments = await Department.findAll({
-    include: [
-      {
-        model: User,
-        as: "users",
-      },
-      {
-        model: Meeting,
-        as: "meetings",
-      },
-    ],
-  });
-  res.json(departments);
 });
 
 router.post("/", [auth, upload.single("profile_pic")], async (req, res) => {

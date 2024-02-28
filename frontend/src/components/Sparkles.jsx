@@ -1,5 +1,5 @@
 import React from "react";
-import { SparklesCore } from "../ui/sparkles";
+import SparklesCore from "../ui/sparkles";
 
 export function Sparkles() {
   return (
@@ -16,7 +16,7 @@ export function Sparkles() {
         />
       </div>
       <h1 className="md:text-7xl text-3xl lg:text-6xl font-bold text-center text-white relative z-20">
-        Build great products
+        Start chatting now!
       </h1>
     </div>
   );

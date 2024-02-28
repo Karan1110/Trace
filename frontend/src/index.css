@@ -242,7 +242,6 @@
   @apply bg-gray-500 dark:bg-green-400;
 }
 
-/* index.css */
-@import "tailwindcss/base";
-@import "tailwindcss/components";
-@import "tailwindcss/utilities";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
