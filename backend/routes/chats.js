@@ -154,6 +154,26 @@ import("livekit-server-sdk").then(({ AccessToken }) => {
       .status(200)
       .send(`promoted user ${req.params.userId} to ${req.body.role}`);
   });
+
+  router.put("/updateInviteCode/:chatId", auth, async (req, res) => {
+    try {
+      const newInviteCode = uuidv4();
+      await Chat.update(
+        {
+          inviteCode: newInviteCode,
+        },
+        {
+          where: {
+            id: req.params.chatId,
+          },
+        }
+      );
+
+      res.json({ newInviteCode });
+    } catch (error) {
+      console.log(error.message, error);
+    }
+  });
 });
 
 module.exports = router;

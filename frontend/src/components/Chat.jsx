@@ -178,7 +178,7 @@ const Chat = () => {
   return (
     <>
       {user && <Sidebar setId={setId} />}
-      {chatData && (
+      {chatData && chatData.type !== "personal" && (
         <aside
           id="default-sidebar"
           className="sticky left-64 border-r border-double border-gray-100 z-40 w-[8rem] h-screen transition-transform -translate-x-full sm:translate-x-0"
@@ -364,71 +364,147 @@ const Chat = () => {
             ) : (
               messages &&
               messages.map((msg) => (
-                <ContextMenu.Root key={msg.id} size="1">
-                  <ContextMenu.Trigger>
-                    {msg && msg.id && editing == msg?.id ? (
-                      <Flex direction="row">
-                        <TextField.Input
-                          style={{
-                            width: "500px",
-                          }}
-                          size="2"
-                          onChange={(e) => setEditMessage(e.target.value)}
-                        />
-                        <Button
-                          color="purple"
-                          onClick={() => edit(msg.id, editMessage)}
+                <div style="w-full">
+                  <div className="flex flex-row space-x-4">
+                    <Heading>{chatData.name}</Heading>
+                    <DropdownMenu.Root>
+                      <DropdownMenu.Trigger>
+                        <svg
+                          width="25"
+                          height="25"
+                          viewBox="0 0 15 15"
+                          fill="none"
+                          xmlns="http://www.w3.org/2000/svg"
                         >
-                          Edit
-                        </Button>
-                      </Flex>
-                    ) : (
-                      <>
-                        {!msg.url ? (
-                          <Card
+                          <path
+                            d="M3.13523 6.15803C3.3241 5.95657 3.64052 5.94637 3.84197 6.13523L7.5 9.56464L11.158 6.13523C11.3595 5.94637 11.6759 5.95657 11.8648 6.15803C12.0536 6.35949 12.0434 6.67591 11.842 6.86477L7.84197 10.6148C7.64964 10.7951 7.35036 10.7951 7.15803 10.6148L3.15803 6.86477C2.95657 6.67591 2.94637 6.35949 3.13523 6.15803Z"
+                            fill="currentColor"
+                            fill-rule="evenodd"
+                            clip-rule="evenodd"
+                          ></path>
+                        </svg>
+                      </DropdownMenu.Trigger>
+                      <DropdownMenu.Content>
+                        <DropdownMenu.Item shortcut="⌘ E">
+                          Edit Server
+                        </DropdownMenu.Item>
+                        <DropdownMenu.Item shortcut="⌘ D">
+                          <Dialog.Root>
+                            <Dialog.Trigger>Invite</Dialog.Trigger>
+
+                            <Dialog.Content style={{ maxWidth: 450 }}>
+                              <Dialog.Title>Edit profile</Dialog.Title>
+                              <Dialog.Description size="2" mb="4">
+                                Make changes to your profile.
+                              </Dialog.Description>
+
+                              <Flex direction="column" gap="3">
+                                <label>
+                                  <Text as="div" size="2" mb="1" weight="bold">
+                                    Name
+                                  </Text>
+                                  <TextField.Input
+                                    defaultValue="Freja Johnsen"
+                                    placeholder="Enter your full name"
+                                  />
+                                </label>
+                                <label>
+                                  <Text as="div" size="2" mb="1" weight="bold">
+                                    Email
+                                  </Text>
+                                  <TextField.Input
+                                    defaultValue="freja@example.com"
+                                    placeholder="Enter your email"
+                                  />
+                                </label>
+                              </Flex>
+
+                              <Flex gap="3" mt="4" justify="end">
+                                <Dialog.Close>
+                                  <Button variant="soft" color="gray">
+                                    Cancel
+                                  </Button>
+                                </Dialog.Close>
+                                <Dialog.Close>
+                                  <Button>Save</Button>
+                                </Dialog.Close>
+                              </Flex>
+                            </Dialog.Content>
+                          </Dialog.Root>
+                        </DropdownMenu.Item>
+                        <DropdownMenu.Item shortcut="⌘ ⌫" color="red">
+                          Delete
+                        </DropdownMenu.Item>
+                      </DropdownMenu.Content>
+                    </DropdownMenu.Root>
+                  </div>
+                  <Separator my="3" size="4" />
+                  <ContextMenu.Root key={msg.id} size="1">
+                    <ContextMenu.Trigger>
+                      {msg && msg.id && editing == msg?.id ? (
+                        <Flex direction="row">
+                          <TextField.Input
                             style={{
-                              maxWidth: 240,
-                              marginTop: 10,
-                              marginBottom: 10,
+                              width: "500px",
                             }}
-                            size="1"
+                            size="2"
+                            onChange={(e) => setEditMessage(e.target.value)}
+                          />
+                          <Button
+                            color="purple"
+                            onClick={() => edit(msg.id, editMessage)}
                           >
-                            <Flex gap="3" align="center">
-                              <Avatar
-                                size="3"
-                                src="https://images.unsplash.com/photo-1607346256330-dee7af15f7c5?&w=64&h=64&dpr=2&q=70&crop=focalpoint&fp-x=0.67&fp-y=0.5&fp-z=1.4&fit=crop"
-                                radius="full"
-                                fallback="T"
-                              />
-                              <Box>
-                                <Text as="div" size="3" color="gray">
-                                  {msg.value.toString()}
-                                </Text>
-                                <Text as="div" size="1" color="gray">
-                                  {moment(msg.createdAt).fromNow()}
-                                </Text>
-                              </Box>
-                            </Flex>
-                          </Card>
-                        ) : (
-                          <Image width={200} src={msg.url} />
-                        )}
-                      </>
-                    )}
-                  </ContextMenu.Trigger>
-                  <ContextMenu.Content>
-                    <ContextMenu.Item
-                      shortcut="⌘ E"
-                      onClick={() => setEditing(msg.id)}
-                    >
-                      Edit
-                    </ContextMenu.Item>
-                    <ContextMenu.Separator />
-                    <ContextMenu.Item shortcut="⌘ ⌫" color="red">
-                      Delete
-                    </ContextMenu.Item>
-                  </ContextMenu.Content>
-                </ContextMenu.Root>
+                            Edit
+                          </Button>
+                        </Flex>
+                      ) : (
+                        <>
+                          {!msg.url ? (
+                            <Card
+                              style={{
+                                maxWidth: 240,
+                                marginTop: 10,
+                                marginBottom: 10,
+                              }}
+                              size="1"
+                            >
+                              <Flex gap="3" align="center">
+                                <Avatar
+                                  size="3"
+                                  src="https://images.unsplash.com/photo-1607346256330-dee7af15f7c5?&w=64&h=64&dpr=2&q=70&crop=focalpoint&fp-x=0.67&fp-y=0.5&fp-z=1.4&fit=crop"
+                                  radius="full"
+                                  fallback="T"
+                                />
+                                <Box>
+                                  <Text as="div" size="3" color="gray">
+                                    {msg.value.toString()}
+                                  </Text>
+                                  <Text as="div" size="1" color="gray">
+                                    {moment(msg.createdAt).fromNow()}
+                                  </Text>
+                                </Box>
+                              </Flex>
+                            </Card>
+                          ) : (
+                            <Image width={200} src={msg.url} />
+                          )}
+                        </>
+                      )}
+                    </ContextMenu.Trigger>
+                    <ContextMenu.Content>
+                      <ContextMenu.Item
+                        shortcut="⌘ E"
+                        onClick={() => setEditing(msg.id)}
+                      >
+                        Edit
+                      </ContextMenu.Item>
+                      <ContextMenu.Separator />
+                      <ContextMenu.Item shortcut="⌘ ⌫" color="red">
+                        Delete
+                      </ContextMenu.Item>
+                    </ContextMenu.Content>
+                  </ContextMenu.Root>
+                </div>
               ))
             )}
           </div>
