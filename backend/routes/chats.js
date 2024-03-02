@@ -1,6 +1,5 @@
 const Chat = require("../models/chat");
 const ChatUser = require("../models/ChatUser");
-const Message = require("../models/message");
 const router = require("express").Router();
 const auth = require("../middlewares/auth");
 const config = require("config");
@@ -13,19 +12,23 @@ const upload = multer({ storage });
 const uploader = require("../utils/uploader");
 
 import("livekit-server-sdk").then(({ AccessToken }) => {
-  router.get("/", async (req, res) => {
+  router.get("/messages", async (req, res) => {
     try {
-      const messages = await Message.findAll({
+      const channel = await Channel.findOne({
         where: {
           chat_id: req.query.chat_id,
-          channel: req.query.channel,
+          name: req.query.channel,
         },
-        limit: 20,
-        offset: req.query.page * 20,
-        order: [["createdAt", "ASC"]],
+        include: {
+          model: Message,
+          as: "messages",
+          limit: 10,
+          offset: req.query.page * 10,
+          order: [["createdAt", "DESC"]],
+        },
       });
 
-      res.json({ messages });
+      res.json(channel.messages);
     } catch (error) {
       console.error("Error fetching messages:", error);
       res.status(500).json({ error: "Internal Server Error" });

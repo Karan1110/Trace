@@ -409,7 +409,39 @@ const Chat = () => {
                         </DropdownMenu.Trigger>
                         <DropdownMenu.Content>
                           <DropdownMenu.Item shortcut="⌘ E">
-                            Edit Server
+                            <Dialog.Root>
+                              <Dialog.Trigger>Edit Server</Dialog.Trigger>
+                              <Dialog.Content style={{ maxWidth: 450 }}>
+                                <Dialog.Title>{chatData.name}</Dialog.Title>
+                                <Dialog.Description size="2" mb="4">
+                                  Edit server
+                                </Dialog.Description>
+
+                                <Flex direction="column" gap="3">
+                                  <label>
+                                    <Text
+                                      as="div"
+                                      size="2"
+                                      mb="1"
+                                      weight="bold"
+                                    >
+                                      Server's name
+                                    </Text>
+                                  </label>
+                                  <TextField.Input value={chatData.name} />
+                                </Flex>
+                                <Flex gap="3" mt="4" justify="end">
+                                  <Dialog.Close>
+                                    <Button variant="soft" color="gray">
+                                      Cancel
+                                    </Button>
+                                  </Dialog.Close>
+                                  <Dialog.Close>
+                                    <Button>Save</Button>
+                                  </Dialog.Close>
+                                </Flex>
+                              </Dialog.Content>
+                            </Dialog.Root>
                           </DropdownMenu.Item>
                           <DropdownMenu.Item shortcut="⌘ D">
                             <Dialog.Root>
@@ -435,7 +467,9 @@ const Chat = () => {
                                     </Text>
                                   </label>
                                   <Flex direction="row">
-                                    <TextField.Input value={chatData} />
+                                    <TextField.Input
+                                      value={chatData.inviteCode}
+                                    />
                                     <IconButton
                                       onClick={() =>
                                         copyToClipboard(chatData.inviteCode)
@@ -496,7 +530,34 @@ const Chat = () => {
                             </Dialog.Root>
                           </DropdownMenu.Item>
                           <DropdownMenu.Item shortcut="⌘ ⌫" color="red">
-                            Delete
+                            <AlertDialog.Root>
+                              <AlertDialog.Trigger>
+                                Delete server
+                              </AlertDialog.Trigger>
+                              <AlertDialog.Content style={{ maxWidth: 450 }}>
+                                <AlertDialog.Title>
+                                  Revoke access
+                                </AlertDialog.Title>
+                                <AlertDialog.Description size="2">
+                                  Are you sure? This application will no longer
+                                  be accessible and any existing sessions will
+                                  be expired.
+                                </AlertDialog.Description>
+
+                                <Flex gap="3" mt="4" justify="end">
+                                  <AlertDialog.Cancel>
+                                    <Button variant="soft" color="gray">
+                                      Cancel
+                                    </Button>
+                                  </AlertDialog.Cancel>
+                                  <AlertDialog.Action>
+                                    <Button variant="solid" color="red">
+                                      Revoke access
+                                    </Button>
+                                  </AlertDialog.Action>
+                                </Flex>
+                              </AlertDialog.Content>
+                            </AlertDialog.Root>
                           </DropdownMenu.Item>
                         </DropdownMenu.Content>
                       </DropdownMenu.Root>
