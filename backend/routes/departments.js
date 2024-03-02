@@ -59,7 +59,7 @@ router.get("/:id", auth, async (req, res) => {
 router.post("/", [auth, upload.single("profile_pic")], async (req, res) => {
   let url;
   if (req.file) {
-    url = uploader(req.file);
+    url = await uploader(req.file);
   }
 
   const department = await Department.create({

@@ -7,6 +7,10 @@ const config = require("config");
 const Channel = require("../models/channel");
 const User = require("../models/user");
 const { v4: uuidv4 } = require("uuid");
+const multer = require("multer");
+const storage = multer.memoryStorage();
+const upload = multer({ storage });
+const uploader = require("../utils/uploader");
 
 import("livekit-server-sdk").then(({ AccessToken }) => {
   router.get("/", async (req, res) => {
@@ -45,12 +49,15 @@ import("livekit-server-sdk").then(({ AccessToken }) => {
     res.send(chat);
   });
 
-  router.post("/", auth, async (req, res) => {
+  router.post("/", [auth, upload.single("chat_pic")], async (req, res) => {
+    const url = await uploader(req.file);
+
     const chat = await Chat.create({
       id: req.params.chat,
       type: req.body.type,
       name: req.body.name,
-      inviteCode: uuidv4().toString(),
+      inviteCode: uuidv4(),
+      url: url.toString(),
     });
 
     const chat_user = await ChatUser.create({

@@ -6,26 +6,13 @@ const Notification = require("../models/notification.js");
 const Ticket = require("../models/ticket.js");
 const moment = require("moment");
 const { Op } = require("sequelize");
-const admin = require("firebase-admin");
 const Comment = require("../models/comment.js");
 const Saved = require("../models/saved.js");
-const path = require("path");
 const multer = require("multer");
 const blockedUsers = require("../middlewares/blockedUsers.js");
 const Department = require("../models/department.js");
 const axios = require("axios");
-
-const serviceAccount = require(path.join(
-  __dirname,
-  "../karanstore-2c850-firebase-adminsdk-5ry9v-ff376d22e0.json"
-));
-
-admin.initializeApp({
-  credential: admin.credential.cert(serviceAccount),
-  storageBucket: "karanstore-2c850.appspot.com",
-});
-
-const bucket = admin.storage().bucket();
+const uploader = require("../utils/uploader.js");
 const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
 
@@ -382,21 +369,9 @@ router.post("/", [auth, upload.single("video")], async (req, res) => {
   });
 
   if (req.file) {
-    const videoBuffer = req.file.buffer;
-    const videoFileName = `trace/video_${ticket.id}.mp4`;
-
-    // Save the video to a temporary file
-    const video = bucket.file(videoFileName);
-    await video.save(videoBuffer);
-
-    // Update ticket with signed URL
-    const signedUrl = await video.getSignedUrl({
-      action: "read",
-      expires: "03-09-2491", // Replace with a far future date
-    });
-
+    const url = await uploader(req.file);
     await ticket.update({
-      videoUrl: signedUrl[0],
+      videoUrl: url,
     });
   }
 
