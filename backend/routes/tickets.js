@@ -441,7 +441,26 @@ router.post("/save/remove/:id", auth, async (req, res) => {
     res.send("something failed...");
   }
 });
+// not used in frontend...
+router.put("/changeStatus/:id", [auth], async (req, res) => {
+  const ticket = await Ticket.findByPk(req.params.id);
+  if (!ticket) return res.status(404).json({ message: "ticket not found..." });
 
+  await ticket.update({
+    status: req.body.status,
+  });
+
+  await axios.post(
+    "/notifications",
+    {
+      user_id: ticket.dataValues.user_id,
+      message: `the status of your ticket has been changed! - ${ticket.name}`,
+    },
+    {}
+  );
+
+  res.status(200).json({ message: "done!" });
+});
 router.put("/close/:id", [auth], async (req, res) => {
   const ticket = await Ticket.findByPk(req.params.id);
   if (!ticket) return res.status(404).json({ message: "ticket not found..." });
