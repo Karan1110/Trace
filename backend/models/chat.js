@@ -5,12 +5,6 @@ const Channel = require("./channel");
 const Chat = db.define(
   "Chat", // Specify the desired table name here
   {
-    id: {
-      type: Sequelize.INTEGER,
-      primaryKey: true,
-      autoIncrement: true,
-      allowNull: false,
-    },
     name: {
       type: Sequelize.STRING,
       allowNull: false,
@@ -25,7 +19,8 @@ const Chat = db.define(
     },
     url: {
       type: Sequelize.STRING,
-      allowNull: false,
+      defaultValue:
+        "https://static.vecteezy.com/system/resources/previews/006/892/625/original/discord-logo-icon-editorial-free-vector.jpg",
     },
   },
   {

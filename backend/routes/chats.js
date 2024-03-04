@@ -56,7 +56,6 @@ import("livekit-server-sdk").then(({ AccessToken }) => {
     const url = await uploader(req.file);
 
     const chat = await Chat.create({
-      id: req.params.chat,
       type: req.body.type,
       name: req.body.name,
       inviteCode: uuidv4(),
@@ -68,11 +67,21 @@ import("livekit-server-sdk").then(({ AccessToken }) => {
       chat_id: chat.dataValues.id,
       role: "owner",
     });
-    const channel = await Channel.create({
-      name: "general",
-      chat_id: chat.dataValues.id,
-      type: "text",
-    });
+    if (req.body.type == "personal") {
+      await ChatUser.create({
+        user_id: req.body.recipient_id,
+        chat_id: chat.dataValues.id,
+      });
+    }
+
+    let channel;
+    if (req.body.type !== "personal") {
+      channel = await Channel.create({
+        name: "general",
+        chat_id: chat.dataValues.id,
+        type: "text",
+      });
+    }
 
     res.json({ chat, chat_user, channel });
   });
