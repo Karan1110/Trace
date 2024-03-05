@@ -1,17 +1,33 @@
-const express = require("express")
-const router = express.Router()
-const auth = require("../middlewares/auth")
-const Comment = require("../models/comment.js")
+const express = require("express");
+const router = express.Router();
+const auth = require("../middlewares/auth");
+const Comment = require("../models/comment.js");
+const Ticket = require("../models/ticket.js");
 
 router.post("/", auth, async (req, res) => {
+  const ticket = await Ticket.findByPk(req.body.ticket_id, {
+    attributes: ["name"],
+  });
+
+  if (!ticket) return res.status(404).send("ticket not found...");
+
+  await axios.post(
+    "/notifications",
+    {
+      user_id: ticket.dataValues.user_id,
+      message: `a new comment has been posted! - ${ticket.name}`,
+    },
+    {}
+  );
+
   const comment = await Comment.create({
     content: req.body.content,
     user_id: req.user.id,
     ticket_id: req.body.ticket_id,
-  })
+  });
 
-  res.status(200).json(comment)
-})
+  res.status(200).json(comment);
+});
 
 router.put("/:id", [auth], async (req, res) => {
   const comment = await Comment.update(
@@ -25,19 +41,19 @@ router.put("/:id", [auth], async (req, res) => {
         id: req.params.id,
       },
     }
-  )
+  );
 
-  res.status(200).json(comment)
-})
+  res.status(200).json(comment);
+});
 
 router.delete("/:id", [auth], async (req, res) => {
   await Comment.destroy({
     where: {
       id: req.params.id,
     },
-  })
+  });
 
-  res.status(200).send("deleted!")
-})
+  res.status(200).send("deleted!");
+});
 
-module.exports = router
+module.exports = router;

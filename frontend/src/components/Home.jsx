@@ -12,7 +12,7 @@ import {
   BarElement,
 } from "chart.js";
 import Typewriter from "./Typewriter";
-
+import MacbookScroll from '../ui/macbook-scroll';
 Chart.register(
   LineController,
   LineElement,
@@ -123,6 +123,7 @@ const Home = () => {
   };
   return (
     <>
+      <MacbookScroll/>
       <Typewriter avgTime={avgTime} />
       <div className="container flex flex-row ml-[50px] mr-[40px] ">
         <div className="w-1/2 h-[450px] mt-10  ">

@@ -74,6 +74,15 @@ router.post("/", [auth], async (req, res) => {
         user_id: invitee,
         meeting_id: meeting.dataValues.id,
       });
+
+      await axios.post(
+        "/notifications",
+        {
+          user_id: invitee,
+          message: `a new meeting ! - ${req.body.name}`,
+        },
+        {}
+      );
     }
 
     await MeetingMember.create({

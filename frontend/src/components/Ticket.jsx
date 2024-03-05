@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from "react"
-import moment from "moment"
-import axios from "axios"
-import { useParams } from "react-router-dom"
+import React, { useState, useEffect } from "react";
+import moment from "moment";
+import axios from "axios";
+import { useParams } from "react-router-dom";
 import {
   Heading,
   Text,
@@ -14,19 +14,20 @@ import {
   TextArea,
   Box,
   Avatar,
-} from "@radix-ui/themes"
-import Spinner from "./Spinner"
+} from "@radix-ui/themes";
+import Spinner from "./Spinner";
 
-import { TrashIcon, CaretDownIcon, Pencil2Icon } from "@radix-ui/react-icons"
-import MarkdownEditor from "@uiw/react-markdown-editor"
-import { toast } from "react-hot-toast"
-import { useUser } from "../contexts/userContext"
+import { TrashIcon, CaretDownIcon, Pencil2Icon } from "@radix-ui/react-icons";
+import MarkdownEditor from "@uiw/react-markdown-editor";
+import { toast } from "react-hot-toast";
+import { useUser } from "../contexts/userContext";
 
 const Ticket = () => {
-  const [ticket, setTicket] = useState(null)
-  const [content, setContent] = useState("")
-  const [users, setUsers] = useState([])
-  const { id } = useParams()
+  const [ticket, setTicket] = useState(null);
+  const [content, setContent] = useState("");
+  const [statusLoading, setStatusLoading] = useState(false);
+  const [users, setUsers] = useState([]);
+  const { id } = useParams();
   const save = async () => {
     try {
       await axios.post(
@@ -37,28 +38,43 @@ const Ticket = () => {
             "x-auth-token": localStorage.getItem("token"),
           },
         }
-      )
-      toast.success("saved!")
+      );
+      toast.success("saved!");
     } catch (ex) {
-      toast(ex.message)
-      console.error(ex)
+      toast(ex.message);
+      console.error(ex);
     }
-  }
+  };
 
-  const user = useUser()
+  const user = useUser();
 
   useEffect(() => {
     const fetchTicket = async () => {
       try {
-        const response = await axios.get(`http://localhost:1111/tickets/${id}`)
-        setTicket(response.data)
+        const response = await axios.get(`http://localhost:1111/tickets/${id}`);
+        setTicket(response.data);
 
-        console.log(response.data)
+        console.log(response.data);
       } catch (error) {
-        console.error("Error fetching ticket details:", error)
+        console.error("Error fetching ticket details:", error);
       }
-    }
+    };
+    const changeStatus = async (status) => {
+      try {
+        setStatusLoading(true);
 
+        setTicket({ ...ticket, status: status });
+        await axios.put(
+          `http://localhost:1111/tickets/changeStatus/${id}`,
+          { status: status },
+          { "x-auth-token": localStorage.getItem("token") }
+        );
+        setTimeout(() => setStatusLoading(false), 1500);
+      } catch (error) {
+        toast.error("something failed..");
+        console.error(error.message, error);
+      }
+    };
     // Fetch list of users
     const fetchUsers = async () => {
       try {
@@ -66,16 +82,16 @@ const Ticket = () => {
           headers: {
             "x-auth-token": localStorage.getItem("token"),
           },
-        })
-        setUsers(response.data)
+        });
+        setUsers(response.data);
       } catch (error) {
-        console.error("Error fetching users:", error)
+        console.error("Error fetching users:", error);
       }
-    }
+    };
 
-    fetchTicket()
-    fetchUsers()
-  }, [])
+    fetchTicket();
+    fetchUsers();
+  }, []);
 
   const addComment = async () => {
     await axios.post(
@@ -89,14 +105,14 @@ const Ticket = () => {
           "x-auth-token": localStorage.getItem("token"),
         },
       }
-    )
-    toast.success("comment sent!")
+    );
+    toast.success("comment sent!");
     ticket.Comments.push({
       content: content,
       ticket_id: ticket.id,
       user_id: localStorage.getItem("user_id"),
-    })
-  }
+    });
+  };
 
   async function close() {
     try {
@@ -109,17 +125,17 @@ const Ticket = () => {
             "x-auth-token": localStorage.getItem("token"), // Include your authentication token if needed
           },
         }
-      )
+      );
 
       // Check the response status and handle accordingly
       if (response.status === 200) {
-        toast.success("closed!")
+        toast.success("closed!");
       } else {
-        toast.error("something failed...")
+        toast.error("something failed...");
       }
     } catch (error) {
       // Handle any errors that occur during the request
-      console.error("Error in API call:", error.message, error.response?.data)
+      console.error("Error in API call:", error.message, error.response?.data);
     }
   }
 
@@ -135,14 +151,14 @@ const Ticket = () => {
             "x-auth-token": localStorage.getItem("token"),
           },
         }
-      )
+      );
 
-      toast.success("Ticket assigned successfully!")
+      toast.success("Ticket assigned successfully!");
     } catch (error) {
-      toast("something failed.")
-      console.log(error.message, error)
+      toast("something failed.");
+      console.log(error.message, error);
     }
-  }
+  };
 
   return (
     <>
@@ -236,6 +252,17 @@ const Ticket = () => {
           <Button variant="solid" color="purple" onClick={() => close()}>
             Close <Pencil2Icon />
           </Button>
+          {["in-progress", "open"]
+            .filter((status) => status !== ticket.status)
+            .map((status) => (
+              <Button
+                variant="solid"
+                onClick={() => changeStatus(status)}
+                disabled={statusLoading}
+              >
+                {statusLoading ? "updating..." : status}
+              </Button>
+            ))}
           <Button variant="solid" color="purple">
             Edit <Pencil2Icon />
           </Button>
@@ -331,7 +358,7 @@ const Ticket = () => {
         <Flex direction="column">
           {ticket &&
             ticket.Comments.map((comment) => {
-              const timeAgo = moment(comment.createdAt).fromNow()
+              const timeAgo = moment(comment.createdAt).fromNow();
               return (
                 <div className="max-w-xl p-3  flex items-center border-b   my-2 rounded-md">
                   <Avatar fallback="A" size="2" m="2" />
@@ -342,7 +369,7 @@ const Ticket = () => {
                     {timeAgo}
                   </Badge>
                 </div>
-              )
+              );
             })}
           {!ticket && <Spinner />}
           <Popover.Root>
@@ -371,7 +398,7 @@ const Ticket = () => {
         </Flex>
       </div>
     </>
-  )
-}
+  );
+};
 
-export default Ticket
+export default Ticket;
