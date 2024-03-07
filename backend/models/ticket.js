@@ -21,6 +21,7 @@ const Ticket = db.define(
       defaultValue: null,
     },
     before_id: Sequelize.INTEGER,
+    imageUrl: Sequelize.TEXT,
   },
   {
     timestamps: true,

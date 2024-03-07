@@ -1,11 +1,18 @@
 const express = require("express");
 const router = express.Router();
 const { Request } = require("../models"); // Assuming your Request model is exported from '../models'
+const user = require("../middlewares/auth.js");
 
 // Create a request
-router.post("/", async (req, res) => {
+router.post("/", auth, async (req, res) => {
   try {
     const { senderId, recipientId } = req.body;
+    const recipient = await User.findByPk(recipientId);
+
+    if (recipient && recipient.dataValues.blockedUsers.includes(req.user.id))
+      return res.send(
+        "the user whom you are trying to send an invite request has blocked you!"
+      );
 
     // Create the request
     const request = await Request.create({

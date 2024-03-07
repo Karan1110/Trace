@@ -334,7 +334,7 @@ router.get("/:id", async (req, res) => {
   }
 });
 
-router.post("/", [auth, upload.single("video")], async (req, res) => {
+router.post("/", [auth, upload.array("video", "image")], async (req, res) => {
   const user = await User.findByPk(req.body.user_id);
   if (!user) return res.status(400).send("User not found");
 
@@ -353,7 +353,7 @@ router.post("/", [auth, upload.single("video")], async (req, res) => {
       );
   }
 
-  const ticket = await Ticket.create({
+  let ticket = new Ticket({
     name: req.body.name,
     user_id: req.body.user_id,
     deadline: start_date.toDate(),
@@ -369,11 +369,13 @@ router.post("/", [auth, upload.single("video")], async (req, res) => {
   });
 
   if (req.file) {
-    const url = await uploader(req.file);
-    await ticket.update({
-      videoUrl: url,
-    });
+    const videoUrl = await uploader(req.files[0]);
+    const imageUrl = await uploader(req.files[1]);
+    ticket.imageUrl = imageUrl;
+    ticket.videoUrl = videoUrl;
   }
+
+  await ticket.save();
 
   res.status(200).send(ticket);
 });
