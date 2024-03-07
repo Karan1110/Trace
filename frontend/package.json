@@ -28,6 +28,7 @@
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.0",
     "dotenv": "^16.4.5",
+    "emoji-picker-react": "^4.8.0",
     "framer-motion": "^11.0.6",
     "markdown-parser-react": "^1.1.2",
     "markdown-to-jsx": "^7.4.0",

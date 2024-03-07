@@ -260,7 +260,7 @@ const Ticket = () => {
                 onClick={() => changeStatus(status)}
                 disabled={statusLoading}
               >
-                {statusLoading ? "updating..." : status}
+                {statusLoading ? "updating..." : ` mark as ${status}`}
               </Button>
             ))}
           <Button variant="solid" color="purple">

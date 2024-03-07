@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import EmojiPicker from "emoji-picker-react";
 import { CaretDownIcon, PlusIcon } from "@radix-ui/react-icons";
 import {
   Box,
@@ -660,6 +661,12 @@ const Chat = () => {
             )}
           </div>
           <div className="flex flex-row  items-center justify-center    space-x-4 fixed bottom-5 left-96 ">
+            <EmojiPicker
+              onEmojiClick={(event) => {
+                setInputMessage(...inputMessage, event.emoji);
+              }}
+            />
+
             <TextField.Input
               value={inputMessage}
               style={{
