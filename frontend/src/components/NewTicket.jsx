@@ -1,12 +1,13 @@
-import React, { useState, useEffect, useRef } from "react"
-import axios from "axios"
-import moment from "moment"
-import { toast } from "react-hot-toast"
-import { Button, TextField, Select } from "@radix-ui/themes"
-import { CaretDownIcon } from "@radix-ui/react-icons"
-import MarkdownEditor from "@uiw/react-markdown-editor"
+import React, { useState, useEffect, useRef } from "react";
+import axios from "axios";
+import moment from "moment";
+import { z } from "zod";
+import { toast } from "react-hot-toast";
+import { Button, TextField, Select } from "@radix-ui/themes";
+import { CaretDownIcon } from "@radix-ui/react-icons";
+import MarkdownEditor from "@uiw/react-markdown-editor";
 const NewTicket = () => {
-  const [users, setUsers] = useState([])
+  const [users, setUsers] = useState([]);
   const [mdStr, setMdStr] = useState(
     `
   # This is a H1
@@ -17,8 +18,8 @@ const NewTicket = () => {
   ## include code blocks:
 \`onClick={() => setFormData({ ...formData})\`
 `
-  )
-  const [departmentSuggestions, setDepartmentSuggestions] = useState([])
+  );
+  const [departmentSuggestions, setDepartmentSuggestions] = useState([]);
 
   const [formData, setFormData] = useState({
     name: "",
@@ -26,55 +27,66 @@ const NewTicket = () => {
     deadline: moment().add(2, "days").format("YYYY-MM-DD"),
     status: "open",
     department_id: 1,
-  })
+  });
+  const ticketSchema = z.object({
+    name: z.string(),
+    user_id: z.number().nullable(),
+    deadline: z.enum([z.date(), z.string()]),
+    status: z.string(),
+    department_id: z.number().nullable(),
+  });
 
   useEffect(() => {
     // Fetch list of users
     const fetchUsers = async () => {
       try {
-        const authToken = localStorage.getItem("token")
+        const authToken = localStorage.getItem("token");
         const response = await axios.get("http://localhost:1111/users", {
           headers: {
             "x-auth-token": authToken,
           },
-        })
+        });
 
-        setUsers(response.data)
+        setUsers(response.data);
         async function fetchDepartments() {
-          const response = await axios.get("http://localhost:1111/departments")
-          setDepartmentSuggestions(response.data)
+          const response = await axios.get("http://localhost:1111/departments");
+          setDepartmentSuggestions(response.data);
         }
-        fetchDepartments()
+        fetchDepartments();
       } catch (error) {
-        toast.error("Error fetching users: " + error.message)
-        console.error("Error fetching users:", error)
+        toast.error("Error fetching users: " + error.message);
+        console.error("Error fetching users:", error);
       }
-    }
+    };
 
-    fetchUsers()
-  }, [])
+    fetchUsers();
+  }, []);
 
   const handleChange = (e) => {
-    const { name, value } = e.target
+    const { name, value } = e.target;
     setFormData({
       ...formData,
       [name]: value,
-    })
-  }
+    });
+  };
 
   const handleSubmit = async (e) => {
-    e.preventDefault()
+    e.preventDefault();
     try {
-      console.log(formData)
-      const videoFile = document.getElementById("video").files[0]
-      const formDataWithVideo = new FormData()
-      formDataWithVideo.append("name", formData.name)
-      formDataWithVideo.append("description", mdStr)
-      formDataWithVideo.append("user_id", formData.user_id)
-      formDataWithVideo.append("deadline", formData.deadline)
-      formDataWithVideo.append("status", formData.status)
-      formDataWithVideo.append("department_id", formData.department_id)
-      formDataWithVideo.append("video", videoFile) // Append the video file
+      console.log(formData);
+      const videoFile = document.getElementById("video").files[0];
+      const imageFile = document.getElementById("image").files[0];
+      const formDataWithVideo = new FormData();
+      formDataWithVideo.append("name", formData.name);
+      formDataWithVideo.append("description", mdStr);
+      formDataWithVideo.append("user_id", formData.user_id);
+      formDataWithVideo.append("deadline", formData.deadline);
+      formDataWithVideo.append("status", formData.status);
+      formDataWithVideo.append("department_id", formData.department_id);
+      formDataWithVideo.append("video", videoFile);
+      formDataWithVideo.append("image", imageFile);
+      // ticketSchema.parse(form)
+
       const response = await axios.post(
         "http://localhost:1111/tickets",
         formDataWithVideo,
@@ -84,23 +96,23 @@ const NewTicket = () => {
             "Content-Type": "multipart/form-data", // Important for file upload
           },
         }
-      )
+      );
 
-      console.log("Ticket created successfully:", response.data)
-      toast.success("Ticket created successfully!")
+      console.log("Ticket created successfully:", response.data);
+      toast.success("Ticket created successfully!");
       // Additional actions or redirect can be added here
     } catch (error) {
-      toast("Error creating ticket. Please try again.")
-      console.error("Error creating ticket:", error)
+      toast("Error creating ticket. Please try again.");
+      console.error("Error creating ticket:", error);
     }
-  }
+  };
   const handleUserChange = (v) => {
-    setFormData({ ...formData, user_id: v })
-  }
+    setFormData({ ...formData, user_id: v });
+  };
 
   const handleDepartmentChange = (v) => {
-    setFormData({ ...formData, department_id: v })
-  }
+    setFormData({ ...formData, department_id: v });
+  };
 
   return (
     <div className="max-w-4xl my-10 mt-[40px] mx-60">
@@ -124,12 +136,20 @@ const NewTicket = () => {
     file:py-3 file:px-4
     dark:file:bg-gray-700 dark:file:text-gray-400"
         />
+        <input
+          type="file"
+          id="image"
+          className="block w-full border border-gray-200 shadow-sm rounded-lg text-sm focus:z-10 focus:border-blue-500 focus:ring-blue-500 disabled:opacity-50 disabled:pointer-events-none dark:bg-slate-900 dark:border-gray-700 dark:text-gray-400 dark:focus:outline-none dark:focus:ring-1 dark:focus:ring-gray-600
+    file:bg-gray-50 file:border-0 file:me-4
+    file:py-3 file:px-4
+    dark:file:bg-gray-700 dark:file:text-gray-400"
+        />
         <div>
           <MarkdownEditor
             value={mdStr}
             onChange={(value) => {
-              setMdStr(value)
-              console.log(value)
+              setMdStr(value);
+              console.log(value);
             }}
           />
         </div>
@@ -183,7 +203,7 @@ const NewTicket = () => {
           defaultValue="open"
           size="2"
           onValueChange={(value) => {
-            setFormData({ ...formData, status: value })
+            setFormData({ ...formData, status: value });
           }}
         >
           <Select.Trigger>
@@ -223,7 +243,7 @@ const NewTicket = () => {
         </div>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default NewTicket
+export default NewTicket;

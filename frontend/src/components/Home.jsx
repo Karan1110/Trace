@@ -12,7 +12,7 @@ import {
   BarElement,
 } from "chart.js";
 import Typewriter from "./Typewriter";
-import MacbookScroll from '../ui/macbook-scroll';
+import MacbookScroll from "../ui/macbook-scroll";
 Chart.register(
   LineController,
   LineElement,
@@ -123,7 +123,7 @@ const Home = () => {
   };
   return (
     <>
-      <MacbookScroll/>
+      <MacbookScroll />
       <Typewriter avgTime={avgTime} />
       <div className="container flex flex-row ml-[50px] mr-[40px] ">
         <div className="w-1/2 h-[450px] mt-10  ">
@@ -213,108 +213,28 @@ const Home = () => {
             <Tabs.Content value="account">
               <div className="flex flex-col justify-center items-center max-w-xl">
                 {feed.map((ticket) => (
-                  <Card
-                    key={ticket.id}
-                    size="2"
-                    style={{ width: 425, marginBottom: 16 }}
-                  >
-                    <Flex gap="4" align="center">
-                      <Avatar
-                        size="4"
-                        radius="full"
-                        fallback="T"
-                        color="indigo"
-                      />
-                      <Box>
-                        <Text as="div" weight="bold">
-                          {ticket.name}
-                        </Text>
-                        <Text as="div" color="gray">
-                          {ticket.status}
-                        </Text>
-                      </Box>
-                    </Flex>
-                  </Card>
+                  <TicketCard ticket={ticket} />
                 ))}
               </div>
             </Tabs.Content>
 
             <Tabs.Content value="documents">
-              {pendingTickets.map((ticket) => {
-                return (
-                  <Card size="2" style={{ width: 425 }}>
-                    <Flex gap="4" align="center">
-                      <Avatar
-                        size="4"
-                        radius="full"
-                        fallback="T"
-                        color="indigo"
-                      />
-                      <Box>
-                        <Text as="div" weight="bold">
-                          {ticket.name}
-                        </Text>
-                        <Text as="div" color="gray">
-                          {ticket.status}
-                        </Text>
-                      </Box>
-                    </Flex>
-                  </Card>
-                );
-              })}
+              {pendingTickets.map((ticket) => (
+                <TicketCard ticket={ticket} />
+              ))}
             </Tabs.Content>
 
             <Tabs.Content value="settings">
               {departmentTickets &&
                 departmentTickets.length > 0 &&
-                departmentTickets.map((ticket) => {
-                  return (
-                    <Card size="2" style={{ width: 425 }}>
-                      <Flex gap="4" align="center">
-                        <Avatar
-                          size="4"
-                          radius="full"
-                          fallback="T"
-                          color="indigo"
-                        />
-                        <Box>
-                          <Text as="div" weight="bold">
-                            {ticket.name}
-                          </Text>
-                          <Text as="div" color="gray">
-                            {ticket.status}
-                          </Text>
-                        </Box>
-                      </Flex>
-                    </Card>
-                  );
-                })}
+                departmentTickets.map((ticket) => (
+                  <TicketCard ticket={ticket} />
+                ))}
             </Tabs.Content>
             <Tabs.Content value="following">
               {departmentTickets &&
                 followFeed.length > 0 &&
-                followFeed.map((ticket) => {
-                  return (
-                    <Card size="2" style={{ width: 425 }}>
-                      <Flex gap="4" align="center" direction={"row"}>
-                        <Avatar
-                          size="4"
-                          radius="full"
-                          fallback="T"
-                          color="indigo"
-                        />
-                        <Box>
-                          <Text as="div" weight="bold">
-                            {ticket.name}
-                          </Text>
-                          <Text as="div" color="gray">
-                            {ticket.status}
-                          </Text>
-                        </Box>
-                      </Flex>
-                    </Card>
-                  );
-                })}
+                followFeed.map((ticket) => <TicketCard ticket={ticket} />)}
             </Tabs.Content>
           </Box>
         </Tabs.Root>

@@ -375,7 +375,7 @@ router.post("/", [auth, upload.array("video", "image")], async (req, res) => {
     ticket.videoUrl = videoUrl;
   }
 
-  await ticket.save();
+  ticket = await ticket.save();
 
   res.status(200).send(ticket);
 });
