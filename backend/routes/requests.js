@@ -1,14 +1,27 @@
 const express = require("express");
 const router = express.Router();
 const { Request } = require("../models"); // Assuming your Request model is exported from '../models'
-const user = require("../middlewares/auth.js");
+const auth = require("../middlewares/auth.js");
+const { Op } = require("sequelize");
 
 // Create a request
 router.post("/", auth, async (req, res) => {
   try {
-    const { senderId, recipientId } = req.body;
+    const { recipientId } = req.body;
     const recipient = await User.findByPk(recipientId);
 
+    const existingRequest = await Request.findOne({
+      where: {
+        [Op.or]: [
+          { sender_id: req.user.id, recipient_id: recipientId },
+          { sender_id: recipientId, recipient_id: req.user.id },
+        ],
+      },
+    });
+    if (existingRequest)
+      return res
+        .status(400)
+        .send("already a request exists from his side or your side.");
     if (recipient && recipient.dataValues.blockedUsers.includes(req.user.id))
       return res.send(
         "the user whom you are trying to send an invite request has blocked you!"
@@ -16,7 +29,7 @@ router.post("/", auth, async (req, res) => {
 
     // Create the request
     const request = await Request.create({
-      sender_id: senderId,
+      sender_id: req.user.id,
       recipient_id: recipientId,
     });
 

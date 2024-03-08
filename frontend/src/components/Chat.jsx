@@ -68,7 +68,7 @@ const Chat = () => {
   };
   const openPersonalChat = async (user) => {
     const existingChat = user.Chats.find(
-      (chat) => chat.type == "personal" && chat.name == `${user}`
+      (chat) => chat.type == "personal" && chat.name == `${user.name}`
     );
     if (existingChat) {
       setId(existingChat.id);
@@ -76,7 +76,7 @@ const Chat = () => {
       const resp = await axios.post(
         "http://localhost:1111/chats",
         {
-          name: `${user} `,
+          name: `${user.name} `,
           type: "personal",
           recipient_id: user.id,
         },
@@ -663,7 +663,7 @@ const Chat = () => {
           <div className="flex flex-row  items-center justify-center    space-x-4 fixed bottom-5 left-96 ">
             <EmojiPicker
               onEmojiClick={(event) => {
-                setInputMessage(...inputMessage, event.emoji);
+                setInputMessage(inputMessage.toString().concat(event.emoji));
               }}
             />
 

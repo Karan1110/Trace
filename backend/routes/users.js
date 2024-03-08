@@ -13,6 +13,7 @@ const { Sequelize, Op } = require("sequelize");
 const Saved = require("../models/saved.js");
 const FollowUser = require("../models/followUser");
 const Channel = require("../models/channel.js");
+const Request = require("../models/request.js");
 
 router.get("/", auth, async (req, res) => {
   try {
@@ -223,6 +224,38 @@ router.get("/:id", [auth], async (req, res) => {
           as: "channels",
         },
       },
+      {
+        model: Request,
+        as: "requests",
+        include: {
+          model: User,
+          as: "sender",
+        },
+      },
+      {
+        model: Request,
+        as: "friends",
+        include: {
+          model: User,
+          as: "sender",
+        },
+      },
+      {
+        model: Request,
+        as: "my_requests",
+        include: {
+          model: User,
+          as: "recipient",
+        },
+      },
+      {
+        model: Request,
+        as: "friends2",
+        include: {
+          model: User,
+          as: "recipient",
+        },
+      },
     ],
   });
   if (!user) return res.status(404).send("user not found");
@@ -259,12 +292,13 @@ router.post("/", async (req, res) => {
     const salt = await bcrypt.genSalt(10);
     const p = await bcrypt.hash(req.body.password, salt);
 
-    const user = await User.create({
+    let user = new User({
       name: req.body.name,
       email: req.body.email,
       password: p,
       department_id: req.body.department_id,
     });
+    user = await user.save();
 
     const token = user.generateAuthToken();
 
@@ -281,15 +315,6 @@ router.put("/:id", auth, async (req, res) => {
     if (!authenticatedUser) {
       return res.status(404).send("User Not Found.");
     }
-
-    // const isPasswordValid = await bcrypt.compare(
-    //   req.body.password,
-    //   authenticatedUser.password
-    // )
-
-    // if (!isPasswordValid) {
-    //   return res.status(400).send("Invalid credentials.")
-    // }
 
     await authenticatedUser.update({
       name: req.body.name,

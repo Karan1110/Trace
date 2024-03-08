@@ -29,6 +29,39 @@ Request.belongsTo(User, {
   onDelete: "CASCADE",
 });
 
+User.hasMany(Request, {
+  as: "my_requests",
+  foreignKey: "sender_id",
+  onDelete: "CASCADE",
+});
+
+User.hasMany(Request, {
+  as: "requests",
+  scope: {
+    accepted: false,
+  },
+  foreignKey: "recipient_id",
+  onDelete: "CASCADE",
+});
+
+User.hasMany(Request, {
+  as: "friends",
+  foreignKey: "recipient_id",
+  scope: {
+    accepted: true,
+  },
+  onDelete: "CASCADE",
+});
+
+User.hasMany(Request, {
+  as: "friends2",
+  foreignKey: "sender_id",
+  scope: {
+    accepted: true,
+  },
+  onDelete: "CASCADE",
+});
+
 Request.belongsTo(User, {
   as: "recipient",
   foreignKey: "recipient_id",

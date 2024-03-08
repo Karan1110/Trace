@@ -1,35 +1,37 @@
-const express = require("express")
-const helmet = require("helmet")
-const cors = require("cors")
-const users = require("../routes/users")
-const departments = require("../routes/departments")
-const meetings = require("../routes/meetings")
-const login = require("../routes/login")
-const notifications = require("../routes/notifications")
-const tickets = require("../routes/tickets")
-const error = require("../middlewares/error")
-const mails = require("../routes/mail")
-const chats = require("../routes/chats.js")
-const comments = require("../routes/comments")
-const follows = require("../routes/follows")
-const block = require("../routes/block")
+const express = require("express");
+const helmet = require("helmet");
+const cors = require("cors");
+const users = require("../routes/users");
+const departments = require("../routes/departments");
+const meetings = require("../routes/meetings");
+const login = require("../routes/login");
+const notifications = require("../routes/notifications");
+const tickets = require("../routes/tickets");
+const error = require("../middlewares/error");
+const mails = require("../routes/mail");
+const chats = require("../routes/chats.js");
+const comments = require("../routes/comments");
+const follows = require("../routes/follows");
+const block = require("../routes/block");
+const requests = require("../routes/requests");
 
 module.exports = function (app) {
-  app.use(express.urlencoded({ extended: true }))
-  app.use(express.json())
-  app.use(helmet())
-  app.use(cors())
-  require("../sockets/chats")(app)
-  app.use("/notifications", notifications)
-  app.use("/users", users)
-  app.use("/departments", departments)
-  app.use("/tickets", tickets)
-  app.use("/verify-email", mails)
-  app.use("/meetings", meetings)
-  app.use("/login", login)
-  app.use("/chats", chats)
-  app.use("/comments", comments)
-  app.use("/follow", follows)
-  app.use("/block", block)
-  app.use(error)
-}
+  app.use(express.urlencoded({ extended: true }));
+  app.use(express.json());
+  app.use(helmet());
+  app.use(cors());
+  require("../sockets/chats")(app);
+  app.use("/notifications", notifications);
+  app.use("/users", users);
+  app.use("/departments", departments);
+  app.use("/tickets", tickets);
+  app.use("/verify-email", mails);
+  app.use("/meetings", meetings);
+  app.use("/login", login);
+  app.use("/chats", chats);
+  app.use("/comments", comments);
+  app.use("/follow", follows);
+  app.use("/block", block);
+  app.use("/requests", requests);
+  app.use(error);
+};
