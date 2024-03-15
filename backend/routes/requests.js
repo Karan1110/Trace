@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const { Request } = require("../models"); // Assuming your Request model is exported from '../models'
+const  Request  = require("../models/request.js"); 
 const auth = require("../middlewares/auth.js");
 const { Op } = require("sequelize");
 
