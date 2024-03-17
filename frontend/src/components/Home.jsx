@@ -34,6 +34,7 @@ import {
   Box,
   ScrollArea,
   Flex,
+  Heading,
 } from "@radix-ui/themes";
 import { Link } from "react-router-dom";
 
@@ -51,6 +52,7 @@ const Home = () => {
       try {
         const response0 = await axios.get("http://localhost:1111/users/stats");
         setAvgTime(response0.data.average_time_taken);
+        console.log(response0.data);
         const response = await axios.get("http://localhost:1111/tickets");
         setTicketsCount(response.data);
         const response2 = await axios.get(
@@ -123,10 +125,15 @@ const Home = () => {
   };
   return (
     <>
-      <MacbookScroll />
-      <Typewriter avgTime={avgTime} />
-      <div className="container flex flex-row ml-[50px] mr-[40px] ">
-        <div className="w-1/2 h-[450px] mt-10  ">
+      <div className="flex flex-row ml-[50px] mr-[40px] ">
+        <div className="w-1/2 h-[450px]  ">
+          <div className="my-7">
+            <Heading>
+              The average time taken to complete a ticket is{" "}
+              {avgTime && avgTime.toString()}
+            </Heading>
+          </div>
+
           <div className="grid grid-cols-3  my-5  ">
             <span className="text-gray-900 font-medium  ">Closed Issues</span>
             <span className="text-gray-900 font-medium ">Open Issues</span>
