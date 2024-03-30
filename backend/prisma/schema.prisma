@@ -65,6 +65,8 @@ model Departments {
   tickets   Tickets[]
   meetings  Meetings[]
   users     Users[]
+
+  @@index([id])
 }
 
 model FollowUsers {
@@ -75,6 +77,8 @@ model FollowUsers {
   updatedAt     DateTime @updatedAt @db.Timestamptz(6)
   followedBy    Users?   @relation("followedBy", fields: [followedBy_id], references: [id], onDelete: Cascade)
   following     Users?   @relation("following", fields: [following_id], references: [id], onDelete: Cascade)
+
+  @@index([followedBy_id, following_id])
 }
 
 model MeetingMember {
@@ -124,8 +128,6 @@ model Notifications {
   updatedAt DateTime @updatedAt @db.Timestamptz(6)
   user_id   Int?
   user      Users?   @relation(fields: [user_id], references: [id], onDelete: Cascade)
-
-  @@index([message], map: "notifications_message")
 }
 
 model Saveds {
@@ -158,6 +160,8 @@ model Tickets {
   department    Departments?    @relation(fields: [department_id], references: [id])
   saveds        Saveds[]
   afterTickets  Tickets[]       @relation("beforeTicket")
+
+  @@index([status, name, description, user_id])
 }
 
 model Users {
@@ -183,6 +187,8 @@ model Users {
   chats             ChatUser[]
   meetings          MeetingMember[]
   comments          Comments[]
+
+  @@index([name, email])
 }
 
 enum channels_type {
@@ -205,7 +211,7 @@ enum chats_type {
 
 enum tickets_status {
   in
-  in_progress 
+  in_progress
   closed
   open
 }
