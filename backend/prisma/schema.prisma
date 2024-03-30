@@ -41,6 +41,7 @@ model Chats {
   channels   Channels[]
   users      ChatUser[]
 
+  @@unique([inviteCode])
   @@index([id])
 }
 
@@ -155,7 +156,7 @@ model Tickets {
   beforeTicket  Tickets?        @relation("beforeTicket", fields: [before_id], references: [id], onDelete: Cascade)
   user          Users?          @relation(fields: [user_id], references: [id], onDelete: Cascade)
   department    Departments?    @relation(fields: [department_id], references: [id])
-  Saveds        Saveds[]
+  saveds        Saveds[]
   afterTickets  Tickets[]       @relation("beforeTicket")
 }
 
@@ -203,6 +204,7 @@ enum chats_type {
 }
 
 enum tickets_status {
+  in
   in_progress @map("in-progress")
   closed
   open

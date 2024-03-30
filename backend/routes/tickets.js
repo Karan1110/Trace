@@ -392,6 +392,9 @@ router.post(
         department_id: req.body.department_id || null,
         before_id: req.body.before_id,
       },
+      include: {
+        user: true,
+      },
     });
 
     await prisma.notifications.create({
