@@ -1,21 +1,25 @@
-import { FollowerPointerCard } from "./following-pointer";
+import { FollowerPointerCard } from "./mouse-pointer";
 import { Avatar } from "@radix-ui/themes";
+import moment from "moment";
 
-export function FollowingPointerDemo({ ticket }) {
+export default function FollowingPointerDemo({ ticket }) {
   return (
     <div className="w-80 mx-auto">
       <FollowerPointerCard
         title={
           <TitleComponent
-            title={ticket.dataValues.User.name}
-            avatar={ticket.dataValues.User.name[0]}
+            title={ticket.User.name}
+            avatar={ticket.User.name.charAt(0)}
           />
         }
       >
         <div className="relative overflow-hidden h-full rounded-2xl transition duration-200 group bg-white hover:shadow-xl border border-zinc-100">
           <div className="w-full aspect-w-16 aspect-h-10 bg-gray-100 rounded-tr-lg rounded-tl-lg overflow-hidden xl:aspect-w-16 xl:aspect-h-10 relative">
             <img
-              src={ticket.imageUrl}
+              src={
+                ticket.imageUrl ||
+                "https://ui.aceternity.com/_next/image?url=%2Fdemo%2Fthumbnail.png&w=1920&q=75"
+              }
               alt="thumbnail"
               layout="fill"
               objectFit="cover"

@@ -206,7 +206,7 @@ const Chat = () => {
       config
     );
     console.log(response.data);
-    chatData.channels.push(response.data.dataValues);
+    chatData.channels.push(response.data);
 
     setNewChannel({
       name: "",

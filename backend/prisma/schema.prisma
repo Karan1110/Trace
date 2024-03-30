@@ -1,0 +1,209 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Channels {
+  id        Int            @id @default(autoincrement())
+  name      String         @db.VarChar(255)
+  type      channels_type? @default(text)
+  chat_id   Int?
+  createdAt DateTime       @default(now()) @db.Timestamptz(6)
+  updatedAt DateTime       @updatedAt @db.Timestamptz(6)
+  chats     Chats?         @relation(fields: [chat_id], references: [id], onDelete: NoAction)
+  messages  Messages[]
+}
+
+model ChatUser {
+  chat_id   Int
+  user_id   Int
+  user      Users          @relation(fields: [user_id], references: [id])
+  chat      Chats          @relation(fields: [chat_id], references: [id])
+  role      ChatUser_role? @default(user)
+  createdAt DateTime       @default(now()) @db.Timestamptz(6)
+  updatedAt DateTime       @updatedAt @db.Timestamptz(6)
+
+  @@id([user_id, chat_id])
+}
+
+model Chats {
+  id         Int         @id @default(autoincrement())
+  name       String      @db.VarChar(255)
+  type       chats_type? @default(group)
+  inviteCode String?     @db.Uuid
+  url        String?     @default("https://static.vecteezy.com/system/resources/previews/006/892/625/original/discord-logo-icon-editorial-free-vector.jpg") @db.VarChar(255)
+  createdAt  DateTime    @default(now()) @db.Timestamptz(6)
+  updatedAt  DateTime    @updatedAt @db.Timestamptz(6)
+  channels   Channels[]
+  users      ChatUser[]
+
+  @@index([id])
+}
+
+model Comments {
+  id        Int      @id @default(autoincrement())
+  content   String?
+  user_id   Int?
+  ticket_id Int?
+  createdAt DateTime @default(now()) @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @db.Timestamptz(6)
+  ticket    Tickets? @relation(fields: [ticket_id], references: [id], onDelete: Cascade)
+  user      Users?   @relation(fields: [user_id], references: [id], onDelete: Cascade)
+}
+
+model Departments {
+  id        Int        @id @default(autoincrement())
+  name      String?    @db.VarChar(255)
+  url       String?    @db.VarChar(255)
+  createdAt DateTime   @default(now()) @db.Timestamptz(6)
+  updatedAt DateTime   @updatedAt @db.Timestamptz(6)
+  tickets   Tickets[]
+  meetings  Meetings[]
+  users     Users[]
+}
+
+model FollowUsers {
+  id            Int      @id @default(autoincrement())
+  following_id  Int?
+  followedBy_id Int?
+  createdAt     DateTime @default(now()) @db.Timestamptz(6)
+  updatedAt     DateTime @updatedAt @db.Timestamptz(6)
+  followedBy    Users?   @relation("followedBy", fields: [followedBy_id], references: [id], onDelete: Cascade)
+  following     Users?   @relation("following", fields: [following_id], references: [id], onDelete: Cascade)
+}
+
+model MeetingMember {
+  user_id    Int
+  meeting_id Int
+  attended   Boolean? @default(false)
+  createdAt  DateTime @default(now()) @db.Timestamptz(6)
+  updatedAt  DateTime @updatedAt @db.Timestamptz(6)
+  Meeting    Meetings @relation(fields: [meeting_id], references: [id])
+  User       Users    @relation(fields: [user_id], references: [id])
+
+  @@id([user_id, meeting_id])
+}
+
+model Meetings {
+  id            Int             @id @default(autoincrement())
+  name          String?         @db.VarChar(255)
+  duration      Int?            @default(1)
+  link          String?         @db.VarChar(255)
+  description   String?
+  department_id Int?
+  startingOn    DateTime?       @db.Timestamptz(6)
+  endingOn      DateTime?       @db.Timestamptz(6)
+  createdAt     DateTime        @default(now()) @db.Timestamptz(6)
+  updatedAt     DateTime        @updatedAt @db.Timestamptz(6)
+  department    Departments?    @relation(fields: [department_id], references: [id], onDelete: Cascade)
+  users         MeetingMember[]
+}
+
+model Messages {
+  id         String    @id @db.VarChar(255)
+  value      String?   @db.VarChar(255)
+  isRead     Boolean?  @default(false)
+  channel_id Int?
+  user_id    Int?
+  url        String?   @db.VarChar(255)
+  createdAt  DateTime  @db.Timestamptz(6)
+  updatedAt  DateTime  @db.Timestamptz(6)
+  channel    Channels? @relation(fields: [channel_id], references: [id], onDelete: NoAction)
+  user       Users?    @relation(fields: [user_id], references: [id], onDelete: Cascade)
+}
+
+model Notifications {
+  id        Int      @id @default(autoincrement())
+  message   String?  @db.VarChar(255)
+  createdAt DateTime @default(now()) @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @db.Timestamptz(6)
+  user_id   Int?
+  user      Users?   @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@index([message], map: "notifications_message")
+}
+
+model Saveds {
+  id        Int      @id @default(autoincrement())
+  user_id   Int?
+  ticket_id Int?
+  createdAt DateTime @default(now()) @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @db.Timestamptz(6)
+  ticket    Tickets? @relation(fields: [ticket_id], references: [id], onDelete: Cascade)
+  user      Users?   @relation(fields: [user_id], references: [id], onDelete: Cascade)
+}
+
+model Tickets {
+  id            Int             @id @default(autoincrement())
+  name          String?         @db.VarChar(255)
+  deadline      DateTime?       @db.Timestamptz(6)
+  status        tickets_status? @default(open)
+  description   String?
+  user_id       Int?
+  videoUrl      String?
+  comments      Comments[]
+  department_id Int?
+  closedOn      DateTime?       @db.Timestamptz(6)
+  before_id     Int?
+  imageUrl      String?
+  createdAt     DateTime        @default(now()) @db.Timestamptz(6)
+  updatedAt     DateTime        @updatedAt @db.Timestamptz(6)
+  beforeTicket  Tickets?        @relation("beforeTicket", fields: [before_id], references: [id], onDelete: Cascade)
+  user          Users?          @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  department    Departments?    @relation(fields: [department_id], references: [id])
+  Saveds        Saveds[]
+  afterTickets  Tickets[]       @relation("beforeTicket")
+}
+
+model Users {
+  id                Int             @id @default(autoincrement())
+  name              String?         @db.VarChar(255)
+  email             String?         @unique @db.VarChar(255)
+  password          String?         @db.VarChar(255)
+  department_id     Int?
+  total_meetings    Int?            @default(0)
+  attended_meetings Int?            @default(0)
+  blockedUsers      Int[]           @default([])
+  followedUsers     Int[]           @default([])
+  points            Int?            @default(0)
+  createdAt         DateTime        @default(now()) @db.Timestamptz(6)
+  updatedAt         DateTime        @updatedAt @db.Timestamptz(6)
+  followers         FollowUsers[]   @relation("followedBy")
+  following         FollowUsers[]   @relation("following")
+  messages          Messages[]
+  motifications     Notifications[]
+  saveds            Saveds[]
+  tickets           Tickets[]
+  department        Departments?    @relation(fields: [department_id], references: [id], onDelete: Cascade)
+  chats             ChatUser[]
+  meetings          MeetingMember[]
+  comments          Comments[]
+}
+
+enum channels_type {
+  audio
+  video
+  text
+}
+
+enum ChatUser_role {
+  user
+  moderator
+  owner
+}
+
+enum chats_type {
+  channel
+  group
+  personal
+}
+
+enum tickets_status {
+  in_progress @map("in-progress")
+  closed
+  open
+}

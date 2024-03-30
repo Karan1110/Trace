@@ -13,7 +13,6 @@ const chats = require("../routes/chats.js");
 const comments = require("../routes/comments");
 const follows = require("../routes/follows");
 const block = require("../routes/block");
-const requests = require("../routes/requests");
 
 module.exports = function (app) {
   app.use(express.urlencoded({ extended: true }));
@@ -32,6 +31,5 @@ module.exports = function (app) {
   app.use("/comments", comments);
   app.use("/follow", follows);
   app.use("/block", block);
-  app.use("/requests", requests);
   app.use(error);
 };

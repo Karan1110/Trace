@@ -1,12 +1,8 @@
-const Message = require("../models/message");
-const User = require("../models/user");
-const Chat = require("../models/chat");
-const ChatUser = require("../models/ChatUser");
 const auth = require("./utils/auth");
 const { produceMessage } = require("./utils/Kafka");
 const { startConsumingMessages } = require("./utils/Kafka");
 const { v4: uuidv4 } = require("uuid");
-const Channel = require("../models/channel");
+const prisma = require("../utils/prisma");
 
 module.exports = function (app) {
   require("express-ws")(app);
@@ -17,61 +13,46 @@ module.exports = function (app) {
 
   app.ws("/chat/:chat/:channel", auth, async (ws, req) => {
     try {
-      let currentChat = await Chat.findByPk(req.params.chat, {
-        include: [
-          {
-            as: "channels",
-            model: Channel,
+      let currentChat = await prisma.chats.findUniqueOrThrow({
+        where: {
+          id: req.params.chat,
+        },
+        include: {
+          channels: {
             include: {
-              model: Message,
-              as: "messages",
-              include: {
-                model: User,
-                as: "Sender",
+              messages: {
+                include: {
+                  user: true,
+                },
               },
             },
           },
-        ],
+        },
       });
 
-      const user = await User.findByPk(req.user.id);
-
-      if (!currentChat || !user) {
-        ws.close("chat not found");
-      }
+      const user = await prisma.users.findUniqueOrThrow({
+        where: {
+          id: req.user.id,
+        },
+      });
 
       // Check if the chat room exists, create a new one if it doesn't
       const chatKey = `${req.params.chat}_${req.params.channel}`;
       if (!Chats[chatKey]) {
         Chats[chatKey] = [];
       }
-      ws.username = user.dataValues.name;
+
+      ws.username = user.name;
+
       // Add the WebSocket connection to the chat room
       Chats[chatKey].push(ws);
 
-      // TODO: use Kafka here...
-
-      // Mark all messages as read
-      // await Message.update(
-      //   { isRead: true },
-      //   {
-      //     where: {
-      //       isRead: false,
-      //       chat_id: currentChat.id || currentChat.dataValues.id,
-      //       user_id: {
-      //         [Sequelize.Op.notIn]: [req.user.id],
-      //       },
-      //     },
-      //   }
-      // )
-
-      // Get all messages for the current chat room
-
-      const channelIndex = currentChat.dataValues.channels.findIndex(
+      const channelIndex = currentChat.channels.findIndex(
         (c) => c.name == req.params.channel
       );
-      req.channel = currentChat.dataValues.channels[channelIndex];
-      const messages = currentChat.dataValues.channels[channelIndex].messages;
+
+      req.channel = currentChat.channels[channelIndex];
+      const messages = currentChat.channels[channelIndex].messages;
 
       // Send all messages to the WebSocket connection and mark them as read
       if (messages && messages.length > 0) {
@@ -162,7 +143,7 @@ module.exports = function (app) {
         );
       });
     } catch (ex) {
-      console.log("ERROR!!!", ex.message, ex);
+      console.log(ex.message, ex);
       ws.close(4000, ex.message);
     }
   });

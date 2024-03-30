@@ -1,8 +1,8 @@
-const { Kafka } = require("kafkajs")
-const fs = require("fs")
-const Message = require("../../models/message")
-const path = require("path")
-const config = require("config")
+const { Kafka } = require("kafkajs");
+const fs = require("fs");
+const path = require("path");
+const config = require("config");
+const prisma = require("../../utils/prisma");
 
 const kafka = new Kafka({
   brokers: [config.get("kafka_broker")],
@@ -14,17 +14,17 @@ const kafka = new Kafka({
     username: config.get("kafka_username"),
     password: config.get("kafka_password"),
   },
-})
+});
 
-let producer = null
+let producer = null;
 
 const createProducer = async () => {
-  if (producer) return producer
-  const _producer = kafka.producer()
-  await _producer.connect()
-  producer = _producer
-  return producer
-}
+  if (producer) return producer;
+  const _producer = kafka.producer();
+  await _producer.connect();
+  producer = _producer;
+  return producer;
+};
 
 exports.produceMessage = async function produceMessage(
   Chats,
@@ -36,7 +36,7 @@ exports.produceMessage = async function produceMessage(
   id,
   url
 ) {
-  const producer = await createProducer()
+  const producer = await createProducer();
   const msg = {
     id: id,
     value: JSON.stringify(message),
@@ -47,72 +47,71 @@ exports.produceMessage = async function produceMessage(
     edit: edit,
     msgId: msgId,
     url: url,
-  }
-  console.log("producer msg : ", msg)
+  };
+  console.log("producer msg : ", msg);
 
-  const chatKey = `${req.params.chat}_${req.params.channel}`
-  const otherClients = Chats[chatKey].filter((connection) => connection !== ws)
+  const chatKey = `${req.params.chat}_${req.params.channel}`;
+  const otherClients = Chats[chatKey].filter((connection) => connection !== ws);
 
   if (otherClients.length > 0) {
-    msg.isRead = true
+    msg.isRead = true;
   }
 
   await producer.send({
     messages: [{ value: JSON.stringify(msg) }],
     topic: "message",
-  })
-  return true
-}
+  });
+  return true;
+};
 
 exports.startConsumingMessages = async function startConsumingMessages(
   channel
 ) {
   try {
-    const consumer = kafka.consumer({ groupId: "default" })
-    await consumer.connect()
-    await consumer.subscribe({ topic: "message", fromBeginning: true })
+    const consumer = kafka.consumer({ groupId: "default" });
+    await consumer.connect();
+    await consumer.subscribe({ topic: "message", fromBeginning: true });
 
     await consumer.run({
       eachMessage: async ({ message, pause }) => {
         try {
-          const msg = JSON.parse(message.value.toString())
-          console.log("consumer message...", msg)
-          const temp2 = msg.value.split("~")
-          const value = temp2[0]
-          console.log(value)
+          const msg = JSON.parse(message.value.toString());
+          console.log("consumer message...", msg);
+          const temp2 = msg.value.split("~");
+          const value = temp2[0];
+          console.log(value);
           if (msg.edit == true) {
-            await Message.update(
-              {
+            await prisma.messages.update({
+              data: {
                 value: value,
               },
-              {
-                where: {
-                  id: msg.msgId,
-                },
-              }
-            )
+              where: {
+                id: msg.msgId,
+              },
+            });
           } else {
-            await Message.create({
-              id: msg.id,
-              value: msg.value,
-              isRead: JSON.parse(msg.isRead),
-              channel_id: channel.id,
-              chat_id: parseInt(msg.chat_id),
-              user_id: parseInt(msg.user_id),
-              url: msg.url,
-            })
+            await prisma.messages.create({
+              data: {
+                id: msg.id,
+                value: msg.value,
+                isRead: JSON.parse(msg.isRead),
+                channel_id: channel.id,
+                chat_id: parseInt(msg.chat_id),
+                user_id: parseInt(msg.user_id),
+                url: msg.url,
+              },
+            });
           }
         } catch (ex) {
-          console.error("Error processing message:", ex.message, ex)
-          // Pause the consumer and resume after a delay
-          pause()
+          console.error("Error processing message:", ex.message, ex);
+          pause();
           setTimeout(() => {
-            consumer.resume([{ topic: "message" }])
-          }, 60 * 1000)
+            consumer.resume([{ topic: "message" }]);
+          }, 60 * 1000);
         }
       },
-    })
+    });
   } catch (ex) {
-    console.log("Error occurred while consuming messages:", ex.message)
+    console.log("Error occurred while consuming messages:", ex.message);
   }
-}
+};

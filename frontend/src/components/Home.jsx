@@ -11,8 +11,6 @@ import {
   BarController,
   BarElement,
 } from "chart.js";
-import Typewriter from "./Typewriter";
-import MacbookScroll from "../ui/macbook-scroll";
 Chart.register(
   LineController,
   LineElement,
@@ -37,6 +35,7 @@ import {
   Heading,
 } from "@radix-ui/themes";
 import { Link } from "react-router-dom";
+import TicketCard from "../ui/TicketCard.jsx";
 
 const Home = () => {
   const [ticketCounts, setTicketsCount] = useState([]);
@@ -72,7 +71,7 @@ const Home = () => {
             },
           }
         );
-
+        console.log(response3.data);
         setFeed(response3.data);
         const response4 = await axios.get(
           "http://localhost:1111/tickets/pending",
@@ -207,7 +206,7 @@ const Home = () => {
           </div>
         </div>
       </div>
-      <div className="mt-40">
+      <div className="mt-40 text-center">
         <Tabs.Root defaultValue="account">
           <Tabs.List>
             <Tabs.Trigger value="account">Feed</Tabs.Trigger>
@@ -218,7 +217,7 @@ const Home = () => {
 
           <Box px="4" pt="3" pb="2">
             <Tabs.Content value="account">
-              <div className="flex flex-col justify-center items-center max-w-xl">
+              <div className="flex justify-content-start items-center max-w-full">
                 {feed.map((ticket) => (
                   <TicketCard ticket={ticket} />
                 ))}
@@ -226,9 +225,11 @@ const Home = () => {
             </Tabs.Content>
 
             <Tabs.Content value="documents">
-              {pendingTickets.map((ticket) => (
-                <TicketCard ticket={ticket} />
-              ))}
+              <div className="flex justify-content-start items-center max-w-full">
+                {pendingTickets.map((ticket) => (
+                  <TicketCard ticket={ticket} />
+                ))}
+              </div>
             </Tabs.Content>
 
             <Tabs.Content value="settings">

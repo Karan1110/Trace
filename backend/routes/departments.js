@@ -1,65 +1,58 @@
 const express = require("express");
 const router = express.Router();
 const auth = require("../middlewares/auth");
-const Department = require("../models/department");
 const uploader = require("../utils/uploader");
-const User = require("../models/user");
-const Meeting = require("../models/meeting");
-const Ticket = require("../models/ticket");
 const multer = require("multer");
+const prisma = require("../utils/prisma");
 const storage = multer.memoryStorage();
 const upload = multer({ storage });
 
 router.get("/", auth, async (req, res) => {
-  const departments = await Department.findAll({ attributes: ["name"] });
+  const departments = await prisma.departments.findMany({});
   res.json(departments);
 });
 
 router.get("/:id", auth, async (req, res) => {
-  const department = await Department.findByPk(req.params.id, {
-    include: [
-      {
-        model: User,
-        as: "users",
-      },
-      {
-        model: Meeting,
-        as: "meetings",
-      },
-      {
-        model: Ticket,
-        as: "tickets",
-      },
-    ],
+  const department = await prisma.departments.findUnique({
+    where: {
+      id: req.params.id,
+    },
+    include: {
+      Users: true,
+      Meetings: true,
+      Tickets: true,
+    },
   });
 
-  const followingInCommon = await FollowUser.findAll({
+  const followingInCommon = await prisma.followUsers.findMany({
     where: {
       followedBy_id: req.user.id,
       following_id: {
-        [Op.In]: department.dataValues.users.map((u) => u.id),
+        [Op.In]: department.Users.map((u) => u.id),
       },
     },
-    include: [
-      {
-        model: User,
-        as: "following",
-      },
-    ],
+    include: {
+      Users_FollowUsers_following_idToUsers: true,
+    },
   });
 
   res.json({
     department,
     followingInCommon: followingInCommon.map((f) => {
-      return { name: f.following.name, email: f.following.email };
+      return {
+        name: f.Users_FollowUsers_following_idToUsers.name,
+        email: f.Users_FollowUsers_following_idToUsers.email,
+      };
     }),
   });
 });
 
 router.post("/", [auth, upload.single("profile_pic")], async (req, res) => {
   let url;
+
+  const publicId = `${req.body.name}${uuidv4()}`;
   if (req.file) {
-    url = await uploader(req.file);
+    url = await uploader(req.file, publicId);
   }
 
   const department = await Department.create({

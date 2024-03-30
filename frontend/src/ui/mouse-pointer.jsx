@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from "react";
 
 import { motion, AnimatePresence, useMotionValue } from "framer-motion";
-import { cn } from "@/lib/utils";
+import { cn } from "../utils/cn";
 
 export const FollowerPointerCard = ({ children, className, title }) => {
   const x = useMotionValue(0);
@@ -20,10 +20,8 @@ export const FollowerPointerCard = ({ children, className, title }) => {
 
   const handleMouseMove = (e) => {
     if (rect) {
-      const scrollX = window.scrollX;
-      const scrollY = window.scrollY;
-      x.set(e.clientX - rect.left + scrollX);
-      y.set(e.clientY - rect.top + scrollY);
+      x.set(e.clientX - rect.left);
+      y.set(e.clientY - rect.top);
     }
   };
   const handleMouseLeave = () => {
@@ -112,7 +110,7 @@ export const FollowPointer = ({ x, y, title }) => {
           opacity: 0,
         }}
         className={
-          "px-2 py-2 bg-neutral-200 text-white whitespace-nowrap min-w-max text-xs rounded-full"
+          "px-2 py-2 bg-neutral-200 font-bold text-gray-800 whitespace-nowrap min-w-max text-sm rounded-full"
         }
       >
         {title || `William Shakespeare`}

@@ -1,34 +1,31 @@
-const Chat = require("../models/chat");
-const ChatUser = require("../models/ChatUser");
 const router = require("express").Router();
 const auth = require("../middlewares/auth");
 const config = require("config");
-const Channel = require("../models/channel");
-const User = require("../models/user");
 const { v4: uuidv4 } = require("uuid");
 const multer = require("multer");
 const storage = multer.memoryStorage();
 const upload = multer({ storage });
 const uploader = require("../utils/uploader");
+const prisma = require("../utils/prisma");
 
 import("livekit-server-sdk").then(({ AccessToken }) => {
   router.get("/messages", async (req, res) => {
     try {
-      const channel = await Channel.findOne({
+      const channel = await prisma.channels.findFirst({
         where: {
-          chat_id: req.query.chat_id,
+          chat_id: parseInt(req.query.chat_id),
           name: req.query.channel,
         },
         include: {
-          model: Message,
-          as: "messages",
-          limit: 10,
-          offset: req.query.page * 10,
-          order: [["createdAt", "DESC"]],
+          Messages: {
+            take: 10,
+            skip: req.query.page * 10,
+            orderBy: { createdAt: "desc" },
+          },
         },
       });
 
-      res.json(channel.messages);
+      res.json(channel.Messages);
     } catch (error) {
       console.error("Error fetching messages:", error);
       res.status(500).json({ error: "Internal Server Error" });
@@ -36,58 +33,69 @@ import("livekit-server-sdk").then(({ AccessToken }) => {
   });
 
   router.get("/:id", async (req, res) => {
-    let chat = await Chat.findByPk(req.params.id, {
-      include: [
-        {
-          model: Channel,
-          as: "channels",
-        },
-        {
-          model: User,
-          as: "Users",
-        },
-      ],
+    const chat = await prisma.chats.findUnique({
+      where: {
+        id: parseInt(req.params.id),
+      },
+      include: {
+        Messages: true,
+        Users: true,
+      },
     });
 
     res.send(chat);
   });
 
   router.post("/", [auth, upload.single("chat_pic")], async (req, res) => {
-    const url = await uploader(req.file);
+    try {
+      const publicId = `${req.body.name}${uuidv4()}`;
+      const url = await uploader(req.file, publicId);
 
-    const chat = await Chat.create({
-      type: req.body.type,
-      name: req.body.name,
-      inviteCode: uuidv4(),
-      url: url.toString(),
-    });
-
-    const chat_user = await ChatUser.create({
-      user_id: req.user.id,
-      chat_id: chat.dataValues.id,
-      role: "owner",
-    });
-    if (req.body.type == "personal") {
-      await ChatUser.create({
-        user_id: req.body.recipient_id,
-        chat_id: chat.dataValues.id,
+      const chat = await prisma.chats.create({
+        data: {
+          type: req.body.type,
+          name: req.body.name,
+          inviteCode: uuidv4(),
+          url: url.toString(),
+          channels: {
+            create: { name: "general", type: "text" },
+          },
+        },
+        include: {
+          channels: true,
+          chatUsers: true,
+        },
       });
-    }
 
-    let channel;
-    if (req.body.type !== "personal") {
-      channel = await Channel.create({
-        name: "general",
-        chat_id: chat.dataValues.id,
-        type: "text",
+      const chat_user = await prisma.chatUsers.create({
+        data: {
+          user: { connect: { id: req.user.id } },
+          chat: { connect: { id: chat.id } },
+        },
       });
-    }
 
-    res.json({ chat, chat_user, channel });
+      if (req.body.type === "personal") {
+        await prisma.chatUsers.create({
+          data: {
+            user: { connect: { id: req.body.recipient_id } },
+            chat: { connect: { id: chat.id } },
+          },
+        });
+      }
+
+      res.json({
+        chat,
+        chat_user,
+        channel: chat.channels[0],
+      });
+    } catch (error) {
+      res.send("something failed...");
+      console.log(error.message, error);
+    }
   });
 
   router.post("/join/:inviteCode", auth, async (req, res) => {
-    const chat = await Chat.findOne({
+    const chat = await prisma.chats.findUnique({
       where: {
         inviteCode: req.params.inviteCode,
       },
@@ -98,10 +106,10 @@ import("livekit-server-sdk").then(({ AccessToken }) => {
         .status(404)
         .send("server not found with the given invite code...");
 
-    const already_joined = await ChatUser.findOne({
+    const already_joined = await prisma.chatUsers.findUnique({
       where: {
         user_id: req.user.id,
-        chat_id: chat.id || chat.dataValues.id,
+        chat_id: chat.id,
       },
     });
 
@@ -109,19 +117,23 @@ import("livekit-server-sdk").then(({ AccessToken }) => {
       return res.status(400).send("already joined...");
     }
 
-    const chat_user = await ChatUser.create({
-      user_id: req.user.id,
-      chat_id: chat.id || chat.dataValues.id,
+    const chat_user = await prisma.chatUsers.create({
+      data: {
+        user_id: req.user.id,
+        chat_id: chat.id,
+      },
     });
 
     res.json(chat_user);
   });
 
   router.post("/createChannel", auth, async (req, res) => {
-    const channel = Channel.create({
-      type: req.body.channel_type,
-      name: req.body.name,
-      chat_id: req.body.chat_id,
+    const channel = await prisma.channels.create({
+      data: {
+        type: req.body.channel_type,
+        name: req.body.name,
+        chat_id: req.body.chat_id,
+      },
     });
 
     res.json(channel);
@@ -150,24 +162,27 @@ import("livekit-server-sdk").then(({ AccessToken }) => {
     if (req.body.role != "owner" || "moderator")
       return res.status(400).send("invalid role...");
 
-    const owner = await ChatUser.findOne({
-      chat_id: req.params.chatId,
-      user_id: req.user.id,
-      role: "owner",
+    const owner = await prisma.chatUsers.findFirst({
+      where: {
+        chat_id: req.params.chatId,
+        user_id: req.user.id,
+        role: "owner",
+      },
     });
+
     if (!owner) return res.status(403).send("not authorized...");
 
-    await ChatUser.update(
-      {
+    await prisma.chatUsers.update({
+      where: {
+        userId_chatId: {
+          userId: parseInt(req.params.userId),
+          chatId: parseInt(req.params.chatId),
+        },
+      },
+      data: {
         role: req.body.role,
       },
-      {
-        where: {
-          user_id: req.params.userId,
-          chat_id: req.params.chatId,
-        },
-      }
-    );
+    });
 
     res
       .status(200)
@@ -177,16 +192,14 @@ import("livekit-server-sdk").then(({ AccessToken }) => {
   router.put("/updateInviteCode/:chatId", auth, async (req, res) => {
     try {
       const newInviteCode = uuidv4();
-      await Chat.update(
-        {
+      await prisma.chats.update({
+        where: {
+          id: parseInt(req.params.chatId),
+        },
+        data: {
           inviteCode: newInviteCode,
         },
-        {
-          where: {
-            id: req.params.chatId,
-          },
-        }
-      );
+      });
 
       res.json({ newInviteCode });
     } catch (error) {

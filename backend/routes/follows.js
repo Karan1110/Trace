@@ -1,34 +1,48 @@
 const express = require("express");
 const router = express.Router();
 const auth = require("../middlewares/auth.js");
-const User = require("../models/user.js");
-const FollowUser = require("../models/followUser");
+const prisma = require("../utils/prisma.js");
 
 router.post("/:id", [auth], async (req, res) => {
   try {
-    const user = await User.findByPk(req.user.id);
-    if (!user) return res.status(404).json({ message: "user not found..." });
-
-    const followedUser = await User.findByPk(req.params.id);
-    if (!followedUser) return res.status(404).send("user not found....");
-
-    await FollowUser.create({
-      followedBy_id: req.user.id,
-      following_id: followedUser.dataValues.id,
+    const user = await prisma.users.findUnique({
+      where: {
+        id: req.user.id,
+      },
     });
 
-    await user.update({
-      followedUsers: [
-        ...user.dataValues.followedUsers,
-        followedUser.dataValues.id,
-      ],
+    if (!user) return res.status(404).json({ message: "user not found..." });
+
+    const followedUser = await prisma.users.findUnique({
+      where: {
+        id: req.params.id,
+      },
+    });
+    if (!followedUser) return res.status(404).send("user not found....");
+
+    await prisma.followUsers.create({
+      data: {
+        followedBy_id: req.user.id,
+        following_id: followedUser.id,
+      },
+    });
+
+    await prisma.users.update({
+      where: {
+        id: req.user.id,
+      },
+      data: {
+        followedUsers: {
+          push: parseInt(followedUser.id),
+        },
+      },
     });
 
     await axios.post(
       "/notifications",
       {
-        user_id: followedUser.dataValues.id,
-        message: `${followedUser.dataValues.name} just followed you!`,
+        user_id: followedUser.id,
+        message: `${followedUser.name} just followed you!`,
       },
       {}
     );
@@ -42,11 +56,19 @@ router.post("/:id", [auth], async (req, res) => {
 
 router.put("/:id", [auth], async (req, res) => {
   try {
-    const user = await User.findByPk(req.user.id);
+    const user = await prisma.users.findUniqueOrThrow({
+      where: {
+        id: req.user.id,
+      },
+    });
+
     if (!user) return res.status(404).json({ message: "user not found..." });
 
-    const followedUser = await User.findByPk(req.params.id);
-    const new_followed_list = user.dataValues.followedUsers.filter((id) => {
+    const followedUser = await prisma.users.findUniqueOrThrow({
+      where: { id: req.params.id },
+    });
+
+    const new_followed_list = user.followedUsers.filter((id) => {
       return id !== req.params.id;
     });
 
@@ -58,8 +80,13 @@ router.put("/:id", [auth], async (req, res) => {
     });
     if (!followedUser) return res.status(404).send("user not found....");
 
-    await user.update({
-      followedUsers: new_followed_list,
+    await prisma.users.update({
+      where: {
+        id: req.user.id,
+      },
+      data: {
+        followedUsers: { set: new_followed_list },
+      },
     });
 
     res.status(200).send("done!");

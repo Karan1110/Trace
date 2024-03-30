@@ -1,13 +1,17 @@
-"use strict"
+"use strict";
+const LimMailer = require("lim-mailer");
+const otpGenerator = require("otp-generator");
+const router = require("express").Router();
 
-const LimMailer = require("lim-mailer")
-const randomNumberRange = require("random-number-range")
+router.post("/", async (req, res) => {
+  const c = otpGenerator.generate(6, {
+    upperCaseAlphabets: false,
+    lowerCaseAlphabets: false,
+    specialChars: false,
+    digits: true,
+  });
 
-const router = require("express").Router()
-
-router.post("/", async (req, res, next) => {
-  const c = randomNumberRange({ min: 10, max: 100 })
-  console.log(c)
+  console.log(c);
 
   // pass in the mailbox configuration when creating the instance:
   const mailer = new LimMailer(
@@ -25,22 +29,23 @@ router.post("/", async (req, res, next) => {
       to: [`${req.body.to}`],
       cc: [],
     }
-  )
+  );
 
   mailer
     .sendMail({
-      subject: "Welcome to Veera", // Subject line
-      text: `Welcome to lim-mailer, Your verification code is ${c}!`, // plain text body
-      html: `<b> Your email-code is ${c}</b>`, // HTML body
+      subject: "OTP verification - Trace", // Subject line
+      html: `Welcome to Trace!...
+      <br/>
+      <b>Your otp to sign in to <i> Trace </i> is ${c}</b>`, // HTML body
     })
     .then((info) => {
-      console.log(info)
+      console.log(info);
     })
     .catch((ex) => {
-      console.log(ex)
-    })
+      console.log(ex);
+    });
 
-  res.status(200).json({ mail_code: c })
-})
+  res.status(200).json({ mail_code: c });
+});
 
-module.exports = router
+module.exports = router;

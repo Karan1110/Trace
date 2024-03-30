@@ -1,16 +1,20 @@
+const config = require("config");
 const cloudinary = require("cloudinary").v2;
+
 cloudinary.config({
-  cloud_name: "dd7slpjud",
-  api_key: "538459367684964",
-  api_secret: "51oKGM47I-8nI5vAARdKrGoLUUI",
+  cloud_name: config.get("cloudinary_cloud_name"),
+  api_key: config.get("cloudinary_api_key"),
+  api_secret: config.get("cloudinary_api_secret"),
 });
 
-module.exports = async (file) => {
+// TODO: find out about upload_preset...
+
+module.exports = async (file,public_id) => {
   const b64 = Buffer.from(file.buffer).toString("base64");
   let dataURI = "data:" + file.mimetype + ";base64," + b64;
 
   const { secure_url } = await cloudinary.uploader.upload(dataURI, {
-    upload_preset: "my_preset",
+   public_id : public_id
   });
 
   return secure_url;

@@ -1,18 +1,12 @@
 const express = require("express");
 const router = express.Router();
 const auth = require("../middlewares/auth.js");
-const User = require("../models/user.js");
-const Notification = require("../models/notification.js");
-const Ticket = require("../models/ticket.js");
 const moment = require("moment");
-const { Op } = require("sequelize");
-const Comment = require("../models/comment.js");
-const Saved = require("../models/saved.js");
 const multer = require("multer");
 const blockedUsers = require("../middlewares/blockedUsers.js");
-const Department = require("../models/department.js");
 const axios = require("axios");
 const uploader = require("../utils/uploader.js");
+const prisma = require("../utils/prisma.js");
 const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
 
@@ -20,21 +14,25 @@ const upload = multer({ storage: storage });
 router.get("/", async (req, res) => {
   try {
     const tickets = [];
-    const open = await Ticket.count({
+
+    const open = await prisma.tickets.count({
       where: {
         status: "open",
       },
     });
-    const closed = await Ticket.count({
+
+    const closed = await prisma.tickets.count({
       where: {
         status: "closed",
       },
     });
-    const inProgress = await Ticket.count({
+
+    const inProgress = await prisma.tickets.count({
       where: {
         status: "in-progress",
       },
     });
+
     tickets.push(open);
     tickets.push(closed);
     tickets.push(inProgress);
@@ -53,19 +51,17 @@ router.get("/all", [auth, blockedUsers], async (req, res) => {
     if (req.blockedUsers && req.blockedUsers.length > 0) {
       whereClause = {
         user_id: {
-          [Op.notIn]: req.blockedUsers,
+          notIn: req.blockedUsers,
         },
       };
     }
 
-    const tickets = await Ticket.findAll({
+    const tickets = await prisma.tickets.findMany({
       where: whereClause,
-      order: [
-        [
-          `${req.query.sortingProperty}`,
-          `${req.query.sortingProperty == "createdAt" ? "DESC" : "ASC"}`,
-        ],
-      ],
+      orderBy: {
+        [req.query.sortingProperty]:
+          req.query.sortingProperty == "createdAt" ? "desc" : "asc",
+      },
     });
 
     res.json(tickets);
@@ -79,19 +75,23 @@ router.get("/latest", [auth, blockedUsers], async (req, res) => {
   try {
     let tickets;
     if (req.blockedUsers.length > 0) {
-      tickets = await Ticket.findAll({
+      tickets = await prisma.tickets.findMany({
         where: {
-          [Op.notIn]: {
-            user_id: req.blockedUsers,
+          user_id: {
+            notIn: req.blockedUsers,
           },
         },
-        order: [["createdAt", "DESC"]],
-        limit: 5,
+        orderBy: {
+          createdAt: "desc",
+        },
+        take: 10,
       });
     } else {
-      tickets = await Ticket.findAll({
-        order: [["createdAt", "DESC"]],
-        limit: 5,
+      tickets = await prisma.tickets.findMany({
+        orderBy: {
+          createdAt: "desc",
+        },
+        take: 10,
       });
     }
 
@@ -110,7 +110,7 @@ router.get("/closed", [auth, blockedUsers], async (req, res) => {
 
     if (req.blockedUsers && req.blockedUsers.length > 0) {
       whereClauseBase.user_id = {
-        [Op.notIn]: req.blockedUsers,
+        notIn: req.blockedUsers,
       };
     }
 
@@ -122,15 +122,14 @@ router.get("/closed", [auth, blockedUsers], async (req, res) => {
             department_id: req.query.department_id,
           };
 
-    const incompleteTickets = await Ticket.findAll({
+    const incompleteTickets = await prisma.tickets.findMany({
       where: whereClause,
-      order: [
-        [
-          `${req.query.sortingProperty}`,
-          `${req.query.sortingProperty == "createdAt" ? "DESC" : "ASC"}`,
-        ],
-      ],
+      orderBy: {
+        [req.query.sortingProperty]:
+          req.query.sortingProperty == "createdAt" ? "desc" : "asc",
+      },
     });
+
     res.json(incompleteTickets);
   } catch (error) {
     console.error(error);
@@ -146,7 +145,7 @@ router.get("/open", [auth, blockedUsers], async (req, res) => {
 
     if (req.blockedUsers && req.blockedUsers.length > 0) {
       whereClause.user_id = {
-        [Op.notIn]: req.blockedUsers,
+        notIn: req.blockedUsers,
       };
     }
 
@@ -154,14 +153,12 @@ router.get("/open", [auth, blockedUsers], async (req, res) => {
       whereClause.department_id = req.query.department_id;
     }
 
-    const openTickets = await Ticket.findAll({
+    const openTickets = await prisma.tickets.findMany({
       where: whereClause,
-      order: [
-        [
-          `${req.query.sortingProperty}`,
-          `${req.query.sortingProperty == "createdAt" ? "DESC" : "ASC"}`,
-        ],
-      ],
+      orderBy: {
+        [req.query.sortingProperty]:
+          req.query.sortingProperty == "createdAt" ? "desc" : "asc",
+      },
     });
     res.json(openTickets);
   } catch (error) {
@@ -178,7 +175,7 @@ router.get("/in-progress", [auth, blockedUsers], async (req, res) => {
 
     if (req.blockedUsers && req.blockedUsers.length > 0) {
       whereClause.user_id = {
-        [Op.notIn]: req.blockedUsers,
+        notIn: req.blockedUsers,
       };
     }
 
@@ -186,14 +183,12 @@ router.get("/in-progress", [auth, blockedUsers], async (req, res) => {
       whereClause.department_id = req.query.department_id;
     }
 
-    const tickets = await Ticket.findAll({
+    const tickets = await prisma.tickets.findMany({
       where: whereClause,
-      order: [
-        [
-          `${req.query.sortingProperty}`,
-          `${req.query.sortingProperty == "createdAt" ? "DESC" : "ASC"}`,
-        ],
-      ],
+      orderBy: {
+        [req.query.sortingProperty]:
+          req.query.sortingProperty == "createdAt" ? "desc" : "asc",
+      },
     });
     res.json(tickets);
   } catch (error) {
@@ -204,16 +199,22 @@ router.get("/in-progress", [auth, blockedUsers], async (req, res) => {
 
 router.get("/pending", auth, async (req, res) => {
   try {
-    const tickets = await Ticket.findAll({
+    const tickets = await prisma.tickets.findMany({
       where: {
-        [Op.and]: [
-          {
-            [Op.or]: [{ status: "open" }, { status: "in-progress" }],
+        AND: {
+          user_id: req.user.id,
+          OR: {
+            status: "open",
+            status: "in-progress",
           },
-          { user_id: req.user.id },
-        ],
+        },
       },
-      order: [["createdAt", "DESC"]],
+      orderBy: {
+        createdAt: "desc",
+      },
+      include: {
+        Users: true,
+      },
     });
 
     res.json(tickets);
@@ -233,20 +234,16 @@ router.get("/search", async (req, res) => {
         .json({ error: "Ticket name is required in the request body." });
     }
 
-    const matchingTickets = await Ticket.findAll({
+    const matchingTickets = await prisma.tickets.findMany({
       where: {
-        [Op.or]: [
-          {
-            name: {
-              [Op.iLike]: `%${ticket}%`,
-            },
+        OR: {
+          name: {
+            contains: ticket.toString(),
           },
-          {
-            description: {
-              [Op.iLike]: `%${ticket}%`,
-            },
+          description: {
+            contains: ticket.toString(),
           },
-        ],
+        },
       },
     });
 
@@ -260,11 +257,14 @@ router.get("/search", async (req, res) => {
 router.get("/feed", [auth, blockedUsers], async (req, res) => {
   const temp = [...req.blockedUsers, req.user.id];
 
-  const tickets = await Ticket.findAll({
+  const tickets = await prisma.tickets.findMany({
     where: {
       user_id: {
-        [Op.notIn]: temp,
+        notIn: temp,
       },
+    },
+    include: {
+      Users: true,
     },
   });
 
@@ -273,27 +273,42 @@ router.get("/feed", [auth, blockedUsers], async (req, res) => {
 });
 
 router.get("/departments", auth, async (req, res) => {
-  const user = await User.findByPk(req.user.id);
-  const department_id = user.dataValues.department_id;
-  const tickets = await Ticket.findAll({
+  const user = await prisma.users.findUnique({ where: { id: req.user.id } });
+  const department_id = user.department_id;
+
+  const tickets = await prisma.tickets.findMany({
     where: {
       department_id: department_id,
     },
+    include: {
+      Users: true,
+    },
   });
+
   res.json(tickets);
 });
 
 router.get("/followingFeed", auth, async (req, res) => {
-  const user = await User.findByPk(req.user.id);
-  const followedUsers = user.dataValues.followedUsers;
+  const user = await prisma.users.findUnique({
+    where: {
+      id: req.user.id,
+    },
+  });
+
+  const followedUsers = user.followedUsers;
+
   if (followedUsers) {
-    const tickets = await Ticket.findAll({
+    const tickets = await prisma.tickets.findMany({
       where: {
         user_id: {
-          [Op.in]: followedUsers,
+          in: followedUsers,
         },
       },
+      include: {
+        Users: true,
+      },
     });
+
     return res.json(tickets);
   } else {
     return res.status(400).send([]);
@@ -302,29 +317,23 @@ router.get("/followingFeed", auth, async (req, res) => {
 
 router.get("/:id", async (req, res) => {
   try {
-    const ticket = await Ticket.findByPk(req.params.id, {
-      include: [
-        {
-          model: User,
-          as: "User",
+    const ticket = await prisma.tickets.findUnique({
+      where: {
+        id: req.params.id,
+      },
+      include: {
+        Users: {
           include: {
-            as: "Department",
-            model: Department,
+            Departments: true,
           },
         },
-        {
-          as: "Comments",
-          model: Comment,
-        },
-        {
-          as: "Before",
-          model: Ticket,
+        Comments: true,
+        beforeTicket: {
           include: {
-            model: User,
-            as: "User",
+            Users: true,
           },
         },
-      ],
+      },
     });
 
     res.json(ticket);
@@ -334,73 +343,88 @@ router.get("/:id", async (req, res) => {
   }
 });
 
-router.post("/", [auth, upload.array("video", "image")], async (req, res) => {
-  const user = await User.findByPk(req.body.user_id);
-  if (!user) return res.status(400).send("User not found");
+router.post(
+  "/",
+  [
+    auth,
+    upload.fields([
+      { name: "video", maxCount: 1 },
+      { name: "image", maxCount: 1 },
+    ]),
+  ],
+  async (req, res) => {
+    const user = await prisma.users.findFirst({
+      where: { id: req.body.user_id },
+    });
+    if (!user) return res.status(400).send("User not found");
 
-  const start_date = moment(req.body.deadline);
-  const now = moment();
+    const start_date = moment(req.body.deadline);
+    const now = moment();
 
-  // Check if the deadline is more than two days later
-  if (start_date.diff(now, "days") < 1) {
-    return res
-      .status(400)
-      .send(
-        `Deadline should be at least two days later - ${start_date.diff(
-          now,
-          "days"
-        )}`
-      );
+    // Check if the deadline is more than two days later
+    if (start_date.diff(now, "days") < 1) {
+      return res
+        .status(400)
+        .send(
+          `Deadline should be at least two days later - ${start_date.diff(
+            now,
+            "days"
+          )}`
+        );
+    }
+
+    if (req.file) {
+      const VideoPublicId = `${req.body.name}_video_${uuidv4()}`;
+      const ImagePublicId = `${req.body.name}_image_${uuidv4()}`;
+      const videoUrl = await uploader(req.files[0], VideoPublicId);
+      const imageUrl = await uploader(req.files[1], ImagePublicId);
+      ticket.imageUrl = imageUrl;
+      ticket.videoUrl = videoUrl;
+    }
+
+    const ticket = await prisma.tickets.create({
+      data: {
+        name: req.body.name,
+        user_id: req.body.user_id,
+        deadline: start_date.toDate(),
+        status: req.body.status,
+        description: req.body.description,
+        department_id: req.body.department_id || null,
+        before_id: req.body.before_id,
+      },
+    });
+
+    await prisma.notifications.create({
+      data: {
+        message: `a new ticket for you! - ${ticket.name}`,
+        user_id: req.body.user_id,
+      },
+    });
+
+    res.status(200).send(ticket);
   }
-
-  let ticket = new Ticket({
-    name: req.body.name,
-    user_id: req.body.user_id,
-    deadline: start_date.toDate(),
-    status: req.body.status,
-    description: req.body.description,
-    department_id: req.body.department_id,
-    before_id: req.body.before_id,
-  });
-
-  await Notification.create({
-    message: `a new ticket for you! - ${ticket.dataValues.name}`,
-    user_id: req.body.user_id,
-  });
-
-  if (req.file) {
-    const videoUrl = await uploader(req.files[0]);
-    const imageUrl = await uploader(req.files[1]);
-    ticket.imageUrl = imageUrl;
-    ticket.videoUrl = videoUrl;
-  }
-
-  ticket = await ticket.save();
-
-  res.status(200).send(ticket);
-});
+);
 
 router.post("/save/:id", auth, async (req, res) => {
   try {
-    const user = await User.findOne({
+    const user = await prisma.users.findUnique({
       where: {
         id: req.user.id,
       },
-      include: [
-        {
-          as: "Saved",
-          model: Saved,
-        },
-      ],
+      include: {
+        Saveds: true,
+      },
     });
 
-    if (user.Saved.some((saved) => saved.id === req.params.id)) {
+    if (user.saveds.some((saved) => saved.ticket.id === req.params.id)) {
       return res.status(400).send("Already saved...");
     }
 
-    await Saved.create({
-      ticket_id: req.params.id,
-      user_id: req.user.id,
+    await prisma.saveds.create({
+      data: {
+        ticket_id: req.params.id,
+        user_id: req.user.id,
+      },
     });
 
     res.send("saved!");
@@ -413,23 +437,24 @@ router.post("/save/:id", auth, async (req, res) => {
 
 router.post("/save/remove/:id", auth, async (req, res) => {
   try {
-    const user = await User.findOne({
+    const user = await prisma.users.findUnique({
       where: {
         id: req.user.id,
       },
-      include: [
-        {
-          as: "Saved",
-          model: Saved,
+      include: {
+        Saveds: {
+          include: {
+            Tickets: true,
+          },
         },
-      ],
+      },
     });
 
-    if (user.Saved.some((saved) => saved.id !== req.body.ticket_id)) {
+    if (user.saveds.some((saved) => saved.ticket.id !== req.body.ticket_id)) {
       return res.status(400).send("not saved...");
     }
 
-    await Saved.destroy({
+    await prisma.saveds.delete({
       where: {
         ticket_id: req.params.id,
         user_id: req.user.id,
@@ -443,19 +468,27 @@ router.post("/save/remove/:id", auth, async (req, res) => {
     res.send("something failed...");
   }
 });
+
 // not used in frontend...
 router.put("/changeStatus/:id", [auth], async (req, res) => {
-  const ticket = await Ticket.findByPk(req.params.id);
+  const ticket = await prisma.tickets.findUniqueOrThrow({
+    where: { id: req.params.id },
+  });
   if (!ticket) return res.status(404).json({ message: "ticket not found..." });
 
-  await ticket.update({
-    status: req.body.status,
+  await prisma.tickets.update({
+    data: {
+      status: req.body.status,
+    },
+    where: {
+      id: req.params.id,
+    },
   });
 
   await axios.post(
     "/notifications",
     {
-      user_id: ticket.dataValues.user_id,
+      user_id: ticket.user_id,
       message: `the status of your ticket has been changed! - ${ticket.name}`,
     },
     {}
@@ -463,35 +496,38 @@ router.put("/changeStatus/:id", [auth], async (req, res) => {
 
   res.status(200).json({ message: "done!" });
 });
+
 router.put("/close/:id", [auth], async (req, res) => {
-  const ticket = await Ticket.findByPk(req.params.id);
+  const ticket = await prisma.tickets.findUniqueOrThrow({
+    where: { id: req.params.id },
+  });
   if (!ticket) return res.status(404).json({ message: "ticket not found..." });
 
-  await Ticket.update(
-    {
+  await prisma.tickets.update({
+    data: {
       status: "closed",
       closedOn: new Date(),
     },
-    {
-      where: {
-        id: req.params.id,
+    where: {
+      id: req.params.id,
+    },
+  });
+
+  const points = ticket.deadline > new Date() ? 5 : 3;
+
+  await prisma.users.update({
+    where: { id: req.user.id },
+    data: {
+      points: {
+        increment: points,
       },
-    }
-  );
-
-  const points = ticket.dataValues.deadline > new Date() ? 5 : 3;
-
-  await User.update(
-    { id: req.user.id },
-    {
-      points: Sequelize.literal(`points + ${points}`),
-    }
-  );
+    },
+  });
 
   await axios.post(
     "/notifications",
     {
-      user_id: ticket.dataValues.user_id,
+      user_id: ticket.user_id,
       message: `your ticket has been closed! - ${ticket.name}`,
     },
     {}
@@ -501,29 +537,28 @@ router.put("/close/:id", [auth], async (req, res) => {
 });
 
 router.put("/assign/:id", [auth], async (req, res) => {
-  const ticket = await Ticket.findByPk(req.params.id);
-  if (!ticket) return res.status(404).json({ message: "ticket not found..." });
+  const ticket = await prisma.tickets.findUniqueOrThrow({
+    where: { id: req.params.id },
+  });
 
-  const user = await User.findByPk(req.body.user_id);
-  if (req.body.user_id !== null && !user)
-    return res.status(404).json({ message: "user not found..." });
+  const user = await prisma.users.findUniqueOrThrow({
+    where: { id: req.body.user_id },
+  });
 
-  await Ticket.update(
-    {
-      user_id: req.body.user_id,
+  await prisma.tickets.update({
+    data: {
+      user_id: user.id,
     },
-    {
-      where: {
-        id: req.params.id,
-      },
-    }
-  );
+    where: {
+      id: req.params.id,
+    },
+  });
 
   await axios.post(
     "/notification",
     {
-      user_id: req.body.user_id,
-      message: `you have been assigned a existing tickt - ${ticket.dataValues.name}`,
+      user_id: user.id,
+      message: `you have been assigned a existing tickt - ${ticket.name}`,
     },
     {}
   );
@@ -532,28 +567,28 @@ router.put("/assign/:id", [auth], async (req, res) => {
 });
 
 router.put("/:id", [auth], async (req, res) => {
-  const ticket = await Ticket.findByPk(req.params.id);
-  if (!ticket) return res.status(404).json({ message: "ticket not found..." });
+  const ticket = await prisma.tickets.findUniqueOrThrow({
+    where: { id: req.params.id },
+  });
 
   const deadline = moment(req.body.deadline);
 
-  await Ticket.update(
-    {
+  await prisma.tickets.update({
+    data: {
       name: req.body.name,
       deadline: deadline.toDate(),
       description: req.body.description,
     },
-    {
-      where: {
-        id: req.params.id,
-      },
-    }
-  );
+    where: {
+      id: req.params.id,
+    },
+  });
+
   await axios.post(
     "/notification",
     {
-      user_id: ticket.dataValues.user_id,
-      message: `your ticket has been updated! - ${ticket.dataValues.name}`,
+      user_id: ticket.user_id,
+      message: `your ticket has been updated! - ${ticket.name}`,
     },
     {}
   );
@@ -561,7 +596,7 @@ router.put("/:id", [auth], async (req, res) => {
 });
 
 router.delete("/:id", [auth], async (req, res) => {
-  await Ticket.destroy({
+  await prisma.tickets.delete({
     where: {
       id: req.params.id,
     },

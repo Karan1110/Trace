@@ -1,37 +1,36 @@
 const express = require("express");
+const jwt = require("jsonwebtoken");
 const router = express.Router();
 const bcrypt = require("bcrypt");
 const auth = require("../middlewares/auth.js");
-const blockedUsers = require("../middlewares/blockedUsers.js");
-const Chat = require("../models/chat.js");
-const User = require("../models/user.js");
-const Ticket = require("../models/ticket.js");
-const Meeting = require("../models/meeting.js");
-const Notification = require("../models/notification.js");
-const Department = require("../models/department.js");
-const { Sequelize, Op } = require("sequelize");
-const Saved = require("../models/saved.js");
-const FollowUser = require("../models/followUser");
-const Channel = require("../models/channel.js");
-const Request = require("../models/request.js");
+const blockedUsers = require("../middlewares/blockedUsers.js")
+const prisma = require("../utils/prisma.js");
 
 router.get("/", auth, async (req, res) => {
   try {
-    const users = await User.findAll();
+    const users = await prisma.users.findMany();
     res.json(users);
   } catch (ex) {
-    console.log("ERROR : ");
-    console.log(ex);
+    console.log(ex.message, ex);
     res.send("Someting failed.");
   }
 });
 
 router.get("/suggested", [auth, blockedUsers], async (req, res) => {
-  const users = await User.findAll({
+  const users = await prisma.users.findMany({
     where: {
-      id: {
-        [Op.notIn]: req.blockedUsers,
-      },
+      AND: [
+        {
+          id: {
+            notIn: req.followedUsers, // Excluding followed users
+          },
+        },
+        {
+          id: {
+            notIn: req.blockedUsers, // Excluding blocked users
+          },
+        },
+      ],
     },
   });
 
@@ -40,33 +39,34 @@ router.get("/suggested", [auth, blockedUsers], async (req, res) => {
 });
 
 router.get("/search", auth, async (req, res) => {
-  const users = await User.findAll({
+  const users = await prisma.user.findMany({
     where: {
-      [Op.or]: [
+      OR: [
         {
           name: {
-            [Op.iLike]: `%${req.query.user}%`,
+            contains: req.query.user, // Assuming req.query.user is the search term
           },
         },
         {
           email: {
-            [Op.iLike]: `%${req.query.user}%`,
+            contains: req.query.user, // Assuming req.query.user is the search term
           },
         },
       ],
     },
   });
+
   res.json(users);
 });
 
 router.get("/colleagues", auth, async (req, res) => {
-  const me = await User.findByPk(req.user.id);
+  const me = await prisma.users.findUnique({ where: { id: req.user.id } });
 
-  const users = await User.findAll({
+  const users = await prisma.users.findMany({
     where: {
-      department_id: me.department_id || me.dataValues.department_id,
-      [Op.not]: {
-        id: [req.user.id],
+      department_id: me.department_id,
+      NOT: {
+        id: req.user.id,
       },
     },
   });
@@ -77,19 +77,19 @@ router.get("/colleagues", auth, async (req, res) => {
 router.get("/stats/:id", async (req, res) => {
   try {
     // Average time taken to complete a ticket
-    const average_time_taken_to_complete_a_ticket = await Ticket.findAll({
-      attributes: [
-        [
-          Sequelize.literal('AVG("Ticket"."updatedAt" - "Ticket"."createdAt")'),
-          "average_time_taken",
-        ],
-      ],
+    const averageTimeTakenToCompleteTicket = await prisma.tickets.aggregate({
+      _avg: {
+        updatedAt: {
+          _subtract: "createdAt",
+        },
+      },
       where: {
-        user_id: req.params.id,
+        userId: parseInt(req.params.id),
       },
     });
-    console.log(average_time_taken_to_complete_a_ticket);
-    res.status(200).send(average_time_taken_to_complete_a_ticket);
+
+    console.log(averageTimeTakenToCompleteTicket);
+    res.status(200).send(averageTimeTakenToCompleteTicket);
   } catch (error) {
     console.error("Error in statistics endpoint:", error.message, error);
     res.status(500).send("Internal Server Error");
@@ -98,17 +98,15 @@ router.get("/stats/:id", async (req, res) => {
 
 router.get("/stats", async (req, res) => {
   try {
-    // Average time taken to complete a ticket
-    const average_time_taken_to_complete_a_ticket = await Ticket.findAll({
-      attributes: [
-        [
-          Sequelize.literal('AVG("Ticket"."updatedAt" - "Ticket"."createdAt")'),
-          "average_time_taken",
-        ],
-      ],
+    const averageTimeTakenToCompleteTicket = await prisma.tickets.aggregate({
+      _avg: {
+        updatedAt: {
+          _subtract: "createdAt",
+        },
+      },
     });
-    console.log(average_time_taken_to_complete_a_ticket);
-    res.status(200).send(average_time_taken_to_complete_a_ticket);
+    console.log(verageTimeTakenToCompleteTicket);
+    res.status(200).send(averageTimeTakenToCompleteTicket);
   } catch (error) {
     console.error("Error in statistics endpoint:", error.message, error);
     res.status(500).send("Internal Server Error");
@@ -117,8 +115,10 @@ router.get("/stats", async (req, res) => {
 
 router.get("/leaderboard", async (req, res) => {
   try {
-    const AllTimeRankedUsers = await User.findAll({
-      sort: [["points", "DESC"]],
+    const AllTimeRankedUsers = await prisma.users.findMany({
+      orderBy: {
+        points: "desc",
+      },
     });
 
     const currentDate = new Date();
@@ -132,32 +132,30 @@ router.get("/leaderboard", async (req, res) => {
     oneYearAgo.setFullYear(currentDate.getFullYear() - 1);
 
     // Fetch users along with their associated closed tickets in the last month
-    const LastMonthRankedUsers = await User.findAll({
+    const LastMonthRankedUsers = await prisma.users.findMany({
       include: {
-        model: Ticket,
-        as: "Ticket",
-        where: {
-          status: "closed",
-          closedOn: {
-            [Op.between]: [oneMonthAgo, currentDate],
+        Tickets: {
+          where: {
+            status: "closed",
+            closedOn: {
+              gt: oneMonthAgo,
+            },
           },
         },
-        required: false, // This will ensure that users without closed tickets in the last month are also included
       },
     });
 
     // Fetch users along with their associated closed tickets in the last year
-    const LastYearRankedUsers = await User.findAll({
+    const LastYearRankedUsers = await prisma.users.findMany({
       include: {
-        model: Ticket,
-        as: "Ticket",
-        where: {
-          status: "closed",
-          closedOn: {
-            [Op.between]: [oneYearAgo, currentDate],
+        Tickets: {
+          where: {
+            status: "closed",
+            closedOn: {
+              gt: oneYearAgo,
+            },
           },
         },
-        required: false, // This will ensure that users without closed tickets in the last year are also included
       },
     });
 
@@ -180,111 +178,69 @@ router.get("/leaderboard", async (req, res) => {
 });
 
 router.get("/:id", [auth], async (req, res) => {
-  const user = await User.findOne({
+  const user = await prisma.users.findUnique({
     where: {
       id: req.params.id,
     },
-    include: [
-      {
-        as: "mySavedTickets",
-        model: Saved,
-        include: [
-          {
-            as: "savedTicket",
-            model: Ticket,
+    include: {
+      Saveds: true,
+      Notifications: true,
+      Tickets: true,
+      MeetingMembers: {
+        include: {
+          User: true,
+          Meeting: true,
+        },
+      },
+      Departments: true,
+      ChatUsers: {
+        include: {
+          chat: {
+            include: {
+              Channels: true,
+            },
           },
-        ],
-      },
-      {
-        model: Notification,
-        as: "Notification",
-      },
-      {
-        model: Ticket,
-        as: "Ticket",
-      },
-
-      {
-        model: Meeting,
-        as: "Meeting",
-        include: {
-          model: User,
-          as: "Participants",
         },
       },
-      {
-        model: Department,
-        as: "Department",
-      },
-      {
-        model: Chat,
-        as: "Chats",
+      following: {
         include: {
-          model: Channel,
-          as: "channels",
+          following: true,
         },
       },
-      {
-        model: Request,
-        as: "requests",
+      followers: {
         include: {
-          model: User,
-          as: "sender",
+          followedBy: true,
         },
       },
-      {
-        model: Request,
-        as: "friends",
-        include: {
-          model: User,
-          as: "sender",
-        },
-      },
-      {
-        model: Request,
-        as: "my_requests",
-        include: {
-          model: User,
-          as: "recipient",
-        },
-      },
-      {
-        model: Request,
-        as: "friends2",
-        include: {
-          model: User,
-          as: "recipient",
-        },
-      },
-    ],
+    },
   });
   if (!user) return res.status(404).send("user not found");
 
-  const following = await FollowUser.findAll({
-    where: {
-      followedBy_id: req.params.id,
-    },
-    include: {
-      model: User,
-      as: "following",
-      attributes: ["name", "email"],
-    },
-  });
-  user.following = following;
+  // const following = await FollowUser.findAll({
+  //   where: {
+  //     followedBy_id: req.params.id,
+  //   },
+  //   include: {
+  //     model: User,
+  //     as: "following",
+  //     attributes: ["name", "email"],
+  //   },
+  // });
+  // user.following = following;
 
-  const followedBy = await FollowUser.findAll({
-    where: {
-      following_id: req.params.id,
-    },
-    include: {
-      model: User,
-      as: "followedBy",
-      attributes: ["name", "email"],
-    },
-  });
-  user.followedBy = followedBy;
+  // const followedBy = await FollowUser.findAll({
+  //   where: {
+  //     following_id: req.params.id,
+  //   },
+  //   include: {
+  //     model: User,
+  //     as: "followedBy",
+  //     attributes: ["name", "email"],
+  //   },
+  // });
+  // user.followedBy = followedBy;
 
-  res.status(200).send({ user, followedBy, following });
+  res.status(200).send(user);
 });
 
 router.post("/", async (req, res) => {
@@ -292,15 +248,15 @@ router.post("/", async (req, res) => {
     const salt = await bcrypt.genSalt(10);
     const p = await bcrypt.hash(req.body.password, salt);
 
-    let user = new User({
-      name: req.body.name,
-      email: req.body.email,
-      password: p,
-      department_id: req.body.department_id,
+    const user = await prisma.users.create({
+      data: {
+        name: req.body.name,
+        email: req.body.email,
+        password: p,
+        department_id: req.body.department_id,
+      },
     });
-    user = await user.save();
-
-    const token = user.generateAuthToken();
+    const token = jwt.sign({ id: user.id }, "karan112010");
 
     res.status(201).send({ token: token, User: user });
   } catch (ex) {
@@ -310,25 +266,37 @@ router.post("/", async (req, res) => {
 
 router.put("/:id", auth, async (req, res) => {
   try {
-    const authenticatedUser = await User.findByPk(req.user.id);
+    const authenticatedUser = await prisma.users.findUnique({
+      where: {
+        id: req.user.id,
+      },
+    });
 
     if (!authenticatedUser) {
       return res.status(404).send("User Not Found.");
     }
 
-    await authenticatedUser.update({
-      name: req.body.name,
+    // Update the authenticated user's name
+    await prisma.users.update({
+      where: {
+        id: req.user.id,
+      },
+      data: {
+        name: req.body.name,
+      },
     });
 
     res.status(200).send("updated!");
   } catch (ex) {
     console.log(ex);
     res.status(500).send("Internal Server Error");
+  } finally {
+    await prisma.$disconnect(); // Disconnect from the Prisma client
   }
 });
 
 router.delete("/:id", auth, async (req, res) => {
-  const user = await User.destroy({
+  const user = await prisma.users.delete({
     where: {
       id: req.params.id,
     },

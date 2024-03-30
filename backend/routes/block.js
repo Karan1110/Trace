@@ -1,58 +1,59 @@
-const express = require("express")
-const router = express.Router()
-const auth = require("../middlewares/auth.js")
-const User = require("../models/user.js")
+const express = require("express");
+const router = express.Router();
+const auth = require("../middlewares/auth.js");
+const prisma = require("../utils/prisma.js");
 
-router.post("/:id", [auth], async (req, res) => {
+router.post("/:id", auth, async (req, res) => {
   try {
-    const user = await User.findByPk(req.user.id)
-    if (!user) return res.status(404).json({ message: "user not found..." })
+    const user = await prisma.users.findUnique({
+      where: { id: req.user.id },
+      include: { blockedUsers: true },
+    });
 
-    const blockedUser = await User.findByPk(req.params.id)
+    if (!user) return res.status(404).json({ message: "User not found." });
 
-    if (!blockedUser) return res.status(404).send("user not found....")
+    const blockedUser = await prisma.users.findUnique({
+      where: { id: parseInt(req.params.id) },
+    });
 
-    await User.update(
-      {
-        blockedUsers: [
-          ...user.dataValues.blockedUsers,
-          blockedUser.dataValues.id,
-        ],
-      },
-      { where: { id: req.user.id } }
-    )
+    if (!blockedUser)
+      return res.status(404).json({ message: "Blocked user not found." });
 
-    res.status(200).send("done!")
+    await prisma.users.update({
+      where: { id: req.user.id },
+      data: { blockedUsers: { push: parseInt(req.params.id) } },
+    });
+
+    res.status(200).send("User blocked successfully!");
   } catch (error) {
-    console.error("Error in block user endpoint:", error.message, error)
-    res.status(500).send("Internal Server Error")
+    console.error("Error in blocking user:", error);
+    res.status(500).send("Internal Server Error");
   }
-})
+});
 
-router.put("/:id", [auth], async (req, res) => {
+router.put("/:id", auth, async (req, res) => {
   try {
-    const user = await User.findByPk(req.user.id)
-    if (!user) return res.status(404).json({ message: "user not found..." })
+    const user = await prisma.users.findUnique({
+      where: { id: req.user.id },
+      include: { blockedUsers: true },
+    });
 
-    const blockedUser = await User.findByPk(req.params.id)
-    const new_blocked_list = user.dataValues.blockedUsers.filter((id) => {
-      return id !== req.params.id
-    })
+    if (!user) return res.status(404).json({ message: "User not found." });
 
-    if (!blockedUser) return res.status(404).send("user not found....")
+    const newBlockedUsers = user.blockedUsers.filter(
+      (id) => id !== parseInt(req.params.id)
+    );
 
-    await User.update(
-      {
-        blockedUsers: new_blocked_list,
-      },
-      { where: { id: req.user.id } }
-    )
+    await prisma.users.update({
+      where: { id: req.user.id },
+      data: { blockedUsers: { set: newBlockedUsers } },
+    });
 
-    res.status(200).send("done!")
+    res.status(200).send("User unblocked successfully!");
   } catch (error) {
-    console.error("Error in block user endpoint:", error.message, error)
-    res.status(500).send("Internal Server Error")
+    console.error("Error in unblocking user:", error);
+    res.status(500).send("Internal Server Error");
   }
-})
+});
 
-module.exports = router
+module.exports = router;
