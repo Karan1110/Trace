@@ -47,7 +47,7 @@ const User = () => {
         const closed = response.data.Ticket.filter((t) => t.status == "closed");
         const open = response.data.Ticket.filter((t) => t.status == "open");
         const inProgress = response.data.Ticket.filter(
-          (t) => t.status == "in-progress"
+          (t) => t.status == "in_progress"
         );
         setStats({
           closed: closed.length,
@@ -274,7 +274,7 @@ const User = () => {
           )}
           <Pie
             data={{
-              labels: ["Closed", "Open", "In-Progress"],
+              labels: ["Closed", "Open", "in_progress"],
               datasets: [
                 {
                   label: "Tickets",

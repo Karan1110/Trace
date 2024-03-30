@@ -7,15 +7,17 @@ cloudinary.config({
   api_secret: config.get("cloudinary_api_secret"),
 });
 
-// TODO: find out about upload_preset...
+module.exports = async (file, public_id) => {
+  try {
+    const b64 = Buffer.from(file.buffer).toString("base64");
+    let dataURI = "data:" + file.mimetype + ";base64," + b64;
 
-module.exports = async (file,public_id) => {
-  const b64 = Buffer.from(file.buffer).toString("base64");
-  let dataURI = "data:" + file.mimetype + ";base64," + b64;
+    const { secure_url } = await cloudinary.uploader.upload(dataURI, {
+      public_id: public_id,
+    });
 
-  const { secure_url } = await cloudinary.uploader.upload(dataURI, {
-   public_id : public_id
-  });
-
-  return secure_url;
+    return secure_url;
+  } catch (error) {
+    console.error(error.message, error);
+  }
 };

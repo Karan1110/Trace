@@ -224,7 +224,7 @@ const NewTicket = () => {
           <Select.Content color="purple">
             <Select.Item value="open">open</Select.Item>
             <Select.Item value="closed">closed</Select.Item>
-            <Select.Item value="in-progress">in-progress</Select.Item>
+            <Select.Item value="in_progress">in_progress</Select.Item>
           </Select.Content>
         </Select.Root>
         <div className="w-full ">

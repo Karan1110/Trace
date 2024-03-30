@@ -29,7 +29,7 @@ router.get("/", async (req, res) => {
 
     const inProgress = await prisma.tickets.count({
       where: {
-        status: "in-progress",
+        status: "in_progress",
       },
     });
 
@@ -166,11 +166,11 @@ router.get("/open", [auth, blockedUsers], async (req, res) => {
     res.status(500).json({ error: "Internal Server Error" });
   }
 });
-// filter in-progress tickets
-router.get("/in-progress", [auth, blockedUsers], async (req, res) => {
+// filter in_progress tickets
+router.get("/in_progress", [auth, blockedUsers], async (req, res) => {
   try {
     const whereClause = {
-      status: "in-progress",
+      status: "in_progress",
     };
 
     if (req.blockedUsers && req.blockedUsers.length > 0) {
@@ -205,7 +205,7 @@ router.get("/pending", auth, async (req, res) => {
           user_id: req.user.id,
           OR: {
             status: "open",
-            status: "in-progress",
+            status: "in_progress",
           },
         },
       },

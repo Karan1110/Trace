@@ -252,7 +252,7 @@ const Ticket = () => {
           <Button variant="solid" color="purple" onClick={() => close()}>
             Close <Pencil2Icon />
           </Button>
-          {["in-progress", "open"]
+          {["in_progress", "open"]
             .filter((status) => status !== ticket.status)
             .map((status) => (
               <Button

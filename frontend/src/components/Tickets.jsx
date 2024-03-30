@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from "react"
-import axios from "axios"
+import React, { useState, useEffect } from "react";
+import axios from "axios";
 import {
   Button,
   Table,
@@ -12,17 +12,17 @@ import {
   Text,
   Popover,
   Heading,
-} from "@radix-ui/themes"
-import { ArrowUpIcon, MagnifyingGlassIcon } from "@radix-ui/react-icons"
-import { useNavigate } from "react-router-dom"
-import toast from "react-hot-toast"
+} from "@radix-ui/themes";
+import { ArrowUpIcon, MagnifyingGlassIcon } from "@radix-ui/react-icons";
+import { useNavigate } from "react-router-dom";
+import toast from "react-hot-toast";
 
 const Tickets = () => {
-  const [tickets, setTickets] = useState([])
-  const [searchedTickets, setSearchedTickets] = useState([])
-  const [filter, setFilter] = useState("open") // Default filter is empty
-  const [sortingProperty, setSortingProperty] = useState("name") // Default sorting property is 'name'
-  const navigate = useNavigate()
+  const [tickets, setTickets] = useState([]);
+  const [searchedTickets, setSearchedTickets] = useState([]);
+  const [filter, setFilter] = useState("open"); // Default filter is empty
+  const [sortingProperty, setSortingProperty] = useState("name"); // Default sorting property is 'name'
+  const navigate = useNavigate();
   // Fetch tickets based on filter and sortingProperty
   useEffect(() => {
     const fetchTickets = async () => {
@@ -35,21 +35,21 @@ const Tickets = () => {
             },
             headers: { "x-auth-token": localStorage.getItem("token") },
           }
-        )
-        setTickets(response.data)
-        console.log(response.data)
+        );
+        setTickets(response.data);
+        console.log(response.data);
       } catch (error) {
-        console.error("Error fetching tickets:", error)
+        console.error("Error fetching tickets:", error);
       }
-    }
+    };
 
-    fetchTickets()
-  }, [filter, sortingProperty])
+    fetchTickets();
+  }, [filter, sortingProperty]);
 
   const handleFilterChange = (value) => {
-    console.log(value)
-    setFilter(value)
-  }
+    console.log(value);
+    setFilter(value);
+  };
 
   const fetchSearchedTickets = async (query) => {
     try {
@@ -58,18 +58,18 @@ const Tickets = () => {
           ticket: query,
         },
         headers: { "x-auth-token": localStorage.getItem("token") },
-      })
+      });
 
-      console.log(response.data)
-      setSearchedTickets(response.data)
+      console.log(response.data);
+      setSearchedTickets(response.data);
     } catch (error) {
-      toast(error.message)
-      console.error(error)
+      toast(error.message);
+      console.error(error);
     }
-  }
+  };
   const handleSortingPropertyChange = (property) => {
-    setSortingProperty(property)
-  }
+    setSortingProperty(property);
+  };
 
   return (
     <div className="container   mx-auto p-6">
@@ -159,7 +159,7 @@ const Tickets = () => {
                 <Select.Item value="all">All</Select.Item>
                 <Select.Item value="open">open</Select.Item>
                 <Select.Item value="closed">closed</Select.Item>
-                <Select.Item value="in-progress">in-progress</Select.Item>
+                <Select.Item value="in_progress">in_progress</Select.Item>
               </Select.Group>
             </Select.Content>
           </Select.Root>
@@ -221,7 +221,7 @@ const Tickets = () => {
         </Table.Root>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default Tickets
+export default Tickets;

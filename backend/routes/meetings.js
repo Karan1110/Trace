@@ -59,13 +59,29 @@ router.post("/", [auth], async (req, res) => {
       },
     });
 
-    for (invitee of req.body.invitees) {
-      await prisma.meetingMember.create({
-        data: {
-          user_id: invitee,
-          meeting_id: meeting.id,
-        },
-      });
+    await prisma.meetingMember.create({
+      data: {
+        user_id: req.user.id,
+        meeting_id: meeting.id,
+      },
+    });
+
+    if (req.body.invitees.length > 0) {
+      for (invitee of req.body.invitees) {
+        await prisma.meetingMember.create({
+          data: {
+            user_id: invitee,
+            meeting_id: meeting.id,
+          },
+        });
+
+        await prisma.notifications.create({
+          data: {
+            user_id: invitee,
+            message: `new meeting  assigned just now!  - ${user.name}`,
+          },
+        });
+      }
 
       await axios.post(
         "/notifications",
@@ -76,13 +92,6 @@ router.post("/", [auth], async (req, res) => {
         {}
       );
     }
-
-    await prisma.meetingMember.create({
-      data: {
-        user_id: req.user.id,
-        meeting_id: meeting.id,
-      },
-    });
 
     res.status(200).send(meeting);
   } catch (error) {

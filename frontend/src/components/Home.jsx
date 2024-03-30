@@ -137,7 +137,7 @@ const Home = () => {
             <span className="text-gray-900 font-medium  ">Closed Issues</span>
             <span className="text-gray-900 font-medium ">Open Issues</span>
             <span className="text-gray-900 font-medium ">
-              In-progress Issues
+              in_progress Issues
             </span>
           </div>
           <div className="grid grid-cols-3  mb-5 space-x-3 ">
@@ -157,7 +157,7 @@ const Home = () => {
             options={options}
             className=""
             data={{
-              labels: ["Open", "Closed", "In-progress"],
+              labels: ["Open", "Closed", "in_progress"],
               datasets: [
                 {
                   label: "Open", // Make sure the label matches the labels array
