@@ -9,6 +9,7 @@ const uploader = require("../utils/uploader.js");
 const prisma = require("../utils/prisma.js");
 const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
+const { v4: uuidv4 } = require("uuid");
 
 // count
 router.get("/", async (req, res) => {
@@ -236,14 +237,10 @@ router.get("/search", async (req, res) => {
 
     const matchingTickets = await prisma.tickets.findMany({
       where: {
-        OR: {
-          name: {
-            contains: ticket.toString(),
-          },
-          description: {
-            contains: ticket.toString(),
-          },
-        },
+        OR: [
+          { name: { contains: ticket.toString() } },
+          { description: { contains: ticket.toString() } },
+        ],
       },
     });
 
@@ -353,6 +350,8 @@ router.post(
     ]),
   ],
   async (req, res) => {
+    let imageUrl, videoUrl;
+
     const user = await prisma.users.findFirst({
       where: { id: req.body.user_id },
     });
@@ -373,24 +372,33 @@ router.post(
         );
     }
 
-    if (req.file) {
+    console.log(req.files.video[0].fieldname);
+
+    if (req.files.image && req.files.video) {
+      console.log("uploading.....");
       const VideoPublicId = `${req.body.name}_video_${uuidv4()}`;
       const ImagePublicId = `${req.body.name}_image_${uuidv4()}`;
-      const videoUrl = await uploader(req.files[0], VideoPublicId);
-      const imageUrl = await uploader(req.files[1], ImagePublicId);
-      ticket.imageUrl = imageUrl;
-      ticket.videoUrl = videoUrl;
+      const _videoUrl = await uploader(
+        req.files.video[0],
+        VideoPublicId,
+        "video"
+      );
+      const _imageUrl = await uploader(req.files.image[0], ImagePublicId);
+      imageUrl = _imageUrl;
+      videoUrl = _videoUrl;
     }
 
     const ticket = await prisma.tickets.create({
       data: {
         name: req.body.name,
-        user_id: req.body.user_id,
+        user_id: parseInt(req.body.user_id),
         deadline: start_date.toDate(),
         status: req.body.status,
         description: req.body.description,
         department_id: req.body.department_id || null,
         before_id: req.body.before_id,
+        videoUrl: videoUrl,
+        imageUrl: imageUrl,
       },
       include: {
         user: true,

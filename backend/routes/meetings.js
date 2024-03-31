@@ -56,13 +56,11 @@ router.post("/", [auth], async (req, res) => {
         department_id: req.body.department_id,
         startingOn: startingOn,
         endingOn: endingOn,
-      },
-    });
-
-    await prisma.meetingMember.create({
-      data: {
-        user_id: req.user.id,
-        meeting_id: meeting.id,
+        users: {
+          create: {
+            user_id: req.user.id,
+          },
+        },
       },
     });
 
@@ -78,7 +76,7 @@ router.post("/", [auth], async (req, res) => {
         await prisma.notifications.create({
           data: {
             user_id: invitee,
-            message: `new meeting  assigned just now!  - ${user.name}`,
+            message: `new meeting assigned just now!  - ${user.name}`,
           },
         });
       }
