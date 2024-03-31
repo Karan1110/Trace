@@ -314,7 +314,7 @@ router.get("/followingFeed", auth, async (req, res) => {
 
 router.get("/:id", async (req, res) => {
   try {
-    const ticket = await prisma.tickets.findUnique({
+    const ticket = await prisma.tickets.findUniqueOrThrow({
       where: {
         id: req.params.id,
       },
@@ -328,6 +328,12 @@ router.get("/:id", async (req, res) => {
         beforeTicket: {
           include: {
             Users: true,
+          },
+        },
+        afterTickets: true,
+        saveds: {
+          include: {
+            user: true,
           },
         },
       },
