@@ -8,24 +8,24 @@ datasource db {
 }
 
 model Channels {
-  id        Int            @id @default(autoincrement())
-  name      String         @db.VarChar(255)
-  type      channels_type? @default(text)
-  chat_id   Int?
-  createdAt DateTime       @default(now()) @db.Timestamptz(6)
-  updatedAt DateTime       @updatedAt @db.Timestamptz(6)
-  chats     Chats?         @relation(fields: [chat_id], references: [id], onDelete: NoAction)
+  id        Int           @id @default(autoincrement())
+  name      String        @db.VarChar(255)
+  type      channels_type @default(text)
+  chat_id   Int
+  createdAt DateTime      @default(now()) @db.Timestamptz(6)
+  updatedAt DateTime      @default(now()) @updatedAt @db.Timestamptz(6)
+  chat      Chats         @relation(fields: [chat_id], references: [id], onDelete: NoAction)
   messages  Messages[]
 }
 
 model ChatUser {
   chat_id   Int
   user_id   Int
-  user      Users          @relation(fields: [user_id], references: [id])
-  chat      Chats          @relation(fields: [chat_id], references: [id])
-  role      ChatUser_role? @default(user)
-  createdAt DateTime       @default(now()) @db.Timestamptz(6)
-  updatedAt DateTime       @updatedAt @db.Timestamptz(6)
+  user      Users     @relation(fields: [user_id], references: [id])
+  chat      Chats     @relation(fields: [chat_id], references: [id])
+  role      chat_role @default(user)
+  createdAt DateTime  @default(now()) @db.Timestamptz(6) 
+  updatedAt DateTime  @default(now()) @updatedAt @db.Timestamptz(6)
 
   @@id([user_id, chat_id])
 }
@@ -37,7 +37,7 @@ model Chats {
   inviteCode String?     @db.Uuid
   url        String?     @default("https://static.vecteezy.com/system/resources/previews/006/892/625/original/discord-logo-icon-editorial-free-vector.jpg") @db.VarChar(255)
   createdAt  DateTime    @default(now()) @db.Timestamptz(6)
-  updatedAt  DateTime    @updatedAt @db.Timestamptz(6)
+  updatedAt  DateTime    @default(now()) @updatedAt @db.Timestamptz(6)
   channels   Channels[]
   users      ChatUser[]
 
@@ -51,7 +51,7 @@ model Comments {
   user_id   Int?
   ticket_id Int?
   createdAt DateTime @default(now()) @db.Timestamptz(6)
-  updatedAt DateTime @updatedAt @db.Timestamptz(6)
+  updatedAt DateTime @default(now()) @updatedAt @db.Timestamptz(6)
   ticket    Tickets? @relation(fields: [ticket_id], references: [id], onDelete: Cascade)
   user      Users?   @relation(fields: [user_id], references: [id], onDelete: Cascade)
 }
@@ -61,7 +61,7 @@ model Departments {
   name      String?    @db.VarChar(255)
   url       String?    @db.VarChar(255)
   createdAt DateTime   @default(now()) @db.Timestamptz(6)
-  updatedAt DateTime   @updatedAt @db.Timestamptz(6)
+  updatedAt DateTime   @default(now()) @updatedAt @db.Timestamptz(6)
   tickets   Tickets[]
   meetings  Meetings[]
   users     Users[]
@@ -74,7 +74,7 @@ model FollowUsers {
   following_id  Int?
   followedBy_id Int?
   createdAt     DateTime @default(now()) @db.Timestamptz(6)
-  updatedAt     DateTime @updatedAt @db.Timestamptz(6)
+  updatedAt     DateTime @default(now()) @updatedAt @db.Timestamptz(6)
   followedBy    Users?   @relation("followedBy", fields: [followedBy_id], references: [id], onDelete: Cascade)
   following     Users?   @relation("following", fields: [following_id], references: [id], onDelete: Cascade)
 
@@ -86,9 +86,9 @@ model MeetingMember {
   meeting_id Int
   attended   Boolean? @default(false)
   createdAt  DateTime @default(now()) @db.Timestamptz(6)
-  updatedAt  DateTime @updatedAt @db.Timestamptz(6)
-  Meeting    Meetings @relation(fields: [meeting_id], references: [id])
-  User       Users    @relation(fields: [user_id], references: [id])
+  updatedAt  DateTime @default(now()) @updatedAt @db.Timestamptz(6)
+  meeting    Meetings @relation(fields: [meeting_id], references: [id])
+  user       Users    @relation(fields: [user_id], references: [id])
 
   @@id([user_id, meeting_id])
 }
@@ -103,31 +103,31 @@ model Meetings {
   startingOn    DateTime?       @db.Timestamptz(6)
   endingOn      DateTime?       @db.Timestamptz(6)
   createdAt     DateTime        @default(now()) @db.Timestamptz(6)
-  updatedAt     DateTime        @updatedAt @db.Timestamptz(6)
+  updatedAt     DateTime        @default(now()) @updatedAt @db.Timestamptz(6)
   department    Departments?    @relation(fields: [department_id], references: [id], onDelete: Cascade)
   users         MeetingMember[]
 }
 
 model Messages {
-  id         String    @id @db.VarChar(255)
-  value      String?   @db.VarChar(255)
-  isRead     Boolean?  @default(false)
-  channel_id Int?
-  user_id    Int?
-  url        String?   @db.VarChar(255)
-  createdAt  DateTime  @db.Timestamptz(6)
-  updatedAt  DateTime  @db.Timestamptz(6)
-  channel    Channels? @relation(fields: [channel_id], references: [id], onDelete: NoAction)
-  user       Users?    @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  id         String   @id @db.VarChar(255)
+  value      String   @db.VarChar(255)
+  url        String?  @db.VarChar(255)
+  createdAt  DateTime @db.Timestamptz(6)
+  updatedAt  DateTime @default(now()) @updatedAt @db.Timestamptz(6)
+  channel_id Int
+  user_id    Int
+  channel    Channels @relation(fields: [channel_id], references: [id], onDelete: NoAction)
+  user       Users    @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  deleted    Boolean? @default(false)
 }
 
 model Notifications {
   id        Int      @id @default(autoincrement())
   message   String?  @db.VarChar(255)
   createdAt DateTime @default(now()) @db.Timestamptz(6)
-  updatedAt DateTime @updatedAt @db.Timestamptz(6)
+  updatedAt DateTime @default(now()) @updatedAt @db.Timestamptz(6)
   user_id   Int?
-  user      Users?   @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  user      Users?   @relation("notifications", fields: [user_id], references: [id], onDelete: Cascade)
 }
 
 model Saveds {
@@ -135,31 +135,32 @@ model Saveds {
   user_id   Int?
   ticket_id Int?
   createdAt DateTime @default(now()) @db.Timestamptz(6)
-  updatedAt DateTime @updatedAt @db.Timestamptz(6)
+  updatedAt DateTime @default(now()) @updatedAt @db.Timestamptz(6)
   ticket    Tickets? @relation(fields: [ticket_id], references: [id], onDelete: Cascade)
   user      Users?   @relation(fields: [user_id], references: [id], onDelete: Cascade)
 }
 
 model Tickets {
-  id            Int             @id @default(autoincrement())
-  name          String?         @db.VarChar(255)
-  deadline      DateTime?       @db.Timestamptz(6)
-  status        tickets_status? @default(open)
-  description   String?
-  user_id       Int?
-  videoUrl      String?
-  comments      Comments[]
-  department_id Int?
-  closedOn      DateTime?       @db.Timestamptz(6)
-  before_id     Int?
-  imageUrl      String?
-  createdAt     DateTime        @default(now()) @db.Timestamptz(6)
-  updatedAt     DateTime        @updatedAt @db.Timestamptz(6)
-  beforeTicket  Tickets?        @relation("beforeTicket", fields: [before_id], references: [id], onDelete: Cascade)
-  user          Users?          @relation(fields: [user_id], references: [id], onDelete: Cascade)
-  department    Departments?    @relation(fields: [department_id], references: [id])
-  saveds        Saveds[]
-  afterTickets  Tickets[]       @relation("beforeTicket")
+  id                         Int             @id @default(autoincrement())
+  name                       String?         @db.VarChar(255)
+  deadline                   DateTime?       @db.Timestamptz(6)
+  status                     tickets_status? @default(open)
+  description                String?
+  user_id                    Int?
+  videoUrl                   String?
+  comments                   Comments[]
+  department_id              Int?
+  closedOn                   DateTime?       @db.Timestamptz(6)
+  before_id                  Int?
+  imageUrl                   String?
+  createdAt                  DateTime        @default(now()) @db.Timestamptz(6)
+  updatedAt                  DateTime        @default(now()) @updatedAt @db.Timestamptz(6)
+  beforeTicket               Tickets?        @relation("beforeTicket", fields: [before_id], references: [id], onDelete: Cascade)
+  user                       Users?          @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  department                 Departments?    @relation(fields: [department_id], references: [id])
+  saveds                     Saveds[]
+  afterTickets               Tickets[]       @relation("beforeTicket")
+  timeTakenToCompleteInHours Int?
 
   @@index([status, name, description, user_id])
 }
@@ -176,11 +177,11 @@ model Users {
   followedUsers     Int[]           @default([])
   points            Int?            @default(0)
   createdAt         DateTime        @default(now()) @db.Timestamptz(6)
-  updatedAt         DateTime        @updatedAt @db.Timestamptz(6)
+  updatedAt         DateTime        @default(now()) @updatedAt @db.Timestamptz(6)
   followers         FollowUsers[]   @relation("followedBy")
   following         FollowUsers[]   @relation("following")
   messages          Messages[]
-  motifications     Notifications[]
+  notifications     Notifications[] @relation("notifications")
   saveds            Saveds[]
   tickets           Tickets[]
   department        Departments?    @relation(fields: [department_id], references: [id], onDelete: Cascade)
@@ -197,7 +198,7 @@ enum channels_type {
   text
 }
 
-enum ChatUser_role {
+enum chat_role {
   user
   moderator
   owner

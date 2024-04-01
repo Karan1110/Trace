@@ -11,8 +11,8 @@ router.get("/", auth, async (req, res) => {
       createdAt: "desc",
     },
     include: {
-      Department: true,
-      User: true,
+      department: true,
+      users: true,
     },
   });
   res.json(meetings);
@@ -27,8 +27,8 @@ router.get("/departments/:id", async (req, res) => {
       department_id: req.params.id,
     },
     include: {
-      Department: true,
-      User: true,
+      department: true,
+      users: true,
     },
   });
   res.json(meetings);

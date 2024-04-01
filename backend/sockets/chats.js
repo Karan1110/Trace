@@ -1,6 +1,6 @@
-const auth = require("./utils/auth");
-const { produceMessage } = require("./utils/Kafka");
-const { startConsumingMessages } = require("./utils/Kafka");
+const auth = require("./services/auth");
+const { produceMessage } = require("./services/Kafka");
+const { startConsumingMessages } = require("./services/Kafka");
 const { v4: uuidv4 } = require("uuid");
 const prisma = require("../utils/prisma");
 
@@ -62,7 +62,6 @@ module.exports = function (app) {
               id: msg.id,
               value: msg.value,
               user_id: msg.user_id,
-              isRead: true, // Mark as read
               channel: msg.channel_id,
               url: msg.url,
             })
@@ -76,6 +75,7 @@ module.exports = function (app) {
       ws.on("message", async (msg) => {
         const regex = /edit-message-karan112010/;
         const regex2 = /send-image-karan112010/;
+        const regex3 = /delete-message-karan112010/;
 
         if (regex.test(msg)) {
           const temp = msg.split("=");
@@ -93,7 +93,7 @@ module.exports = function (app) {
               );
             }
           );
-          produceMessage(Chats, msg, ws, req, true, message_id, null, null);
+          produceMessage(msg, req, true, message_id, null, null);
         } else if (regex2.test(msg)) {
           const id = uuidv4().toString();
           const temp = msg.split("=");
@@ -115,6 +115,21 @@ module.exports = function (app) {
           );
 
           produceMessage(Chats, msg, ws, req, null, null, id, url);
+        } else if (regex3.test(msg)) {
+          const temp = msg.split("=");
+          const message_id = temp[temp.length - 1];
+          Chats[`${req.params.chat}_${req.params.channel}`].forEach(
+            (connection) => {
+              connection.send(
+                JSON.stringify({
+                  id: message_id,
+                  deleted: true,
+                })
+              );
+            }
+          );
+
+          produceMessage(msg, req, false, message_id, null, null);
         } else {
           const id = uuidv4().toString();
           Chats[`${req.params.chat}_${req.params.channel}`].forEach(

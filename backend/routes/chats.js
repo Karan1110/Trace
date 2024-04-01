@@ -17,7 +17,7 @@ import("livekit-server-sdk").then(({ AccessToken }) => {
           name: req.query.channel,
         },
         include: {
-          Messages: {
+          messages: {
             take: 10,
             skip: req.query.page * 10,
             orderBy: { createdAt: "desc" },
@@ -38,8 +38,16 @@ import("livekit-server-sdk").then(({ AccessToken }) => {
         id: parseInt(req.params.id),
       },
       include: {
-        Messages: true,
-        Users: true,
+        channels: {
+          include: {
+            messages: true,
+          },
+        },
+        users: {
+          include: {
+            user : true
+          }
+        },
       },
     });
 
@@ -60,22 +68,24 @@ import("livekit-server-sdk").then(({ AccessToken }) => {
           channels: {
             create: { name: "general", type: "text" },
           },
+          users: {
+            create: {
+              user_id: req.user.id,
+            },
+          },
         },
         include: {
           channels: true,
-          chatUsers: true,
-        },
-      });
-
-      const chat_user = await prisma.chatUsers.create({
-        data: {
-          user: { connect: { id: req.user.id } },
-          chat: { connect: { id: chat.id } },
+          users: {
+            include: {
+              user: true,
+            },
+          },
         },
       });
 
       if (req.body.type === "personal") {
-        await prisma.chatUsers.create({
+        await prisma.chatUser.create({
           data: {
             user: { connect: { id: req.body.recipient_id } },
             chat: { connect: { id: chat.id } },
@@ -85,7 +95,7 @@ import("livekit-server-sdk").then(({ AccessToken }) => {
 
       res.json({
         chat,
-        chat_user,
+        chat_user: chat.users[0],
         channel: chat.channels[0],
       });
     } catch (error) {
@@ -106,7 +116,7 @@ import("livekit-server-sdk").then(({ AccessToken }) => {
         .status(404)
         .send("server not found with the given invite code...");
 
-    const already_joined = await prisma.chatUsers.findUnique({
+    const already_joined = await prisma.chatUser.findUnique({
       where: {
         user_id: req.user.id,
         chat_id: chat.id,
@@ -117,7 +127,7 @@ import("livekit-server-sdk").then(({ AccessToken }) => {
       return res.status(400).send("already joined...");
     }
 
-    const chat_user = await prisma.chatUsers.create({
+    const chat_user = await prisma.chatUser.create({
       data: {
         user_id: req.user.id,
         chat_id: chat.id,
@@ -162,7 +172,7 @@ import("livekit-server-sdk").then(({ AccessToken }) => {
     if (req.body.role != "owner" || "moderator")
       return res.status(400).send("invalid role...");
 
-    const owner = await prisma.chatUsers.findFirst({
+    const owner = await prisma.chatUser.findFirst({
       where: {
         chat_id: req.params.chatId,
         user_id: req.user.id,
@@ -172,7 +182,7 @@ import("livekit-server-sdk").then(({ AccessToken }) => {
 
     if (!owner) return res.status(403).send("not authorized...");
 
-    await prisma.chatUsers.update({
+    await prisma.chatUser.update({
       where: {
         userId_chatId: {
           userId: parseInt(req.params.userId),

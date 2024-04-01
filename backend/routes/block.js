@@ -7,7 +7,9 @@ router.post("/:id", auth, async (req, res) => {
   try {
     const user = await prisma.users.findUnique({
       where: { id: req.user.id },
-      include: { blockedUsers: true },
+      select: {
+        blockedUsers: true,
+      },
     });
 
     if (!user) return res.status(404).json({ message: "User not found." });
@@ -35,7 +37,7 @@ router.put("/:id", auth, async (req, res) => {
   try {
     const user = await prisma.users.findUnique({
       where: { id: req.user.id },
-      include: { blockedUsers: true },
+      select: { blockedUsers: true },
     });
 
     if (!user) return res.status(404).json({ message: "User not found." });

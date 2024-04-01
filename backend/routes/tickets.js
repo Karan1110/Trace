@@ -214,7 +214,7 @@ router.get("/pending", auth, async (req, res) => {
         createdAt: "desc",
       },
       include: {
-        Users: true,
+        user: true,
       },
     });
 
@@ -261,7 +261,7 @@ router.get("/feed", [auth, blockedUsers], async (req, res) => {
       },
     },
     include: {
-      Users: true,
+      user: true,
     },
   });
 
@@ -278,7 +278,7 @@ router.get("/departments", auth, async (req, res) => {
       department_id: department_id,
     },
     include: {
-      Users: true,
+      user: true,
     },
   });
 
@@ -302,7 +302,7 @@ router.get("/followingFeed", auth, async (req, res) => {
         },
       },
       include: {
-        Users: true,
+        user: true,
       },
     });
 
@@ -319,15 +319,15 @@ router.get("/:id", async (req, res) => {
         id: req.params.id,
       },
       include: {
-        Users: {
+        user: {
           include: {
-            Departments: true,
+            department: true,
           },
         },
-        Comments: true,
+        comments: true,
         beforeTicket: {
           include: {
-            Users: true,
+            user: true,
           },
         },
         afterTickets: true,
@@ -429,7 +429,7 @@ router.post("/save/:id", auth, async (req, res) => {
         id: req.user.id,
       },
       include: {
-        Saveds: true,
+        saveds: true,
       },
     });
 
@@ -459,9 +459,9 @@ router.post("/save/remove/:id", auth, async (req, res) => {
         id: req.user.id,
       },
       include: {
-        Saveds: {
+        saveds: {
           include: {
-            Tickets: true,
+            ticket: true,
           },
         },
       },
@@ -520,10 +520,16 @@ router.put("/close/:id", [auth], async (req, res) => {
   });
   if (!ticket) return res.status(404).json({ message: "ticket not found..." });
 
+  const startingDate = moment(ticket.createdAt);
+  const timeTakenToCompleteInHours = parseInt(
+    startingDate.diff(moment(), "hours")
+  );
+
   await prisma.tickets.update({
     data: {
       status: "closed",
       closedOn: new Date(),
+      timeTakenToCompleteInHours,
     },
     where: {
       id: req.params.id,

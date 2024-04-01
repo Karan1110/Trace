@@ -7,6 +7,7 @@ import { ArrowRightIcon, CaretDownIcon } from "@radix-ui/react-icons";
 import Spinner from "./Spinner";
 import { useUser } from "../contexts/userContext";
 import moment from "moment";
+import MeetingCard from "./MeetingCard";
 
 const Meetings = () => {
   const history = useNavigate();
@@ -80,7 +81,7 @@ const Meetings = () => {
           },
         }
       );
-      user.Meeting.push(meeting);
+      user.meetings.push({ meeting });
       toast.success("added to your schedule!");
     } catch (ex) {
       toast.error("something failed...");
@@ -126,73 +127,27 @@ const Meetings = () => {
         </Tabs.List>
 
         <Box px="4" pt="3" pb="2">
-          <Tabs.Content value="account"></Tabs.Content>
+          <Tabs.Content value="account">
+            {" "}
+            {meetings.map((m) => (
+              <MeetingCard />
+            ))}{" "}
+          </Tabs.Content>
 
           <Tabs.Content value="settings">
             <div className="flex items-center justify-center space-x-5 space-y-5">
-              {departmentMeetings.map((meeting) => (
-                <div className=" max-w-md  p-6 bg-white border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700">
-                  <h5 className="mb-2 text-2xl font-bold tracking-tight text-gray-900 dark:text-white">
-                    {meeting.name}
-                  </h5>
-                  <p className="mb-3 text-sm max-w-sm  text-gray-700 dark:text-gray-400">
-                    {meeting.description ||
-                      "Here are the biggest enterprise technology acquisitions of 2021 so far, in reverse chronological order."}
-                  </p>
-                  <p className="mb-3 space-x-3">
-                    <Badge color="red">{meeting.duration}</Badge>
-                    <Badge color="red">
-                      {meeting.Department?.name || "General"}
-                    </Badge>
-                  </p>
-                  <div className="space-x-3">
-                    {user.Meeting.some((m) => m.id == meeting.id) ? null : (
-                      <Button onClick={() => addMeetingToSchedule(meeting.id)}>
-                        Add
-                        <ArrowRightIcon />
-                      </Button>
-                    )}
-                    <Button href={meeting.link}>Join</Button>
-                  </div>
-                </div>
+              {departmentMeetings.map((m) => (
+                <MeetingCard />
               ))}
             </div>
           </Tabs.Content>
 
           <Tabs.Content value="following">
             <div className="flex items-center justify-center space-x-5 space-y-5">
-              {user.Meeting.length.toString()}
+              {user.meetings.length.toString()}
               {user &&
-                user.Meeting &&
-                user.Meeting.map((meeting) => (
-                  <div className=" max-w-md  p-6 bg-white border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700">
-                    <h5 className="mb-2 text-2xl font-bold tracking-tight text-gray-900 dark:text-white">
-                      {meeting.name}
-                    </h5>
-                    <p className="mb-3 text-sm max-w-sm  text-gray-700 dark:text-gray-400">
-                      {meeting.description ||
-                        "Here are the biggest enterprise technology acquisitions of 2021 so far, in reverse chronological order."}
-                    </p>
-                    <p className="mb-3 space-x-3">
-                      <Badge color="red">{meeting.duration}</Badge>
-                      <Badge color="red">
-                        {meeting.Department?.name || "General"}
-                      </Badge>
-                    </p>
-                    <div className="space-x-3">
-                      {meeting.duration[1] >
-                      (
-                        <Button
-                          onClick={() => addMeetingToSchedule(meeting.id)}
-                        >
-                          Remove
-                          <ArrowRightIcon />
-                        </Button>
-                      )}
-                      <Button href={meeting.link}>Join</Button>
-                    </div>
-                  </div>
-                ))}
+                user.meetings.length > 0 &&
+                user.meetings.map((m) => <MeetingCard />)}
             </div>
           </Tabs.Content>
         </Box>

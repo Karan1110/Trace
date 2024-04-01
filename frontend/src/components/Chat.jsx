@@ -67,8 +67,8 @@ const Chat = () => {
     setChatData({ ...chatData, inviteCode: resp.data.newInviteCode });
   };
   const openPersonalChat = async (user) => {
-    const existingChat = user.Chats.find(
-      (chat) => chat.type == "personal" && chat.name == `${user.name}`
+    const existingChat = user.chats.find(
+      (chat) => chat.chat.type == "personal" && chat.chat.name == `${user.name}`
     );
     if (existingChat) {
       setId(existingChat.id);
@@ -85,7 +85,10 @@ const Chat = () => {
         }
       );
       const { chat } = resp.data;
-      user.Chats.push(chat);
+      user.chats.push({
+        ...chat.users[0],
+        chat: chat,
+      });
       setId(chat.id);
       ws.send("Hii man!!!");
     }
@@ -138,6 +141,19 @@ const Chat = () => {
               };
               return updatedMessages;
             });
+          } else if (msg.deleted) {
+            const indexToUpdate = messages.findIndex(
+              (_message) => _message.id === message.id
+            );
+
+            setMessages((prevMessages) => {
+              const updatedMessages = [...prevMessages];
+              updatedMessages[indexToUpdate] = {
+                ...updatedMessages[indexToUpdate],
+                value: "this message has been deleted",
+              };
+              return updatedMessages;
+            });
           } else {
             setMessages((prevMessages) => [...prevMessages, message]);
           }
@@ -164,6 +180,12 @@ const Chat = () => {
       }
     };
   }, [id, selectedChannel]);
+
+  function deleteMsg(msgId) {
+    if (ws && msgId) {
+      ws.send(`delete-message-karan112010=${msgId}`);
+    }
+  }
 
   const edit = (msgId) => {
     if (ws && msgId) {
@@ -338,7 +360,7 @@ const Chat = () => {
             <ul className="space-y-2 font-medium">
               {chatData &&
                 chatData.Users &&
-                chatData.Users.map((user, index) => (
+                chatData.users.map((user, index) => (
                   <ContextMenu.Root>
                     <ContextMenu.Trigger>
                       <li key={index}>
@@ -358,9 +380,9 @@ const Chat = () => {
                           </svg>
                           <span
                             className="flex-1 ms-3 whitespace-nowrap"
-                            onClick={() => openPersonalChat(user)}
+                            onClick={() => openPersonalChat(user.user)}
                           >
-                            {user.name}
+                            {user.user.name}
                           </span>
                         </a>
                       </li>
@@ -371,7 +393,7 @@ const Chat = () => {
                         <ContextMenu.SubTrigger>Role</ContextMenu.SubTrigger>
                         <ContextMenu.SubContent>
                           {["owner", "moderator", "user"]
-                            .filter((role) => role !== user.ChatUser.role)
+                            .filter((role) => role !== user.role)
                             .map((role) => {
                               return (
                                 <>
@@ -651,7 +673,11 @@ const Chat = () => {
                         Edit
                       </ContextMenu.Item>
                       <ContextMenu.Separator />
-                      <ContextMenu.Item shortcut="⌘ ⌫" color="red">
+                      <ContextMenu.Item
+                        shortcut="⌘ ⌫"
+                        color="red"
+                        onClick={() => deleteMsg(msg.id)}
+                      >
                         Delete
                       </ContextMenu.Item>
                     </ContextMenu.Content>

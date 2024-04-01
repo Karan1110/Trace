@@ -1,6 +1,5 @@
 const express = require("express");
 const router = express.Router();
-const auth = require("../middlewares/auth");
 const prisma = require("../utils/prisma");
 
 router.post("/", async (req, res) => {

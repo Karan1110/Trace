@@ -3,7 +3,7 @@ const jwt = require("jsonwebtoken");
 const router = express.Router();
 const bcrypt = require("bcrypt");
 const auth = require("../middlewares/auth.js");
-const blockedUsers = require("../middlewares/blockedUsers.js")
+const blockedUsers = require("../middlewares/blockedUsers.js");
 const prisma = require("../utils/prisma.js");
 
 router.get("/", auth, async (req, res) => {
@@ -44,12 +44,12 @@ router.get("/search", auth, async (req, res) => {
       OR: [
         {
           name: {
-            contains: req.query.user, // Assuming req.query.user is the search term
+            contains: req.query.user, 
           },
         },
         {
           email: {
-            contains: req.query.user, // Assuming req.query.user is the search term
+            contains: req.query.user, 
           },
         },
       ],
@@ -65,8 +65,8 @@ router.get("/colleagues", auth, async (req, res) => {
   const users = await prisma.users.findMany({
     where: {
       department_id: me.department_id,
-      NOT: {
-        id: req.user.id,
+      id: {
+        not: req.user.id,
       },
     },
   });
@@ -79,12 +79,16 @@ router.get("/stats/:id", async (req, res) => {
     // Average time taken to complete a ticket
     const averageTimeTakenToCompleteTicket = await prisma.tickets.aggregate({
       _avg: {
-        updatedAt: {
-          _subtract: "createdAt",
-        },
+        timeTakenToCompleteInHours: true,
       },
       where: {
-        userId: parseInt(req.params.id),
+        user_id: parseInt(req.params.id),
+        closedOn: {
+          not: null,
+        },
+        timeTakenToCompleteInHours: {
+          not: null,
+        },
       },
     });
 
@@ -100,15 +104,21 @@ router.get("/stats", async (req, res) => {
   try {
     const averageTimeTakenToCompleteTicket = await prisma.tickets.aggregate({
       _avg: {
-        updatedAt: {
-          _subtract: "createdAt",
+        timeTakenToCompleteInHours: true,
+      },
+      where: {
+        closedOn: {
+          not: null,
+        },
+        timeTakenToCompleteInHours: {
+          not: null,
         },
       },
     });
-    console.log(verageTimeTakenToCompleteTicket);
+
     res.status(200).send(averageTimeTakenToCompleteTicket);
   } catch (error) {
-    console.error("Error in statistics endpoint:", error.message, error);
+    console.error(error.message, error);
     res.status(500).send("Internal Server Error");
   }
 });
@@ -134,7 +144,7 @@ router.get("/leaderboard", async (req, res) => {
     // Fetch users along with their associated closed tickets in the last month
     const LastMonthRankedUsers = await prisma.users.findMany({
       include: {
-        Tickets: {
+        tickets: {
           where: {
             status: "closed",
             closedOn: {
@@ -148,7 +158,7 @@ router.get("/leaderboard", async (req, res) => {
     // Fetch users along with their associated closed tickets in the last year
     const LastYearRankedUsers = await prisma.users.findMany({
       include: {
-        Tickets: {
+        tickets: {
           where: {
             status: "closed",
             closedOn: {
@@ -180,24 +190,23 @@ router.get("/leaderboard", async (req, res) => {
 router.get("/:id", [auth], async (req, res) => {
   const user = await prisma.users.findUnique({
     where: {
-      id: req.params.id,
+      id: parseInt(req.params.id),
     },
     include: {
-      Saveds: true,
-      Notifications: true,
-      Tickets: true,
-      MeetingMembers: {
+      saveds: true,
+      notifications: true,
+      tickets: true,
+      meetings: {
         include: {
-          User: true,
-          Meeting: true,
+          meeting: true,
         },
       },
-      Departments: true,
-      ChatUsers: {
+      department: true,
+      chats: {
         include: {
           chat: {
             include: {
-              Channels: true,
+              channels: true,
             },
           },
         },
@@ -215,30 +224,6 @@ router.get("/:id", [auth], async (req, res) => {
     },
   });
   if (!user) return res.status(404).send("user not found");
-
-  // const following = await FollowUser.findAll({
-  //   where: {
-  //     followedBy_id: req.params.id,
-  //   },
-  //   include: {
-  //     model: User,
-  //     as: "following",
-  //     attributes: ["name", "email"],
-  //   },
-  // });
-  // user.following = following;
-
-  // const followedBy = await FollowUser.findAll({
-  //   where: {
-  //     following_id: req.params.id,
-  //   },
-  //   include: {
-  //     model: User,
-  //     as: "followedBy",
-  //     attributes: ["name", "email"],
-  //   },
-  // });
-  // user.followedBy = followedBy;
 
   res.status(200).send(user);
 });

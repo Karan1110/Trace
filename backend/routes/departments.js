@@ -13,14 +13,14 @@ router.get("/", auth, async (req, res) => {
 });
 
 router.get("/:id", auth, async (req, res) => {
-  const department = await prisma.departments.findUnique({
+  const department = await prisma.departments.findUniqueOrThrow({
     where: {
       id: req.params.id,
     },
     include: {
-      Users: true,
-      Meetings: true,
-      Tickets: true,
+      users: true,
+      meetings: true,
+      tickets: true,
     },
   });
 
@@ -28,11 +28,11 @@ router.get("/:id", auth, async (req, res) => {
     where: {
       followedBy_id: req.user.id,
       following_id: {
-        [Op.In]: department.Users.map((u) => u.id),
+        in: department.users.map((u) => u.id),
       },
     },
     include: {
-      Users_FollowUsers_following_idToUsers: true,
+      following: true,
     },
   });
 
@@ -40,8 +40,8 @@ router.get("/:id", auth, async (req, res) => {
     department,
     followingInCommon: followingInCommon.map((f) => {
       return {
-        name: f.Users_FollowUsers_following_idToUsers.name,
-        email: f.Users_FollowUsers_following_idToUsers.email,
+        name: f.following.name,
+        email: f.following.email,
       };
     }),
   });

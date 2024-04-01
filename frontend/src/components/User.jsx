@@ -21,8 +21,6 @@ const User = () => {
   const [user, setUser] = useState(null);
   const [colleagues, setColleagues] = useState(null);
   const { id } = useParams();
-  const [followers, setFollowers] = useState([]);
-  const [following, setFollowing] = useState([]);
   const currentUser = useUser();
   const [stats, setStats] = useState({});
   const [avgTime, setAvgTime] = useState(null);
@@ -40,13 +38,12 @@ const User = () => {
         setAvgTime(response1.data.average_time_taken);
 
         console.log(response.data);
-        setUser(response.data.user);
-
-        setFollowers(response.data.followedBy);
-        setFollowing(response.data.following);
-        const closed = response.data.Ticket.filter((t) => t.status == "closed");
-        const open = response.data.Ticket.filter((t) => t.status == "open");
-        const inProgress = response.data.Ticket.filter(
+        setUser(response.data);
+        const closed = response.data.tickets.filter(
+          (t) => t.status == "closed"
+        );
+        const open = response.data.tickets.filter((t) => t.status == "open");
+        const inProgress = response.data.tickets.filter(
           (t) => t.status == "in_progress"
         );
         setStats({
@@ -307,13 +304,13 @@ const User = () => {
                   <Table.Root className="w-[550px]">
                     <Table.Body size="3">
                       {user &&
-                        user.mySavedTickets.map((ticket) => (
-                          <Table.Row key={ticket.savedTicket.id}>
+                        user.saveds.map((ticket) => (
+                          <Table.Row key={ticket.ticket.id}>
                             <Table.RowHeaderCell>
                               <div className="flex flex-col  space-y-4">
-                                <Link to={`/tickets/${ticket.savedTicket.id}`}>
+                                <Link to={`/tickets/${ticket.ticket.id}`}>
                                   <Text size="3" weight="regular">
-                                    {ticket.savedTicket.name || "title"}
+                                    {ticket.ticket.name || "title"}
                                   </Text>
                                 </Link>
                                 <Badge
@@ -321,7 +318,7 @@ const User = () => {
                                   color="red"
                                   className="w-[50px]"
                                 >
-                                  {ticket.savedTicket.status}
+                                  {ticket.ticket.status}
                                 </Badge>
                               </div>
                             </Table.RowHeaderCell>
@@ -366,8 +363,8 @@ const User = () => {
                   <Table.Root className="w-[550px]">
                     <Table.Body size="3">
                       {user &&
-                        user.Ticket.length > 0 &&
-                        user.Ticket.map((ticket) => (
+                        user.tickets.length > 0 &&
+                        user.tickets.map((ticket) => (
                           <Table.Row key={ticket.id}>
                             <Table.RowHeaderCell>
                               <div className="flex flex-col  space-y-4">
@@ -400,9 +397,9 @@ const User = () => {
                   <h5 className="text-xl font-bold  mb-5 leading-none text-gray-900 dark:text-white">
                     Followers
                   </h5>
-                  {followers &&
-                    followers.length > 0 &&
-                    followers.map((follower) => (
+                  {user.followers &&
+                    user.followers.length > 0 &&
+                    user.followers.map((follower) => (
                       <Card style={{ maxWidth: 240 }}>
                         <Flex gap="3" align="center">
                           <Avatar size="3" fallback="T" />
@@ -426,9 +423,9 @@ const User = () => {
                   </h5>
                   <Table.Root className="w-[550px]">
                     <Table.Body size="3">
-                      {following &&
-                        following.length > 0 &&
-                        following.map((follower) => (
+                      {user.following &&
+                        user.following.length > 0 &&
+                        user.following.map((follower) => (
                           <Card style={{ maxWidth: 240 }}>
                             <Flex gap="3" align="center">
                               <Avatar size="3" fallback="T" />

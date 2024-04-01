@@ -27,35 +27,24 @@ const createProducer = async () => {
 };
 
 exports.produceMessage = async function produceMessage(
-  Chats,
   message,
-  ws,
   req,
   edit,
   msgId,
-  id,
-  url
+  url,
+  deleted
 ) {
   const producer = await createProducer();
   const msg = {
-    id: id,
+    id: msgId,
     value: JSON.stringify(message),
-    isRead: false,
     channel_id: req.channel.id,
     chat_id: req.params.chat,
     user_id: req.user.id,
     edit: edit,
-    msgId: msgId,
     url: url,
+    deleted: deleted,
   };
-  console.log("producer msg : ", msg);
-
-  const chatKey = `${req.params.chat}_${req.params.channel}`;
-  const otherClients = Chats[chatKey].filter((connection) => connection !== ws);
-
-  if (otherClients.length > 0) {
-    msg.isRead = true;
-  }
 
   await producer.send({
     messages: [{ value: JSON.stringify(msg) }],
@@ -76,17 +65,25 @@ exports.startConsumingMessages = async function startConsumingMessages(
       eachMessage: async ({ message, pause }) => {
         try {
           const msg = JSON.parse(message.value.toString());
-          console.log("consumer message...", msg);
           const temp2 = msg.value.split("~");
           const value = temp2[0];
-          console.log(value);
+
           if (msg.edit == true) {
             await prisma.messages.update({
               data: {
                 value: value,
               },
               where: {
-                id: msg.msgId,
+                id: msg.id,
+              },
+            });
+          } else if (msg.deleted == true) {
+            await prisma.messages.update({
+              data: {
+                deleted: true,
+              },
+              where: {
+                id: msg.id,
               },
             });
           } else {
@@ -94,7 +91,6 @@ exports.startConsumingMessages = async function startConsumingMessages(
               data: {
                 id: msg.id,
                 value: msg.value,
-                isRead: JSON.parse(msg.isRead),
                 channel_id: channel.id,
                 chat_id: parseInt(msg.chat_id),
                 user_id: parseInt(msg.user_id),
