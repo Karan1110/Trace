@@ -50,7 +50,9 @@ const Home = () => {
     const fetchTicketCounts = async () => {
       try {
         const response0 = await axios.get("http://localhost:1111/users/stats");
-        setAvgTime(response0.data.average_time_taken);
+        setAvgTime(
+          response0.data
+        );
         console.log(response0.data);
         const response = await axios.get("http://localhost:1111/tickets");
         setTicketsCount(response.data);
@@ -217,7 +219,7 @@ const Home = () => {
 
           <Box px="4" pt="3" pb="2">
             <Tabs.Content value="account">
-              <div className="flex justify-content-start items-center max-w-full">
+              <div className="flex gap-4 justify-center items-center ">
                 {feed.map((ticket) => (
                   <TicketCard ticket={ticket} />
                 ))}

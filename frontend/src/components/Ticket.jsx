@@ -252,23 +252,25 @@ const Ticket = () => {
           <Button variant="solid" color="purple" onClick={() => close()}>
             Close <Pencil2Icon />
           </Button>
-          {["in_progress", "open"]
-            .filter((status) => status !== ticket.status)
-            .map((status) => (
-              <Button
-                variant="solid"
-                onClick={() => changeStatus(status)}
-                disabled={statusLoading}
-              >
-                {statusLoading ? "updating..." : ` mark as ${status}`}
-              </Button>
-            ))}
+          {ticket &&
+            ticket.status &&
+            ["in_progress", "open"]
+              .filter((status) => status !== ticket.status)
+              .map((status) => (
+                <Button
+                  variant="solid"
+                  onClick={() => changeStatus(status)}
+                  disabled={statusLoading}
+                >
+                  {statusLoading ? "updating..." : ` mark as ${status}`}
+                </Button>
+              ))}
           <Button variant="solid" color="purple">
             Edit <Pencil2Icon />
           </Button>
           {ticket && (
             <Button variant="solid" color="violet" onClick={() => save()}>
-              {user.mySavedTickets.some((t) => t.savedTicket.id == ticket.id)
+              {user.saveds.some((t) => t.ticket.id == ticket.id)
                 ? "unsave"
                 : "save"}
               <svg

@@ -39,17 +39,17 @@ router.get("/suggested", [auth, blockedUsers], async (req, res) => {
 });
 
 router.get("/search", auth, async (req, res) => {
-  const users = await prisma.user.findMany({
+  const users = await prisma.users.findMany({
     where: {
       OR: [
         {
           name: {
-            contains: req.query.user, 
+            contains: req.query.user.toString(),
           },
         },
         {
           email: {
-            contains: req.query.user, 
+            contains: req.query.user.toString(),
           },
         },
       ],
@@ -218,7 +218,7 @@ router.get("/:id", [auth], async (req, res) => {
       },
       followers: {
         include: {
-          followedBy: true,
+          user: true,
         },
       },
     },

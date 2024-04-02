@@ -22,7 +22,7 @@ router.post("/:id", [auth], async (req, res) => {
 
     await prisma.followUsers.create({
       data: {
-        followedBy_id: req.user.id,
+        user_id: req.user.id,
         following_id: followedUser.id,
       },
     });
@@ -75,7 +75,7 @@ router.put("/:id", [auth], async (req, res) => {
     await FollowUser.destroy({
       where: {
         following_id: req.params.id,
-        followedBy_id: req.user.id,
+        user_id: req.user.id,
       },
     });
     if (!followedUser) return res.status(404).send("user not found....");

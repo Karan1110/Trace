@@ -26,9 +26,9 @@ router.get("/:id", auth, async (req, res) => {
 
   const followingInCommon = await prisma.followUsers.findMany({
     where: {
-      followedBy_id: req.user.id,
+      user_id: req.user.id,
       following_id: {
-        in: department.users.map((u) => u.id),
+        in: department.users.filter(u => u.id == req.user.id).map((u) => u.id),
       },
     },
     include: {

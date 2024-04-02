@@ -72,13 +72,13 @@ model Departments {
 model FollowUsers {
   id            Int      @id @default(autoincrement())
   following_id  Int?
-  followedBy_id Int?
+  user_id Int?
   createdAt     DateTime @default(now()) @db.Timestamptz(6)
   updatedAt     DateTime @default(now()) @updatedAt @db.Timestamptz(6)
-  followedBy    Users?   @relation("followedBy", fields: [followedBy_id], references: [id], onDelete: Cascade)
+  user    Users?   @relation("user", fields: [user_id], references: [id], onDelete: Cascade)
   following     Users?   @relation("following", fields: [following_id], references: [id], onDelete: Cascade)
 
-  @@index([followedBy_id, following_id])
+  @@index([user_id, following_id])
 }
 
 model MeetingMember {
@@ -162,7 +162,7 @@ model Tickets {
   afterTickets               Tickets[]       @relation("beforeTicket")
   timeTakenToCompleteInHours Int?
 
-  @@index([status, name, description, user_id])
+  @@index([status, name, description, user_id,createdAt])
 }
 
 model Users {
@@ -178,8 +178,8 @@ model Users {
   points            Int?            @default(0)
   createdAt         DateTime        @default(now()) @db.Timestamptz(6)
   updatedAt         DateTime        @default(now()) @updatedAt @db.Timestamptz(6)
-  followers         FollowUsers[]   @relation("followedBy")
-  following         FollowUsers[]   @relation("following")
+  following         FollowUsers[]   @relation("user")
+  followers         FollowUsers[]   @relation("following")
   messages          Messages[]
   notifications     Notifications[] @relation("notifications")
   saveds            Saveds[]
@@ -189,7 +189,7 @@ model Users {
   meetings          MeetingMember[]
   comments          Comments[]
 
-  @@index([name, email])
+  @@index([name, email,department_id])
 }
 
 enum channels_type {

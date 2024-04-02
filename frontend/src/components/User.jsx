@@ -405,10 +405,10 @@ const User = () => {
                           <Avatar size="3" fallback="T" />
                           <Box>
                             <Text as="div" size="2" weight="bold">
-                              {follower.followedBy.name}
+                              {follower.user.name}
                             </Text>
                             <Text as="div" size="2" color="gray">
-                              {follower.followedBy.email}
+                              {follower.user.email}
                             </Text>
                           </Box>
                         </Flex>

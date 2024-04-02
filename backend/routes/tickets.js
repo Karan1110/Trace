@@ -85,14 +85,14 @@ router.get("/latest", [auth, blockedUsers], async (req, res) => {
         orderBy: {
           createdAt: "desc",
         },
-        take: 10,
+        take: 5,
       });
     } else {
       tickets = await prisma.tickets.findMany({
         orderBy: {
           createdAt: "desc",
         },
-        take: 10,
+        take: 5,
       });
     }
 
@@ -204,10 +204,14 @@ router.get("/pending", auth, async (req, res) => {
       where: {
         AND: {
           user_id: req.user.id,
-          OR: {
-            status: "open",
-            status: "in_progress",
-          },
+          OR: [
+            {
+              status: "open",
+            },
+            {
+              status: "in_progress",
+            },
+          ],
         },
       },
       orderBy: {
