@@ -1,13 +1,13 @@
 import React, { useState, useEffect, useRef } from "react";
 import axios from "axios";
 import moment from "moment";
-import { z } from "zod";
 import { toast } from "react-hot-toast";
 import { Button, TextField, Select } from "@radix-ui/themes";
 import { CaretDownIcon } from "@radix-ui/react-icons";
 import MarkdownEditor from "@uiw/react-markdown-editor";
 const NewTicket = () => {
   const [users, setUsers] = useState([]);
+  const [tickets, setTickets] = useState([]);
   const [mdStr, setMdStr] = useState(
     `
   # This is a H1
@@ -27,15 +27,12 @@ const NewTicket = () => {
     deadline: moment().add(2, "days").format("YYYY-MM-DD"),
     status: "open",
     department_id: 1,
-  });
-  const ticketSchema = z.object({
-    name: z.string(),
-    user_id: z.number().nullable(),
-    deadline: z.enum([z.date(), z.string()]),
-    status: z.string(),
-    department_id: z.number().nullable(),
+    before_id: null,
   });
 
+  const handleTicketChange = (v) => {
+    setFormData({ ...formData, before_id: v });
+  };
   useEffect(() => {
     // Fetch list of users
     const fetchUsers = async () => {
@@ -67,6 +64,20 @@ const NewTicket = () => {
       }
     };
 
+    const fetchTickets = async () => {
+      const rsp = await axios.get("http://localhost:1111/tickets/all", {
+        headers: {
+          "x-auth-token": localStorage.getItem("token"),
+        },
+        params: {
+          sortingProperty: "createdAt",
+        },
+      });
+      console.log(rsp.data);
+      setTickets(rsp.data);
+    };
+
+    fetchTickets();
     fetchUsers();
   }, []);
 
@@ -88,12 +99,12 @@ const NewTicket = () => {
       formDataWithVideo.append("name", formData.name);
       formDataWithVideo.append("description", mdStr);
       formDataWithVideo.append("user_id", formData.user_id);
+      formDataWithVideo.append("before_id", formData.before_id);
       formDataWithVideo.append("deadline", formData.deadline);
       formDataWithVideo.append("status", formData.status);
       formDataWithVideo.append("department_id", formData.department_id);
       formDataWithVideo.append("video", videoFile);
       formDataWithVideo.append("image", imageFile);
-      // ticketSchema.parse(form)
 
       const response = await axios.post(
         "http://localhost:1111/tickets",
@@ -188,6 +199,28 @@ const NewTicket = () => {
             <Select.Item value={null}>Not Assigned</Select.Item>
           </Select.Content>
         </Select.Root>
+
+        {tickets.length > 0 && (
+          <Select.Root
+            defaultValue={null}
+            size="2"
+            onValueChange={(v) => handleTicketChange(v)}
+          >
+            <Select.Trigger>
+              <Button variant="outline" color="purple">
+                <CaretDownIcon />
+              </Button>
+            </Select.Trigger>
+            <Select.Content color="purple">
+              {tickets.map((ticket) => (
+                <Select.Item key={ticket.id} value={ticket.id}>
+                  {ticket.name}
+                </Select.Item>
+              ))}
+              <Select.Item value={null}>none</Select.Item>
+            </Select.Content>
+          </Select.Root>
+        )}
 
         <Select.Root
           defaultValue={null}

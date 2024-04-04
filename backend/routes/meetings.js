@@ -24,7 +24,7 @@ router.get("/departments/:id", async (req, res) => {
       createdAt: true,
     },
     where: {
-      department_id: req.params.id,
+      department_id: parseInt(req.params.id),
     },
     include: {
       department: true,
@@ -76,19 +76,10 @@ router.post("/", [auth], async (req, res) => {
         await prisma.notifications.create({
           data: {
             user_id: invitee,
-            message: `new meeting assigned just now!  - ${user.name}`,
+            message: `new meeting assigned just now!  - ${meeting.name}`,
           },
         });
       }
-
-      await axios.post(
-        "/notifications",
-        {
-          user_id: invitee,
-          message: `a new meeting ! - ${meeting.name}`,
-        },
-        {}
-      );
     }
 
     res.status(200).send(meeting);
@@ -102,7 +93,7 @@ router.post("/addToSchedule/:id", auth, async (req, res) => {
   try {
     const meeting = await prisma.meeting.findUnique({
       where: {
-        id: req.params.id,
+        id: parseInt(req.params.id),
       },
     });
     if (!meeting) return res.status(404).send("meeting not found...");
@@ -113,7 +104,7 @@ router.post("/addToSchedule/:id", auth, async (req, res) => {
 
     const m_m = await prisma.meetingMember.findFirst({
       where: {
-        meeting_id: req.params.id,
+        meeting_id: parseInt(req.params.id),
         user_id: req.user.id,
       },
     });
@@ -122,7 +113,7 @@ router.post("/addToSchedule/:id", auth, async (req, res) => {
 
     const meeting_member = await prisma.meetingMember.create({
       data: {
-        meeting_id: req.params.id,
+        meeting_id: parseInt(req.params.id),
         user_id: req.user.id,
       },
     });
@@ -239,7 +230,7 @@ router.delete("/:id", [auth], async (req, res) => {
   try {
     await prisma.meetings.delete({
       where: {
-        id: req.params.id,
+        id: parseInt(req.params.id),
       },
     });
 

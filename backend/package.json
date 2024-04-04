@@ -10,7 +10,6 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@prisma/client": "^5.11.0",
     "axios": "^1.6.7",
     "bcrypt": "^5.1.1",
     "cloudinary": "^2.0.1",
@@ -44,6 +43,7 @@
   ],
   "description": "this si a personal project by karan... ",
   "devDependencies": {
-    "prisma": "^5.11.0"
+    "@prisma/client": "^5.12.0",
+    "prisma": "^5.12.0"
   }
 }

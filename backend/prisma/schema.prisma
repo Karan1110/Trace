@@ -24,7 +24,7 @@ model ChatUser {
   user      Users     @relation(fields: [user_id], references: [id])
   chat      Chats     @relation(fields: [chat_id], references: [id])
   role      chat_role @default(user)
-  createdAt DateTime  @default(now()) @db.Timestamptz(6) 
+  createdAt DateTime  @default(now()) @db.Timestamptz(6)
   updatedAt DateTime  @default(now()) @updatedAt @db.Timestamptz(6)
 
   @@id([user_id, chat_id])
@@ -50,6 +50,7 @@ model Comments {
   content   String?
   user_id   Int?
   ticket_id Int?
+  likes     String[] @default([])
   createdAt DateTime @default(now()) @db.Timestamptz(6)
   updatedAt DateTime @default(now()) @updatedAt @db.Timestamptz(6)
   ticket    Tickets? @relation(fields: [ticket_id], references: [id], onDelete: Cascade)
@@ -70,13 +71,13 @@ model Departments {
 }
 
 model FollowUsers {
-  id            Int      @id @default(autoincrement())
-  following_id  Int?
-  user_id Int?
-  createdAt     DateTime @default(now()) @db.Timestamptz(6)
-  updatedAt     DateTime @default(now()) @updatedAt @db.Timestamptz(6)
-  user    Users?   @relation("user", fields: [user_id], references: [id], onDelete: Cascade)
-  following     Users?   @relation("following", fields: [following_id], references: [id], onDelete: Cascade)
+  id           Int      @id @default(autoincrement())
+  following_id Int?
+  user_id      Int?
+  createdAt    DateTime @default(now()) @db.Timestamptz(6)
+  updatedAt    DateTime @default(now()) @updatedAt @db.Timestamptz(6)
+  user         Users?   @relation("user", fields: [user_id], references: [id], onDelete: Cascade)
+  following    Users?   @relation("following", fields: [following_id], references: [id], onDelete: Cascade)
 
   @@index([user_id, following_id])
 }
@@ -162,7 +163,7 @@ model Tickets {
   afterTickets               Tickets[]       @relation("beforeTicket")
   timeTakenToCompleteInHours Int?
 
-  @@index([status, name, description, user_id,createdAt])
+  @@index([status, name, description, user_id, createdAt])
 }
 
 model Users {
@@ -189,7 +190,7 @@ model Users {
   meetings          MeetingMember[]
   comments          Comments[]
 
-  @@index([name, email,department_id])
+  @@index([name, email, department_id])
 }
 
 enum channels_type {
@@ -211,7 +212,6 @@ enum chats_type {
 }
 
 enum tickets_status {
-  in
   in_progress
   closed
   open

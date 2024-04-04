@@ -77,7 +77,7 @@ router.get("/colleagues", auth, async (req, res) => {
 router.get("/stats/:id", async (req, res) => {
   try {
     // Average time taken to complete a ticket
-    const averageTimeTakenToCompleteTicket = await prisma.tickets.aggregate({
+    const { _avg } = await prisma.tickets.aggregate({
       _avg: {
         timeTakenToCompleteInHours: true,
       },
@@ -92,8 +92,8 @@ router.get("/stats/:id", async (req, res) => {
       },
     });
 
-    console.log(averageTimeTakenToCompleteTicket);
-    res.status(200).send(averageTimeTakenToCompleteTicket);
+    console.log(_avg.timeTakenToCompleteInHours);
+    res.status(200).send(_avg.timeTakenToCompleteInHours);
   } catch (error) {
     console.error("Error in statistics endpoint:", error.message, error);
     res.status(500).send("Internal Server Error");
@@ -102,7 +102,7 @@ router.get("/stats/:id", async (req, res) => {
 
 router.get("/stats", async (req, res) => {
   try {
-    const averageTimeTakenToCompleteTicket = await prisma.tickets.aggregate({
+    const { _avg } = await prisma.tickets.aggregate({
       _avg: {
         timeTakenToCompleteInHours: true,
       },
@@ -111,12 +111,12 @@ router.get("/stats", async (req, res) => {
           not: null,
         },
         timeTakenToCompleteInHours: {
-          not: null,
+        not: null,
         },
       },
     });
 
-    res.status(200).send(averageTimeTakenToCompleteTicket);
+    res.status(200).send(_avg.timeTakenToCompleteInHours);
   } catch (error) {
     console.error(error.message, error);
     res.status(500).send("Internal Server Error");
@@ -283,7 +283,7 @@ router.put("/:id", auth, async (req, res) => {
 router.delete("/:id", auth, async (req, res) => {
   const user = await prisma.users.delete({
     where: {
-      id: req.params.id,
+      id: parseInt(req.params.id),
     },
   });
 

@@ -15,7 +15,7 @@ router.get("/", auth, async (req, res) => {
 router.get("/:id", auth, async (req, res) => {
   const department = await prisma.departments.findUniqueOrThrow({
     where: {
-      id: req.params.id,
+      id: parseInt(req.params.id),
     },
     include: {
       users: true,
@@ -28,7 +28,9 @@ router.get("/:id", auth, async (req, res) => {
     where: {
       user_id: req.user.id,
       following_id: {
-        in: department.users.filter(u => u.id == req.user.id).map((u) => u.id),
+        in: department.users
+          .filter((u) => u.id == req.user.id)
+          .map((u) => u.id),
       },
     },
     include: {
@@ -70,7 +72,7 @@ router.put("/:id", [auth], async (req, res) => {
     },
     {
       where: {
-        id: req.params.id,
+        id: parseInt(req.params.id),
       },
     }
   );
@@ -81,7 +83,7 @@ router.put("/:id", [auth], async (req, res) => {
 router.delete("/:id", [auth], async (req, res) => {
   await Department.destroy({
     where: {
-      id: req.params.id,
+      id: parseInt(req.params.id),
     },
   });
 

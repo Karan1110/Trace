@@ -15,7 +15,7 @@ router.post("/:id", [auth], async (req, res) => {
 
     const followedUser = await prisma.users.findUnique({
       where: {
-        id: req.params.id,
+        id: parseInt(req.params.id),
       },
     });
     if (!followedUser) return res.status(404).send("user not found....");
@@ -38,14 +38,12 @@ router.post("/:id", [auth], async (req, res) => {
       },
     });
 
-    await axios.post(
-      "/notifications",
-      {
+    await prisma.notifications.create({
+      data: {
         user_id: followedUser.id,
-        message: `${followedUser.name} just followed you!`,
+        message: `${user.name} just followed you!`,
       },
-      {}
-    );
+    });
 
     res.status(200).send("done!");
   } catch (error) {
@@ -65,16 +63,16 @@ router.put("/:id", [auth], async (req, res) => {
     if (!user) return res.status(404).json({ message: "user not found..." });
 
     const followedUser = await prisma.users.findUniqueOrThrow({
-      where: { id: req.params.id },
+      where: { id: parseInt(req.params.id) },
     });
 
     const new_followed_list = user.followedUsers.filter((id) => {
-      return id !== req.params.id;
+      return id !== parseInt(req.params.id);
     });
 
     await FollowUser.destroy({
       where: {
-        following_id: req.params.id,
+        following_id: parseInt(req.params.id),
         user_id: req.user.id,
       },
     });

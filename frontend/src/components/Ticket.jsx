@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from "react";
 import moment from "moment";
 import axios from "axios";
-import { useParams } from "react-router-dom";
+import { Player } from "video-react";
+import { useParams, Link } from "react-router-dom";
 import {
   Heading,
   Text,
@@ -13,6 +14,7 @@ import {
   Popover,
   TextArea,
   Box,
+  HoverCard,
   Avatar,
 } from "@radix-ui/themes";
 import Spinner from "./Spinner";
@@ -59,22 +61,7 @@ const Ticket = () => {
         console.error("Error fetching ticket details:", error);
       }
     };
-    const changeStatus = async (status) => {
-      try {
-        setStatusLoading(true);
 
-        setTicket({ ...ticket, status: status });
-        await axios.put(
-          `http://localhost:1111/tickets/changeStatus/${id}`,
-          { status: status },
-          { "x-auth-token": localStorage.getItem("token") }
-        );
-        setTimeout(() => setStatusLoading(false), 1500);
-      } catch (error) {
-        toast.error("something failed..");
-        console.error(error.message, error);
-      }
-    };
     // Fetch list of users
     const fetchUsers = async () => {
       try {
@@ -93,6 +80,29 @@ const Ticket = () => {
     fetchUsers();
   }, []);
 
+  const changeStatus = async (status) => {
+    try {
+      setStatusLoading(true);
+
+      setTicket({ ...ticket, status: status });
+      await axios.put(
+        `http://localhost:1111/tickets/changeStatus/${id}`,
+        { status },
+        {
+          headers: {
+            "x-auth-token": localStorage.getItem("token"),
+          },
+        }
+      );
+
+      setTimeout(() => setStatusLoading(false), 1500);
+    } catch (error) {
+      setStatusLoading(false);
+      toast.error("something failed..");
+      console.error(error.message, error);
+    }
+  };
+
   const addComment = async () => {
     await axios.post(
       "http://localhost:1111/comments",
@@ -107,11 +117,57 @@ const Ticket = () => {
       }
     );
     toast.success("comment sent!");
-    ticket.Comments.push({
+    ticket.comments.push({
       content: content,
       ticket_id: ticket.id,
       user_id: localStorage.getItem("user_id"),
     });
+  };
+
+  const likeComment = async (commentId, comment_user_id) => {
+    try {
+      console.log(user.email, user);
+      await axios.post(
+        `http://localhost:1111/comments/like/${commentId}`,
+        {
+          user_email: user.email,
+          comment_user_id,
+        },
+        {
+          headers: {
+            "x-auth-token": localStorage.getItem("token"),
+          },
+        }
+      );
+      const comment = ticket.comments.find((c) => c.id === commentId);
+      comment.likes.push(user.email);
+      toast.success("comment liked");
+    } catch (error) {
+      console.error(error.message, error);
+      toast.error("error while liking the comment", error.message);
+    }
+  };
+
+  const dislikeComment = async (commentId) => {
+    try {
+      await axios.put(
+        `http://localhost:1111/comments/dislike/${commentId}`,
+        {
+          like: user.email,
+        },
+        {
+          headers: {
+            "x-auth-token": localStorage.getItem("token"),
+          },
+        }
+      );
+
+      const comment = ticket.comments.find((c) => c.id === commentId);
+      comment.likes.filter((c) => c.like === user.email);
+      toast.success("comment disliked");
+    } catch (error) {
+      toast.error("error while disliking the comment");
+    }
   };
 
   async function close() {
@@ -168,11 +224,15 @@ const Ticket = () => {
             <div>
               <Heading className="text-2xl mt-[75px] font-bold mb-4">
                 {ticket.name} assigned to -{" "}
-                {ticket.User.name ? (
+                {ticket.user.name ? (
                   <HoverCard.Root>
                     <HoverCard.Trigger>
-                      <Link href="https://twitter.com/radix_ui" target="_blank">
-                        @{ticket.User.name}
+                      <Link
+                        href="https://twitter.com/radix_ui"
+                        target="_blank"
+                        className="text-blue-600 font-medium"
+                      >
+                        @{ticket.user.name}
                       </Link>
                     </HoverCard.Trigger>
                     <HoverCard.Content>
@@ -185,19 +245,20 @@ const Ticket = () => {
                         />
                         <Box>
                           <Heading size="3" as="h3">
-                            {ticket.User.name}
+                            {ticket.user.name}
                           </Heading>
-                          <Text as="div" size="2" color="gray">
-                            @{ticket.User.Department.name}
-                          </Text>
-
+                          {ticket.user.deparment && (
+                            <Text as="div" size="2" color="gray">
+                              @{ticket.user.department.name}
+                            </Text>
+                          )}
                           <Text
                             as="div"
                             size="2"
                             style={{ maxWidth: 300 }}
                             mt="3"
                           >
-                            {ticket.User.email}
+                            {ticket.user.email}
                           </Text>
                         </Box>
                       </Flex>
@@ -215,10 +276,9 @@ const Ticket = () => {
               </div>
 
               {ticket.videoUrl && (
-                <video className="w-[250px] h-[250px] mx-auto" controls>
-                  <source src={ticket.videoUrl} type="video/mp4" />
-                  Your browser does not support the video tag.
-                </video>
+                <Player className="w-[250px] h-[250px] mx-auto">
+                  <source src={ticket.videoUrl} />
+                </Player>
               )}
               <div className="border-2 p-7 w-100 rounded-lg mb-0 mt-5 ">
                 <MarkdownEditor.Markdown source={ticket.description} />
@@ -268,7 +328,7 @@ const Ticket = () => {
           <Button variant="solid" color="purple">
             Edit <Pencil2Icon />
           </Button>
-          {ticket && (
+          {ticket && user && (
             <Button variant="solid" color="violet" onClick={() => save()}>
               {user.saveds.some((t) => t.ticket.id == ticket.id)
                 ? "unsave"
@@ -315,12 +375,17 @@ const Ticket = () => {
               </Flex>
             </AlertDialog.Content>
           </AlertDialog.Root>
-          {ticket && ticket.Before && (
+          {ticket && ticket.beforeTicket && (
             <Text>
               Should be completed after this
               <HoverCard.Root>
                 <HoverCard.Trigger>
-                  <Link href="https://twitter.com/radix_ui" target="_blank">
+                  <Link
+                    href={`https://localhost:5173/tickets/${ticket.id}`}
+                    target="_blank"
+                    className="text-blue-600 font-medium"
+                  >
+                    {" "}
                     @ticket
                   </Link>
                 </HoverCard.Trigger>
@@ -330,18 +395,25 @@ const Ticket = () => {
                       size="3"
                       fallback="R"
                       radius="full"
-                      src="https://pbs.twimg.com/profile_images/1337055608613253126/r_eiMp2H_400x400.png"
+                      src={
+                        ticket.beforeTicket.imageUrl
+                          ? ticket.beforeTicket.imageUrl
+                          : "https://pbs.twimg.com/profile_images/1337055608613253126/r_eiMp2H_400x400.png"
+                      }
                     />
                     <Box>
                       <Heading size="3" as="h3">
-                        {ticket.Before.id}
+                        {ticket.beforeTicket.name}
                       </Heading>
                       <Text as="div" size="2" color="gray">
-                        @{ticket.Before.User.name || "not-assigned"}
+                        @
+                        {(ticket.beforeTicket &&
+                          ticket.beforeTicket.user.name) ||
+                          "not-assigned"}
                       </Text>
 
-                      <Text as="div" size="2" style={{ maxWidth: 300 }} mt="3">
-                        {ticket.Before.description}
+                      <Text as="div" size="2" mt="3">
+                        {ticket.beforeTicket.description}
                       </Text>
                     </Box>
                   </Flex>
@@ -350,6 +422,52 @@ const Ticket = () => {
               for updates.
             </Text>
           )}
+          <Text>The tickets to be completed after this :</Text>
+          {ticket &&
+            ticket.afterTickets &&
+            ticket.afterTickets.length > 0 &&
+            ticket.afterTickets.map((t) => (
+              <Text>
+                <HoverCard.Root>
+                  <HoverCard.Trigger>
+                    <Link
+                      href={`https://localhost:5173/tickets/${t.id}`}
+                      target="_blank"
+                      className="text-blue-600 font-medium"
+                    >
+                      @{t.name}
+                    </Link>
+                  </HoverCard.Trigger>
+                  <HoverCard.Content>
+                    <Flex gap="4">
+                      <Avatar
+                        size="3"
+                        fallback="R"
+                        radius="full"
+                        src={
+                          t.imageUrl
+                            ? t.imageUrl
+                            : "https://pbs.twimg.com/profile_images/1337055608613253126/r_eiMp2H_400x400.png"
+                        }
+                      />
+                      <Box>
+                        <Heading size="3" as="h3">
+                          {t.name}
+                        </Heading>
+                        <Text as="div" size="2" color="gray">
+                          @{t.user.name || "not-assigned"}
+                        </Text>
+
+                        <Text as="div" size="2" mt="3">
+                          {t.description}
+                        </Text>
+                      </Box>
+                    </Flex>
+                  </HoverCard.Content>
+                </HoverCard.Root>{" "}
+                for updates.
+              </Text>
+            ))}
         </div>
       </div>
       <div className="max-w-xl  flex flex-col my-10 mt-[40px] mx-[250px] ">
@@ -359,7 +477,7 @@ const Ticket = () => {
         </Heading>
         <Flex direction="column">
           {ticket &&
-            ticket.Comments.map((comment) => {
+            ticket.comments.map((comment) => {
               const timeAgo = moment(comment.createdAt).fromNow();
               return (
                 <div className="max-w-xl p-3  flex items-center border-b   my-2 rounded-md">
@@ -367,6 +485,43 @@ const Ticket = () => {
                   <Text as="p" size="3" mx="3">
                     {comment.content || "empty comment"}
                   </Text>
+
+                  {user && user.email && comment.likes.includes(user.email) ? (
+                    <svg
+                      width="15"
+                      height="15"
+                      viewBox="0 0 15 15"
+                      fill="none"
+                      xmlns="http://www.w3.org/2000/svg"
+                      onClick={() => dislikeComment(comment.id)}
+                      className="text-pink-900"
+                    >
+                      <path
+                        d="M4.89346 2.35248C3.49195 2.35248 2.35248 3.49359 2.35248 4.90532C2.35248 6.38164 3.20954 7.9168 4.37255 9.33522C5.39396 10.581 6.59464 11.6702 7.50002 12.4778C8.4054 11.6702 9.60608 10.581 10.6275 9.33522C11.7905 7.9168 12.6476 6.38164 12.6476 4.90532C12.6476 3.49359 11.5081 2.35248 10.1066 2.35248C9.27059 2.35248 8.81894 2.64323 8.5397 2.95843C8.27877 3.25295 8.14623 3.58566 8.02501 3.88993C8.00391 3.9429 7.98315 3.99501 7.96211 4.04591C7.88482 4.23294 7.7024 4.35494 7.50002 4.35494C7.29765 4.35494 7.11523 4.23295 7.03793 4.04592C7.01689 3.99501 6.99612 3.94289 6.97502 3.8899C6.8538 3.58564 6.72126 3.25294 6.46034 2.95843C6.18109 2.64323 5.72945 2.35248 4.89346 2.35248ZM1.35248 4.90532C1.35248 2.94498 2.936 1.35248 4.89346 1.35248C6.0084 1.35248 6.73504 1.76049 7.20884 2.2953C7.32062 2.42147 7.41686 2.55382 7.50002 2.68545C7.58318 2.55382 7.67941 2.42147 7.79119 2.2953C8.265 1.76049 8.99164 1.35248 10.1066 1.35248C12.064 1.35248 13.6476 2.94498 13.6476 4.90532C13.6476 6.74041 12.6013 8.50508 11.4008 9.96927C10.2636 11.3562 8.92194 12.5508 8.00601 13.3664C7.94645 13.4194 7.88869 13.4709 7.83291 13.5206C7.64324 13.6899 7.3568 13.6899 7.16713 13.5206C7.11135 13.4709 7.05359 13.4194 6.99403 13.3664C6.0781 12.5508 4.73641 11.3562 3.59926 9.96927C2.39872 8.50508 1.35248 6.74041 1.35248 4.90532Z"
+                        fill="currentColor"
+                        fill-rule="evenodd"
+                        clip-rule="evenodd"
+                      ></path>
+                    </svg>
+                  ) : (
+                    <svg
+                      width="15"
+                      height="15"
+                      className="text-white border-2"
+                      viewBox="0 0 15 15"
+                      onClick={() => likeComment(comment.id, comment.user_id)}
+                      fill="none"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path
+                        d="M1.35248 4.90532C1.35248 2.94498 2.936 1.35248 4.89346 1.35248C6.25769 1.35248 6.86058 1.92336 7.50002 2.93545C8.13946 1.92336 8.74235 1.35248 10.1066 1.35248C12.064 1.35248 13.6476 2.94498 13.6476 4.90532C13.6476 6.74041 12.6013 8.50508 11.4008 9.96927C10.2636 11.3562 8.92194 12.5508 8.00601 13.3664C7.94645 13.4194 7.88869 13.4709 7.83291 13.5206C7.64324 13.6899 7.3568 13.6899 7.16713 13.5206C7.11135 13.4709 7.05359 13.4194 6.99403 13.3664C6.0781 12.5508 4.73641 11.3562 3.59926 9.96927C2.39872 8.50508 1.35248 6.74041 1.35248 4.90532Z"
+                        fill="currentColor"
+                        fill-rule="evenodd"
+                        clip-rule="evenodd"
+                      ></path>
+                    </svg>
+                  )}
+                  {comment.likes.length.toString()}
                   <Badge mx="5" className="absolute right-[700px]">
                     {timeAgo}
                   </Badge>

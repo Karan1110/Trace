@@ -50,9 +50,7 @@ const Home = () => {
     const fetchTicketCounts = async () => {
       try {
         const response0 = await axios.get("http://localhost:1111/users/stats");
-        setAvgTime(
-          response0.data
-        );
+        setAvgTime(response0.data);
         console.log(response0.data);
         const response = await axios.get("http://localhost:1111/tickets");
         setTicketsCount(response.data);
@@ -130,8 +128,9 @@ const Home = () => {
         <div className="w-1/2 h-[450px]  ">
           <div className="my-7">
             <Heading>
-              The average time taken to complete a ticket is{" "}
-              {avgTime && avgTime.toString()}
+              {avgTime &&
+                ("The average time taken to complete a ticket is ",
+                avgTime.toString())}
             </Heading>
           </div>
 

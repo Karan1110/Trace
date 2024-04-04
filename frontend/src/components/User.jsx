@@ -82,8 +82,18 @@ const User = () => {
           },
         }
       );
+
       toast.success("followed!");
-      currentUsers.followedUsers.push(parseInt(id));
+      currentUser.following.push({
+        id: parseInt(`${currentUser.id}${user.id}`),
+        user_id: currentUser.id,
+        following_id: user.id,
+        user: currentUser,
+        following: user,
+        createdAt: new Date(),
+        updatedAt: this.createdAt,
+      });
+      currentUser.followedUsers.push(parseInt(id));
     } catch (error) {
       toast("something failed");
       console.log(eror.message, error);
@@ -100,6 +110,8 @@ const User = () => {
           },
         }
       );
+
+      currentUser.following.filter((f) => f.following_id === user.id);
       currentUser.followedUsers.filter((user) => user !== parseInt(id));
       toast.success("unfollowed!");
     } catch (error) {
@@ -128,11 +140,7 @@ const User = () => {
       currentUser.blockedUsers.push(parseInt(id));
     } catch (error) {
       toast.error("something failed");
-      console.error(
-        "Error blocking user:",
-        error.message,
-        error.response?.data
-      );
+      console.error(error.message, error);
     }
   }
 
@@ -181,7 +189,11 @@ const User = () => {
               <Heading>{user.name}</Heading>
               <Text>{user.email}</Text>
               {avgTime && (
-                <p>Average time taken to finish a ticket: {avgTime}</p>
+                <p>
+                  {" "}
+                  {user.name} on average takes about {avgTime.toString()} hours
+                  to complete a ticket{" "}
+                </p>
               )}
               {user && user.id != localStorage.getItem("user_id") && (
                 <Button
@@ -262,7 +274,7 @@ const User = () => {
                       Department
                     </Text>
                     <Text as="div" color="gray">
-                      {user.Department.name}
+                      {user.department.name}
                     </Text>
                   </Box>
                 </Flex>
@@ -304,13 +316,13 @@ const User = () => {
                   <Table.Root className="w-[550px]">
                     <Table.Body size="3">
                       {user &&
-                        user.saveds.map((ticket) => (
-                          <Table.Row key={ticket.ticket.id}>
+                        user.saveds.map((t) => (
+                          <Table.Row key={t.ticket.id}>
                             <Table.RowHeaderCell>
                               <div className="flex flex-col  space-y-4">
-                                <Link to={`/tickets/${ticket.ticket.id}`}>
+                                <Link to={`/tickets/${t.ticket.id}`}>
                                   <Text size="3" weight="regular">
-                                    {ticket.ticket.name || "title"}
+                                    {t.ticket.name || "title"}
                                   </Text>
                                 </Link>
                                 <Badge
@@ -318,7 +330,7 @@ const User = () => {
                                   color="red"
                                   className="w-[50px]"
                                 >
-                                  {ticket.ticket.status}
+                                  {t.ticket.status}
                                 </Badge>
                               </div>
                             </Table.RowHeaderCell>
@@ -425,16 +437,16 @@ const User = () => {
                     <Table.Body size="3">
                       {user.following &&
                         user.following.length > 0 &&
-                        user.following.map((follower) => (
+                        user.following.map((f) => (
                           <Card style={{ maxWidth: 240 }}>
                             <Flex gap="3" align="center">
                               <Avatar size="3" fallback="T" />
                               <Box>
                                 <Text as="div" size="2" weight="bold">
-                                  {follower.following.name}
+                                  {f.following.name}
                                 </Text>
                                 <Text as="div" size="2" color="gray">
-                                  {follower.following.email}
+                                  {f.following.email}
                                 </Text>
                               </Box>
                             </Flex>
@@ -445,7 +457,7 @@ const User = () => {
                 </div>
               </Tabs.Content>
             </Box>
-          </Tabs.Root>{" "}
+          </Tabs.Root>
         </div>
       )}
     </div>
