@@ -43,7 +43,7 @@
   ],
   "description": "this si a personal project by karan... ",
   "devDependencies": {
-    "@prisma/client": "^5.12.0",
+    "@prisma/client": "^5.12.1",
     "prisma": "^5.12.0"
   }
 }

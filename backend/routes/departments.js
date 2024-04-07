@@ -5,10 +5,15 @@ const uploader = require("../utils/uploader");
 const multer = require("multer");
 const prisma = require("../utils/prisma");
 const storage = multer.memoryStorage();
+const { v4: uuidv4 } = require("uuid");
 const upload = multer({ storage });
 
 router.get("/", auth, async (req, res) => {
-  const departments = await prisma.departments.findMany({});
+  const departments = await prisma.departments.findMany({
+    orderBy: {
+      createdAt: "desc",
+    },
+  });
   res.json(departments);
 });
 
@@ -19,7 +24,6 @@ router.get("/:id", auth, async (req, res) => {
     },
     include: {
       users: true,
-      meetings: true,
       tickets: true,
     },
   });
@@ -57,31 +61,31 @@ router.post("/", [auth, upload.single("profile_pic")], async (req, res) => {
     url = await uploader(req.file, publicId);
   }
 
-  const department = await Department.create({
-    name: req.body.name,
-    url: url,
+  const department = await prisma.departments.create({
+    data: {
+      name: req.body.name,
+      url: url,
+    },
   });
 
   res.status(200).send(department);
 });
 
 router.put("/:id", [auth], async (req, res) => {
-  const department = await Department.update(
-    {
+  const department = await prisma.departments.update({
+    data: {
       name: req.body.name,
     },
-    {
-      where: {
-        id: parseInt(req.params.id),
-      },
-    }
-  );
+    where: {
+      id: parseInt(req.params.id),
+    },
+  });
 
   res.status(200).send(department);
 });
 
 router.delete("/:id", [auth], async (req, res) => {
-  await Department.destroy({
+  await await prisma.departments.delete({
     where: {
       id: parseInt(req.params.id),
     },

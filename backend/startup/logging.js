@@ -1,5 +1,4 @@
 const winston = require("winston")
-// require('winston-mongodb');
 require("express-async-errors")
 
 module.exports = function () {
@@ -9,10 +8,8 @@ module.exports = function () {
   )
 
   process.on("unhandledRejection", (ex) => {
-    throw ex
+    throw ex;
   })
-
-  // winston.add(winston.transports.File, { filename: 'logfile.log' });
 }
 
 // TODO : add a logger with a prisma addon...

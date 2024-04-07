@@ -15,7 +15,7 @@ import {
 } from "@radix-ui/themes";
 import { Link, useParams } from "react-router-dom";
 import { useUser } from "../contexts/userContext";
-import { Pie } from "react-chartjs-2";
+
 
 const User = () => {
   const [user, setUser] = useState(null);
@@ -177,7 +177,8 @@ const User = () => {
 
   return (
     <div className="container mx-auto my-5">
-      {user.blockedUsers.includes(parseInt(localStorage.getItem("user_id"))) ? (
+      {user &&
+      user.blockedUsers.includes(parseInt(localStorage.getItem("user_id"))) ? (
         <Heading>
           You have been blocked from viewing the {user.name}'s profile...
         </Heading>
@@ -195,7 +196,7 @@ const User = () => {
                   to complete a ticket{" "}
                 </p>
               )}
-              {user && user.id != localStorage.getItem("user_id") && (
+              {user && user.id !== currentUser.id && (
                 <Button
                   variant="solid"
                   mt="2"
@@ -213,7 +214,7 @@ const User = () => {
                     : "follow"}
                 </Button>
               )}
-              <Button
+             {user && user.id !== currentUser.id && <Button
                 size="2"
                 color="purple"
                 className="w-1/2 "
@@ -227,7 +228,7 @@ const User = () => {
                 {currentUser.blockedUsers.includes(parseInt(id))
                   ? "unblock"
                   : "block"}
-              </Button>
+              </Button>}
             </div>
           )}
           {user && (
@@ -250,22 +251,8 @@ const User = () => {
                     </Text>
                   </Box>
                 </Flex>
-              </Card>
-
-              <Card size="2" style={{ width: 425 }}>
-                <Flex gap="4" align="center">
-                  <Avatar size="4" radius="full" fallback="P" color="indigo" />
-                  <Box>
-                    <Text as="div" weight="bold">
-                      punctuality score
-                    </Text>
-                    <Text as="div" color="gray">
-                      12
-                    </Text>
-                  </Box>
-                </Flex>
-              </Card>
-
+                </Card>
+                
               <Card size="2" style={{ width: 500 }}>
                 <Flex gap="4" align="center">
                   <Avatar size="4" radius="full" fallback="L" color="indigo" />
@@ -281,23 +268,7 @@ const User = () => {
               </Card>
             </Flex>
           )}
-          <Pie
-            data={{
-              labels: ["Closed", "Open", "in_progress"],
-              datasets: [
-                {
-                  label: "Tickets",
-                  data: [stats.closed, stats.open, stats.inProgress],
-                  backgroundColor: [
-                    "rgb(255, 99, 132)",
-                    "rgb(54, 162, 235)",
-                    "rgb(255, 205, 86)",
-                  ],
-                  hoverOffset: 4,
-                },
-              ],
-            }}
-          />
+        
           <Tabs.Root defaultValue="account">
             <Tabs.List>
               <Tabs.Trigger value="account">Account</Tabs.Trigger>
@@ -409,7 +380,7 @@ const User = () => {
                   <h5 className="text-xl font-bold  mb-5 leading-none text-gray-900 dark:text-white">
                     Followers
                   </h5>
-                  {user.followers &&
+                  {user &&
                     user.followers.length > 0 &&
                     user.followers.map((follower) => (
                       <Card style={{ maxWidth: 240 }}>
@@ -435,7 +406,7 @@ const User = () => {
                   </h5>
                   <Table.Root className="w-[550px]">
                     <Table.Body size="3">
-                      {user.following &&
+                      {user &&
                         user.following.length > 0 &&
                         user.following.map((f) => (
                           <Card style={{ maxWidth: 240 }}>

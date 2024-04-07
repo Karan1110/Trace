@@ -34,7 +34,7 @@ export default function ({ channel, video }) {
 
       const response = await axios.post(
         `http://localhost:1111/chats/joinChannel/${channel || id}`,
-        { participantName: response1.data.user.name },
+        { participantName: response1.data.name },
         {
           headers: {
             "x-auth-token": localStorage.getItem("token"),
@@ -46,24 +46,7 @@ export default function ({ channel, video }) {
       console.log(response.data);
     };
 
-    const sendAttendance = async () => {
-      await axios.put(
-        "http://localhost:1111/meetings/",
-        {
-          meeting_id: id,
-        },
-        {
-          headers: {
-            "x-auth-token": localStorage.getItem("token"),
-          },
-        }
-      );
-    };
-
     fetchToken();
-    if (id) {
-      sendAttendance();
-    }
   }, []);
 
   if (!token || token == "") {

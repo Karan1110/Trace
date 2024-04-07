@@ -87,11 +87,6 @@ const Navbar = () => {
                 Tickets
               </Text>
             </a>
-            <a href={"/meetings"}>
-              <Text weight="regular" className="cursor-pointer hover:scale-95">
-                Meetings
-              </Text>
-            </a>
             <a href={"/"}>
               <Text weight="regular" className="cursor-pointer hover:scale-95">
                 Home

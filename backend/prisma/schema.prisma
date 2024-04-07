@@ -2,6 +2,7 @@ generator client {
   provider = "prisma-client-js"
 }
 
+
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
@@ -64,7 +65,6 @@ model Departments {
   createdAt DateTime   @default(now()) @db.Timestamptz(6)
   updatedAt DateTime   @default(now()) @updatedAt @db.Timestamptz(6)
   tickets   Tickets[]
-  meetings  Meetings[]
   users     Users[]
 
   @@index([id])
@@ -82,32 +82,7 @@ model FollowUsers {
   @@index([user_id, following_id])
 }
 
-model MeetingMember {
-  user_id    Int
-  meeting_id Int
-  attended   Boolean? @default(false)
-  createdAt  DateTime @default(now()) @db.Timestamptz(6)
-  updatedAt  DateTime @default(now()) @updatedAt @db.Timestamptz(6)
-  meeting    Meetings @relation(fields: [meeting_id], references: [id])
-  user       Users    @relation(fields: [user_id], references: [id])
 
-  @@id([user_id, meeting_id])
-}
-
-model Meetings {
-  id            Int             @id @default(autoincrement())
-  name          String?         @db.VarChar(255)
-  duration      Int?            @default(1)
-  link          String?         @db.VarChar(255)
-  description   String?
-  department_id Int?
-  startingOn    DateTime?       @db.Timestamptz(6)
-  endingOn      DateTime?       @db.Timestamptz(6)
-  createdAt     DateTime        @default(now()) @db.Timestamptz(6)
-  updatedAt     DateTime        @default(now()) @updatedAt @db.Timestamptz(6)
-  department    Departments?    @relation(fields: [department_id], references: [id], onDelete: Cascade)
-  users         MeetingMember[]
-}
 
 model Messages {
   id         String   @id @db.VarChar(255)
@@ -150,7 +125,7 @@ model Tickets {
   user_id                    Int?
   videoUrl                   String?
   comments                   Comments[]
-  department_id              Int?
+  department_id              Int
   closedOn                   DateTime?       @db.Timestamptz(6)
   before_id                  Int?
   imageUrl                   String?
@@ -162,33 +137,31 @@ model Tickets {
   saveds                     Saveds[]
   afterTickets               Tickets[]       @relation("beforeTicket")
   timeTakenToCompleteInHours Int?
+  meeting_link               String?
 
   @@index([status, name, description, user_id, createdAt])
 }
 
 model Users {
-  id                Int             @id @default(autoincrement())
-  name              String?         @db.VarChar(255)
-  email             String?         @unique @db.VarChar(255)
-  password          String?         @db.VarChar(255)
-  department_id     Int?
-  total_meetings    Int?            @default(0)
-  attended_meetings Int?            @default(0)
-  blockedUsers      Int[]           @default([])
-  followedUsers     Int[]           @default([])
-  points            Int?            @default(0)
-  createdAt         DateTime        @default(now()) @db.Timestamptz(6)
-  updatedAt         DateTime        @default(now()) @updatedAt @db.Timestamptz(6)
-  following         FollowUsers[]   @relation("user")
-  followers         FollowUsers[]   @relation("following")
-  messages          Messages[]
-  notifications     Notifications[] @relation("notifications")
-  saveds            Saveds[]
-  tickets           Tickets[]
-  department        Departments?    @relation(fields: [department_id], references: [id], onDelete: Cascade)
-  chats             ChatUser[]
-  meetings          MeetingMember[]
-  comments          Comments[]
+  id            Int             @id @default(autoincrement())
+  name          String?         @db.VarChar(255)
+  email         String?         @unique @db.VarChar(255)
+  password      String?         @db.VarChar(255)
+  department_id Int? 
+  blockedUsers  Int[]           @default([])
+  followedUsers Int[]           @default([])
+  points        Int?            @default(0)
+  createdAt     DateTime        @default(now()) @db.Timestamptz(6)
+  updatedAt     DateTime        @default(now()) @updatedAt @db.Timestamptz(6)
+  following     FollowUsers[]   @relation("user")
+  followers     FollowUsers[]   @relation("following")
+  messages      Messages[]
+  notifications Notifications[] @relation("notifications")
+  saveds        Saveds[]
+  tickets       Tickets[]
+  department    Departments?    @relation(fields: [department_id], references: [id], onDelete: Cascade)
+  chats         ChatUser[]
+  comments      Comments[]
 
   @@index([name, email, department_id])
 }
@@ -212,7 +185,7 @@ enum chats_type {
 }
 
 enum tickets_status {
-  in_progress
+  in_progress  
   closed
   open
 }

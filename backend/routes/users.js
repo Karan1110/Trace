@@ -5,10 +5,15 @@ const bcrypt = require("bcrypt");
 const auth = require("../middlewares/auth.js");
 const blockedUsers = require("../middlewares/blockedUsers.js");
 const prisma = require("../utils/prisma.js");
+const moment = require("moment");
 
 router.get("/", auth, async (req, res) => {
   try {
-    const users = await prisma.users.findMany();
+    const users = await prisma.users.findMany({
+      orderBy: {
+        createdAt: "desc",
+      },
+    });
     res.json(users);
   } catch (ex) {
     console.log(ex.message, ex);
@@ -93,7 +98,7 @@ router.get("/stats/:id", async (req, res) => {
     });
 
     console.log(_avg.timeTakenToCompleteInHours);
-    res.status(200).send(_avg.timeTakenToCompleteInHours);
+    res.json(_avg.timeTakenToCompleteInHours);
   } catch (error) {
     console.error("Error in statistics endpoint:", error.message, error);
     res.status(500).send("Internal Server Error");
@@ -111,7 +116,7 @@ router.get("/stats", async (req, res) => {
           not: null,
         },
         timeTakenToCompleteInHours: {
-        not: null,
+          not: null,
         },
       },
     });
@@ -128,6 +133,9 @@ router.get("/leaderboard", async (req, res) => {
     const AllTimeRankedUsers = await prisma.users.findMany({
       orderBy: {
         points: "desc",
+      },
+      include: {
+        tickets: true,
       },
     });
 
@@ -181,9 +189,8 @@ router.get("/leaderboard", async (req, res) => {
       users3: LastYearRankedUsers,
     });
   } catch (ex) {
+    console.log(ex.message,ex);
     res.status(500).send(ex.message);
-    console.log("ERROR : ");
-    console.log(ex);
   }
 });
 
@@ -196,11 +203,6 @@ router.get("/:id", [auth], async (req, res) => {
       saveds: true,
       notifications: true,
       tickets: true,
-      meetings: {
-        include: {
-          meeting: true,
-        },
-      },
       department: true,
       chats: {
         include: {

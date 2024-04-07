@@ -4,7 +4,6 @@ const auth = require("../middlewares/auth.js");
 const moment = require("moment");
 const multer = require("multer");
 const blockedUsers = require("../middlewares/blockedUsers.js");
-const axios = require("axios");
 const uploader = require("../utils/uploader.js");
 const prisma = require("../utils/prisma.js");
 const storage = multer.memoryStorage();
@@ -395,11 +394,6 @@ router.get("/:id", async (req, res) => {
             saveds: true,
             notifications: true,
             tickets: true,
-            meetings: {
-              include: {
-                meeting: true,
-              },
-            },
             department: true,
             chats: {
               include: {
@@ -496,9 +490,11 @@ router.post(
       videoUrl = _videoUrl;
     }
 
+    const id = await prisma.tickets.count();
+
     const ticket = await prisma.tickets.create({
       data: {
-        name: req.body.name,
+        name: `${req.body.name} #${id + 1}`,
         user_id: parseInt(req.body.user_id),
         deadline: start_date.toDate(),
         status: req.body.status,
@@ -507,6 +503,7 @@ router.post(
         before_id: parseInt(req.body.before_id),
         videoUrl: videoUrl,
         imageUrl: imageUrl,
+        meeting_link: `${req.body.name}@${uuidv4()}`,
       },
       include: {
         user: true,
@@ -625,14 +622,21 @@ router.put("/close/:id", [auth], async (req, res) => {
   if (!ticket) return res.status(404).json({ message: "ticket not found..." });
 
   const startingDate = moment(ticket.createdAt);
-  const timeTakenToCompleteInHours = parseInt(
-    startingDate.diff(moment(), "hours")
+  const now = moment();
+
+  let timeTakenToCompleteInHours = parseInt(
+    startingDate.diff(now, "hours")
   );
+
+  if (timeTakenToCompleteInHours === 0) {
+    const temp = parseInt(startingDate.diff(now, "minutes"));
+    timeTakenToCompleteInHours = (temp / 60);
+}
 
   await prisma.tickets.update({
     data: {
       status: "closed",
-      closedOn: new Date(),
+      closedOn: now,
       timeTakenToCompleteInHours,
     },
     where: {
@@ -640,13 +644,15 @@ router.put("/close/:id", [auth], async (req, res) => {
     },
   });
 
-  const points = ticket.deadline > new Date() ? 5 : 3;
+  const points = ticket.deadline > now ? 1 : 2;
 
   await prisma.users.update({
     where: { id: req.user.id },
     data: {
       points: {
         increment: points,
+
+
       },
     },
   });
