@@ -121,7 +121,7 @@ router.get("/stats", async (req, res) => {
       },
     });
 
-    res.status(200).send(_avg.timeTakenToCompleteInHours);
+    res.json(_avg.timeTakenToCompleteInHours);
   } catch (error) {
     console.error(error.message, error);
     res.status(500).send("Internal Server Error");
@@ -136,6 +136,7 @@ router.get("/leaderboard", async (req, res) => {
       },
       include: {
         tickets: true,
+        department : true
       },
     });
 
@@ -160,6 +161,7 @@ router.get("/leaderboard", async (req, res) => {
             },
           },
         },
+        department : true
       },
     });
 
@@ -174,6 +176,7 @@ router.get("/leaderboard", async (req, res) => {
             },
           },
         },
+        department : true
       },
     });
 

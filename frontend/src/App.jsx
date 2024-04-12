@@ -7,7 +7,6 @@ import Navbar from "./components/Navbar";
 import Chat from "./components/Chat.jsx";
 import { Toaster } from "react-hot-toast";
 import EmailVerificationForm from "./components/Mail";
-import Departments from "./components/Departments.jsx";
 import Department from "./components/Department.jsx";
 import Tickets from "./components/Tickets.jsx";
 import SignUp from "./components/SignUp";
@@ -33,7 +32,6 @@ const App = () => {
             <Routes>
               <Route path="/chat" element={<Chat />} />
               <Route path="/verify" element={<EmailVerificationForm />} />
-              <Route path="/departments" element={<Departments />} />
               <Route path="/department/:id" element={<Department />} />
               <Route path="/signup" element={<SignUp />} />
               <Route path="/" element={<Home />} />

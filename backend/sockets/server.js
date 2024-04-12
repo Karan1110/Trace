@@ -15,7 +15,7 @@ module.exports = function (app) {
     try {
       let currentChat = await prisma.chats.findUniqueOrThrow({
         where: {
-          id: req.params.chat,
+          id: parseInt(req.params.chat),
         },
         include: {
           channels: {

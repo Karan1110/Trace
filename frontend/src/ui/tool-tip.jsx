@@ -30,11 +30,11 @@ const AnimatedTooltip = ({ items, setId, ws }) => {
         newServer,
         config
       );
-      user.Chats.push({
+      user.chats.push({
         ...response.data.chat,
         channels: [response.data.channel],
       });
-      console.log("Chat created:", response.data, user.Chats);
+      console.log("chat created:", response.data, user.chats);
       setNewServer({ name: "", type: "" });
     } catch (error) {
       console.error("Error creating chat:", error);
@@ -58,22 +58,13 @@ const AnimatedTooltip = ({ items, setId, ws }) => {
     const halfWidth = event.target.offsetWidth / 2;
     x.set(event.nativeEvent.offsetX - halfWidth);
   };
-  useEffect(() => {
-    const resp = axios.get("http://localhost:1111/users/search", {
-      params: {
-        user: userQuery,
-      },
-    });
-
-    setUsers(resp.data);
-  }, [userQuery]);
-
-  const openChat = async (user) => {
-    const existingChat = user.Chats.find(
+  
+  const openchat = async (user) => {
+    const existingchat = user.chats.find(
       (chat) => chat.type == "personal" && chat.name == `${user.name}`
     );
-    if (existingChat) {
-      setId(existingChat.id);
+    if (existingchat) {
+      setId(existingchat.id);
     } else {
       const resp = await axios.post(
         "http://localhost:1111/chats",
@@ -87,7 +78,7 @@ const AnimatedTooltip = ({ items, setId, ws }) => {
         }
       );
       const { chat } = resp.data;
-      user.Chats.push(chat);
+      user.chats.push(chat);
       setId(chat.id);
       ws.send("Hii man!!!");
     }
@@ -100,7 +91,10 @@ const AnimatedTooltip = ({ items, setId, ws }) => {
           key={item.name}
           onMouseEnter={() => setHoveredIndex(item.id)}
           onMouseLeave={() => setHoveredIndex(null)}
-          onClick={setId(item.id)}
+          onClick={() => {
+            setId(item.id);
+            console.log("chat changed!");
+          }}
         >
           <AnimatePresence mode="wait">
             {hoveredIndex === item.id && (

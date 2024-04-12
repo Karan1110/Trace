@@ -110,6 +110,8 @@ const Chat = () => {
     };
     if (id) {
       fetchChatData();
+    } else {
+      console.log("sksksksksknoting");
     }
   }, [id]);
 
@@ -141,7 +143,7 @@ const Chat = () => {
               };
               return updatedMessages;
             });
-          } else if (msg.deleted) {
+          } else if (message.deleted) {
             const indexToUpdate = messages.findIndex(
               (_message) => _message.id === message.id
             );
@@ -355,6 +357,7 @@ const Chat = () => {
                     </a>
                   </li>
                 ))}
+              {!chatData || (!chatData.channels && <h1> sometihig </h1>)}
             </ul>
             <Heading>Members</Heading>
             <ul className="space-y-2 font-medium">
@@ -687,11 +690,11 @@ const Chat = () => {
             )}
           </div>
           <div className="flex flex-row  items-center justify-center    space-x-4 fixed bottom-5 left-96 ">
-            <EmojiPicker
+            {/* <EmojiPicker
               onEmojiClick={(event) => {
                 setInputMessage(inputMessage.toString().concat(event.emoji));
               }}
-            />
+            /> */}
 
             <TextField.Input
               value={inputMessage}

@@ -128,9 +128,8 @@ const Home = () => {
         <div className="w-1/2 h-[450px]  ">
           <div className="my-7">
             <Heading>
-              {avgTime &&
-                ("The average time taken to complete a ticket is ",
-                avgTime.toString())}
+              The average time taken to complete a ticket is{" "}
+              {avgTime && avgTime.toString()}
             </Heading>
           </div>
 

@@ -191,9 +191,8 @@ const User = () => {
               <Text>{user.email}</Text>
               {avgTime && (
                 <p>
-                  {" "}
                   {user.name} on average takes about {avgTime.toString()} hours
-                  to complete a ticket{" "}
+                  to complete a ticket
                 </p>
               )}
               {user && user.id !== currentUser.id && (
@@ -231,6 +230,26 @@ const User = () => {
               </Button>}
             </div>
           )}
+          
+          <div className="grid grid-cols-3  my-5  ">
+            <span className="text-gray-900 font-medium  ">Closed Issues</span>
+            <span className="text-gray-900 font-medium ">Open Issues</span>
+            <span className="text-gray-900 font-medium ">
+              in progress Issues
+            </span>
+          </div>
+          <div className="grid grid-cols-3  mb-5 space-x-3 ">
+            <span className=" font-medium text-2xl textce-center text-gray-900">
+              {" "}
+              {stats.closed}
+            </span>
+            <span className="text-gray-900 text-2xl  font-medium ">
+              {stats.open}
+            </span>
+            <span className="text-gray-900 font-medium text-2xl  ">
+              {stats.inProgress}
+            </span>
+          </div>
           {user && (
             <Flex
               gap="5"

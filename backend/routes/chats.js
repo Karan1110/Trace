@@ -45,8 +45,8 @@ import("livekit-server-sdk").then(({ AccessToken }) => {
         },
         users: {
           include: {
-            user : true
-          }
+            user: true,
+          },
         },
       },
     });
@@ -56,15 +56,18 @@ import("livekit-server-sdk").then(({ AccessToken }) => {
 
   router.post("/", [auth, upload.single("chat_pic")], async (req, res) => {
     try {
-      const publicId = `${req.body.name}${uuidv4()}`;
-      const url = await uploader(req.file, publicId);
+      let url;
+      if (req.file) {
+        const publicId = `${req.body.name}${uuidv4()}`;
+        url = await uploader(req.file, publicId);
+      }
 
       const chat = await prisma.chats.create({
         data: {
           type: req.body.type,
           name: req.body.name,
           inviteCode: uuidv4(),
-          url: url.toString(),
+          url: url,
           channels: {
             create: { name: "general", type: "text" },
           },

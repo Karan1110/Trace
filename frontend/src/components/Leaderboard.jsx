@@ -1,7 +1,7 @@
 // Leaderboard.js
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import { Tabs, Table } from "@radix-ui/themes"; // Updated import for Tabs from Radix UI
+import { Tabs, Table,Box } from "@radix-ui/themes"; // Updated import for Tabs from Radix UI
 import { toast } from "react-hot-toast";
 
 const Leaderboard = () => {
@@ -35,90 +35,81 @@ const Leaderboard = () => {
 
   return (
     <div className="mx-auto max-w-4xl p-4">
-      <Tabs defaultValue="1">
+      <Tabs.Root defaultValue="account">
         <Tabs.List>
-          <Tabs.Trigger value="1">All Time</Tabs.Trigger>
-          <Tabs.Trigger value="2">Last Month</Tabs.Trigger>
-          <Tabs.Trigger value="3">Last Year</Tabs.Trigger>
+          <Tabs.Trigger value="all_time">All Time</Tabs.Trigger>
+          <Tabs.Trigger value="last_month">Last Month</Tabs.Trigger>
+          <Tabs.Trigger value="last_year">Last Year</Tabs.Trigger>
         </Tabs.List>
 
-        <Tabs.Content>
-          <Tabs.Panel value="1">
-            <Table className="max-w-2xl">
+        <Box pt="3">
+          <Tabs.Content value="all_time">
+            <Table.Root>
               <Table.Header>
                 <Table.Row>
-                  <Table.ColumnHeader>User</Table.ColumnHeader>
-                  <Table.ColumnHeader align="right">Points</Table.ColumnHeader>
-                  <Table.ColumnHeader align="right">
-                    department
-                  </Table.ColumnHeader>
+                  <Table.ColumnHeaderCell>Name</Table.ColumnHeaderCell>
+                  <Table.ColumnHeaderCell>Email</Table.ColumnHeaderCell>
+                  <Table.ColumnHeaderCell>Department</Table.ColumnHeaderCell>
                 </Table.Row>
               </Table.Header>
 
               <Table.Body>
-                {allTimeUsers &&
-                  allTimeUsers.map((user) => (
-                    <Table.Row key={user.id}>
-                      <Table.RowHeaderCell>{user.name}</Table.RowHeaderCell>
-                      <Table.Cell>{user.points}</Table.Cell>
-                      <Table.Cell>{user.department.name}</Table.Cell>
-                    </Table.Row>
-                  ))}
+                {allTimeUsers.map((u) => (
+                  <Table.Row>
+                    <Table.RowHeaderCell>{u.name}</Table.RowHeaderCell>
+                    <Table.Cell>{u.email}</Table.Cell>
+                    <Table.Cell>{u.department.name}</Table.Cell>
+                  </Table.Row>
+                ))}
               </Table.Body>
-            </Table>
-          </Tabs.Panel>
+            </Table.Root>
+          </Tabs.Content>
 
-          <Tabs.Panel value="2">
-            <Table className="max-w-2xl">
+          <Tabs.Content value="last_month">
+            <Table.Root>
               <Table.Header>
                 <Table.Row>
-                  <Table.ColumnHeader>User</Table.ColumnHeader>
-                  <Table.ColumnHeader align="right">Points</Table.ColumnHeader>
-                  <Table.ColumnHeader align="right">
-                    department
-                  </Table.ColumnHeader>
+                  <Table.ColumnHeaderCell>Name</Table.ColumnHeaderCell>
+                  <Table.ColumnHeaderCell>Email</Table.ColumnHeaderCell>
+                  <Table.ColumnHeaderCell>Department</Table.ColumnHeaderCell>
                 </Table.Row>
               </Table.Header>
 
               <Table.Body>
-                {lastMonthUsers &&
-                  lastMonthUsers.map((user) => (
-                    <Table.Row key={user.id}>
-                      <Table.RowHeaderCell>{user.name}</Table.RowHeaderCell>
-                      <Table.Cell>{user.points}</Table.Cell>
-                      <Table.Cell>{user.department.name}</Table.Cell>
-                    </Table.Row>
-                  ))}
+                {lastMonthUsers.map((u) => (
+                <Table.Row>
+                    <Table.RowHeaderCell>{ u.name}</Table.RowHeaderCell>
+                    <Table.Cell>{ u.email}</Table.Cell>
+                    <Table.Cell>{ u.department.name}</Table.Cell>
+                </Table.Row>
+                ))}
               </Table.Body>
-            </Table>
-          </Tabs.Panel>
+            </Table.Root>
+          </Tabs.Content>
 
-          <Tabs.Panel value="3">
-            <Table className="max-w-2xl">
+          <Tabs.Content value="last_year">
+            <Table.Root>
               <Table.Header>
                 <Table.Row>
-                  <Table.ColumnHeader>User</Table.ColumnHeader>
-                  <Table.ColumnHeader align="right">Points</Table.ColumnHeader>
-                  <Table.ColumnHeader align="right">
-                    department
-                  </Table.ColumnHeader>
+                  <Table.ColumnHeaderCell>Name</Table.ColumnHeaderCell>
+                  <Table.ColumnHeaderCell>Email</Table.ColumnHeaderCell>
+                  <Table.ColumnHeaderCell>Department</Table.ColumnHeaderCell>
                 </Table.Row>
               </Table.Header>
 
               <Table.Body>
-                {lastYearUsers &&
-                  lastYearUsers.map((user) => (
-                    <Table.Row key={user.id}>
-                      <Table.RowHeaderCell>{user.name}</Table.RowHeaderCell>
-                      <Table.Cell>{user.points}</Table.Cell>
-                      <Table.Cell>{user.department.name}</Table.Cell>
-                    </Table.Row>
-                  ))}
+                {lastYearUsers.map((u) => (
+                <Table.Row>
+                    <Table.RowHeaderCell>{ u.name}</Table.RowHeaderCell>
+                    <Table.Cell>{ u.email}</Table.Cell>
+                    <Table.Cell>{ u.department.name}</Table.Cell>
+                </Table.Row>
+                ))}
               </Table.Body>
-            </Table>
-          </Tabs.Panel>
-        </Tabs.Content>
-      </Tabs>
+            </Table.Root>
+          </Tabs.Content>
+        </Box>
+      </Tabs.Root>
     </div>
   );
 };

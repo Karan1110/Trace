@@ -6,6 +6,7 @@ import { Button, TextField, DropdownMenu } from "@radix-ui/themes";
 const SignUp = () => {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
+  const [departmentName, setDepartmentName] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [departmentId, setDepartmentId] = useState("");
@@ -57,6 +58,34 @@ const SignUp = () => {
     }
   };
 
+  const createDepartment = async (e) => {
+    e.preventDefault();
+
+    try {
+      const videoFile = document.getElementById("image").files[0];
+      const formData = new FormData();
+      formData.append("profile_pic", videoFile);
+      formData.append("name", departmentName);
+
+      const response = await axios.post(
+        "http://localhost:1111/departments",
+        formData,
+        {
+          headers: {
+            "x-auth-token": localStorage.getItem("token"),
+          },
+        }
+      );
+
+      console.log("Department created:", response.data);
+      toast.success("created the department!");
+      // Reset the form after successful submission
+      setName("");
+    } catch (error) {
+      toast(error.message);
+      console.error("Error creating department:", error);
+    }
+  };
   return (
     <div className="max-w-xl mx-auto mt-[40px] h-100">
       <form
@@ -91,13 +120,70 @@ const SignUp = () => {
             <DropdownMenu.Content size="2">
               {departmentSuggestions.map((d) => (
                 <DropdownMenu.Item onClick={() => handleDepartmentSelect(d)}>
-                  {" "}
                   {d.name}
                 </DropdownMenu.Item>
               ))}
               <DropdownMenu.Separator />
+              <Dialog.Root>
+                <Dialog.Trigger>
+                  <DropdownMenu.Item>New</DropdownMenu.Item>
+                </Dialog.Trigger>
+                <Dialog.Content style={{ maxWidth: 450 }}>
+                  <Dialog.Title>New Department</Dialog.Title>
+                  <Dialog.Description size="2" mb="4">
+                    create a new department
+                  </Dialog.Description>
 
-              <DropdownMenu.Item>None</DropdownMenu.Item>
+                  <Flex direction="column" gap="3">
+                    <form
+                      onSubmit={createDepartment}
+                      className="px-80 pt-6 pb-8 mb-4"
+                    >
+                      <div className="mb-4">
+                        <label
+                          className="block text-gray-700 text-sm font-bold mb-2"
+                          htmlFor="name"
+                        >
+                          Name
+                        </label>
+                        <TextField.Input
+                          className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                          id="name"
+                          type="text"
+                          placeholder="Enter department name"
+                          value={departmentName}
+                          size="3"
+                          onChange={(e) => setDepartmentName(e.target.value)}
+                        />
+                      </div>
+                      <div className="mb-4">
+                        <input
+                          type="file"
+                          className="block w-full border border-gray-200 shadow-sm rounded-lg text-sm focus:z-10 focus:border-blue-500 focus:ring-blue-500 disabled:opacity-50 disabled:pointer-events-none dark:bg-slate-900 dark:border-gray-700 dark:text-gray-400 dark:focus:outline-none dark:focus:ring-1 dark:focus:ring-gray-600  file:border-0
+          file:bg-gray-100 file:me-4
+          file:py-3 file:px-4
+          dark:file:bg-gray-700 dark:file:text-gray-400"
+                          id="image"
+                        />
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <Button type="submit">Save</Button>
+                      </div>
+                    </form>
+                  </Flex>
+
+                  <Flex gap="3" mt="4" justify="end">
+                    <Dialog.Close>
+                      <Button variant="soft" color="gray">
+                        Cancel
+                      </Button>
+                    </Dialog.Close>
+                    <Dialog.Close>
+                      <Button onClick={addChannel}>Save</Button>
+                    </Dialog.Close>
+                  </Flex>
+                </Dialog.Content>
+              </Dialog.Root>
             </DropdownMenu.Content>
           </DropdownMenu.Root>
         </div>

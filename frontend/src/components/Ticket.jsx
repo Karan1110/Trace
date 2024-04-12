@@ -407,7 +407,7 @@ const Ticket = () => {
                   height="15"
                   viewBox="0 0 15 15"
                   fill="none"
-                  className="mt-1"
+                  className="mt-1 mr-1"
                   xmlns="http://www.w3.org/2000/svg"
                 >
                   <path
@@ -417,7 +417,10 @@ const Ticket = () => {
                     clip-rule="evenodd"
                   ></path>
                 </svg>
-                <Link to={`/meet/${ticket.meeting_link}`}>ask for a meet</Link>
+                <Link to={`/meet/${ticket.meeting_link}`}>
+                  {" "}
+                  {"  "} ask for a meet
+                </Link>
               </Text>
             </div>
           )}
