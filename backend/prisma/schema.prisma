@@ -88,7 +88,7 @@ model Messages {
   id         String   @id @db.VarChar(255)
   value      String   @db.VarChar(255)
   url        String?  @db.VarChar(255)
-  createdAt  DateTime @db.Timestamptz(6)
+  createdAt  DateTime @db.Timestamptz(6) @default(now())
   updatedAt  DateTime @default(now()) @updatedAt @db.Timestamptz(6)
   channel_id Int
   user_id    Int

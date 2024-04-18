@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import {
   motion,
   useTransform,
@@ -6,40 +6,8 @@ import {
   useMotionValue,
   useSpring,
 } from "framer-motion";
-import { Dialog, Button, Flex, Text, TextField } from "@radix-ui/themes";
-import axios from "axios";
-import { useUser } from "../contexts/userContext";
 
 const AnimatedTooltip = ({ items, setId, ws }) => {
-  let user = useUser();
-  const [users, setUsers] = useState(null);
-  const [userQuery, setUserQuery] = useState("");
-  const [newServer, setNewServer] = useState({ name: "", type: "" });
-  const createServer = async () => {
-    try {
-      const token = localStorage.getItem("token");
-      const config = {
-        headers: {
-          "Content-Type": "application/json",
-          "x-auth-token": token,
-        },
-      };
-
-      const response = await axios.post(
-        "http://localhost:1111/chats",
-        newServer,
-        config
-      );
-      user.chats.push({
-        ...response.data.chat,
-        channels: [response.data.channel],
-      });
-      console.log("chat created:", response.data, user.chats);
-      setNewServer({ name: "", type: "" });
-    } catch (error) {
-      console.error("Error creating chat:", error);
-    }
-  };
   const [hoveredIndex, setHoveredIndex] = useState(null);
   const springConfig = { stiffness: 100, damping: 5 };
   const x = useMotionValue(0);
@@ -48,7 +16,7 @@ const AnimatedTooltip = ({ items, setId, ws }) => {
     useTransform(x, [-100, 100], [-45, 45]),
     springConfig
   );
-
+  
   const translateX = useSpring(
     useTransform(x, [-100, 100], [-50, 50]),
     springConfig
@@ -58,42 +26,19 @@ const AnimatedTooltip = ({ items, setId, ws }) => {
     const halfWidth = event.target.offsetWidth / 2;
     x.set(event.nativeEvent.offsetX - halfWidth);
   };
-  
-  const openchat = async (user) => {
-    const existingchat = user.chats.find(
-      (chat) => chat.type == "personal" && chat.name == `${user.name}`
-    );
-    if (existingchat) {
-      setId(existingchat.id);
-    } else {
-      const resp = await axios.post(
-        "http://localhost:1111/chats",
-        {
-          name: `${user.name} `,
-          type: "personal",
-          recipient_id: user.id,
-        },
-        {
-          "x-auth-token": xAuthToken,
-        }
-      );
-      const { chat } = resp.data;
-      user.chats.push(chat);
-      setId(chat.id);
-      ws.send("Hii man!!!");
-    }
-  };
+
   return (
-    <>
+    <div className="mt-7">
       {items.map((item) => (
         <div
-          className="-mr-4 relative group"
+          className="-mr-4  relative group"
           key={item.name}
           onMouseEnter={() => setHoveredIndex(item.id)}
           onMouseLeave={() => setHoveredIndex(null)}
           onClick={() => {
-            setId(item.id);
-            console.log("chat changed!");
+            if (item.name !== "add new server") {
+              setId(item.id);
+            }
           }}
         >
           <AnimatePresence mode="wait">
@@ -133,63 +78,11 @@ const AnimatedTooltip = ({ items, setId, ws }) => {
             width={100}
             src={item.image}
             alt={item.name}
-            className="object-cover m-0 p-0 object-top rounded-full h-14 w-14 border-2 group-hover:scale-105 group-hover:z-30 border-white relative transition duration-500"
+            className="object-cover my-2 m-0 p-0 object-top rounded-full h-14 w-14  group-hover:scale-105 group-hover:z-30 border-white relative transition duration-500"
           />
         </div>
       ))}
-
-      <div className="absolute bottom-5">
-        <Dialog.Root>
-          <Dialog.Trigger>
-            <Button>New </Button>
-          </Dialog.Trigger>
-          <Dialog.Content style={{ maxWidth: 450 }}>
-            <Dialog.Title>New Server</Dialog.Title>
-            <Dialog.Description size="2" mb="4">
-              Make a new server
-            </Dialog.Description>
-
-            <Flex direction="column" gap="3">
-              <label>
-                <Text as="div" size="2" mb="1" weight="bold">
-                  Name
-                </Text>
-                <TextField.Input
-                  defaultValue="my-server"
-                  placeholder="Enter your server's name"
-                  onChange={(e) =>
-                    setNewServer({ ...newServer, name: e.target.value })
-                  }
-                />
-              </label>
-              <label>
-                <Text as="div" size="2" mb="1" weight="bold">
-                  Type
-                </Text>
-                <TextField.Input
-                  defaultValue="freja@example.com"
-                  placeholder="Type can either be group or channel"
-                  onChange={(e) =>
-                    setNewServer({ ...newServer, type: e.target.value })
-                  }
-                />
-              </label>
-            </Flex>
-
-            <Flex gap="3" mt="4" justify="end">
-              <Dialog.Close>
-                <Button variant="soft" color="gray">
-                  Cancel
-                </Button>
-              </Dialog.Close>
-              <Dialog.Close>
-                <Button onClick={() => createServer()}>Save</Button>
-              </Dialog.Close>
-            </Flex>
-          </Dialog.Content>
-        </Dialog.Root>
-      </div>
-    </>
+    </div>
   );
 };
 

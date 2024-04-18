@@ -62,6 +62,16 @@ import("livekit-server-sdk").then(({ AccessToken }) => {
         url = await uploader(req.file, publicId);
       }
 
+      let create =
+        req.body.type == "personal"
+          ? {
+              user_id: req.user.id,
+              user_id: req.body.recipient_id,
+            }
+          : {
+              user_id: req.user.id,
+            };
+
       const chat = await prisma.chats.create({
         data: {
           type: req.body.type,
@@ -72,9 +82,7 @@ import("livekit-server-sdk").then(({ AccessToken }) => {
             create: { name: "general", type: "text" },
           },
           users: {
-            create: {
-              user_id: req.user.id,
-            },
+            create: create,
           },
         },
         include: {
@@ -86,15 +94,6 @@ import("livekit-server-sdk").then(({ AccessToken }) => {
           },
         },
       });
-
-      if (req.body.type === "personal") {
-        await prisma.chatUser.create({
-          data: {
-            user: { connect: { id: req.body.recipient_id } },
-            chat: { connect: { id: chat.id } },
-          },
-        });
-      }
 
       res.json({
         chat,
@@ -143,7 +142,7 @@ import("livekit-server-sdk").then(({ AccessToken }) => {
   router.post("/createChannel", auth, async (req, res) => {
     const channel = await prisma.channels.create({
       data: {
-        type: req.body.channel_type,
+        type: req.body.type,
         name: req.body.name,
         chat_id: req.body.chat_id,
       },

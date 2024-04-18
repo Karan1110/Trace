@@ -16,6 +16,8 @@ const kafka = new Kafka({
   },
 });
 
+console.log(fs.readFileSync(path.resolve("./ca.pem"), "utf-8"));
+
 let producer = null;
 
 const createProducer = async () => {
@@ -39,7 +41,6 @@ exports.produceMessage = async function produceMessage(
     id: msgId,
     value: JSON.stringify(message),
     channel_id: req.channel.id,
-    chat_id: req.params.chat,
     user_id: req.user.id,
     edit: edit,
     url: url,
@@ -50,6 +51,7 @@ exports.produceMessage = async function produceMessage(
     messages: [{ value: JSON.stringify(msg) }],
     topic: "message",
   });
+  console.log("message produced..........!!!!!!!!!");
   return true;
 };
 
@@ -57,6 +59,7 @@ exports.startConsumingMessages = async function startConsumingMessages(
   channel
 ) {
   try {
+    console.log("message consumed.............!!!!!!!!!");
     const consumer = kafka.consumer({ groupId: "default" });
     await consumer.connect();
     await consumer.subscribe({ topic: "message", fromBeginning: true });
@@ -87,16 +90,16 @@ exports.startConsumingMessages = async function startConsumingMessages(
               },
             });
           } else {
-            await prisma.messages.create({
+           const msg =  await prisma.messages.create({
               data: {
                 id: msg.id,
                 value: msg.value,
                 channel_id: channel.id,
-                chat_id: parseInt(msg.chat_id),
                 user_id: parseInt(msg.user_id),
                 url: msg.url,
               },
-            });
+           });
+            console.log("just created this msg",msg);
           }
         } catch (ex) {
           console.error("Error processing message:", ex.message, ex);

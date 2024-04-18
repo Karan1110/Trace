@@ -1,8 +1,7 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import dotenv from "dotenv";
-import path from "path"
-
+import path from "path";
 
 // Load environment variables from .env
 dotenv.config();
@@ -14,5 +13,8 @@ export default defineConfig({
     alias: {
       "@": path.resolve(__dirname, "./src"),
     },
-  }
+  },
+  optimizeDeps: {
+    exclude: ["react-mentions"],
+  },
 });

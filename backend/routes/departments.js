@@ -8,7 +8,7 @@ const storage = multer.memoryStorage();
 const { v4: uuidv4 } = require("uuid");
 const upload = multer({ storage });
 
-router.get("/", auth, async (req, res) => {
+router.get("/",  async (req, res) => {
   const departments = await prisma.departments.findMany({
     orderBy: {
       createdAt: "desc",
@@ -28,32 +28,33 @@ router.get("/:id", auth, async (req, res) => {
     },
   });
 
-  const followingInCommon = await prisma.followUsers.findMany({
-    where: {
-      user_id: req.user.id,
-      following_id: {
-        in: department.users
-          .filter((u) => u.id == req.user.id)
-          .map((u) => u.id),
-      },
-    },
+  const f =  await prisma.users.findUnique({
+    where: { id: req.user.id },
     include: {
-      following: true,
+      following: {
+        where: {
+          following_id: {
+            in: department.users
+              .filter((u) => u.id == req.user.id)
+              .map((u) => u.id),
+          },
+        },
+        include: {
+          following : true
+        }
+      }
     },
   });
+
+  let inCommonUsers = f.following.map((f) =>  f.following);
 
   res.json({
     department,
-    followingInCommon: followingInCommon.map((f) => {
-      return {
-        name: f.following.name,
-        email: f.following.email,
-      };
-    }),
+    followingInCommon: inCommonUsers
   });
 });
 
-router.post("/", [auth, upload.single("profile_pic")], async (req, res) => {
+router.post("/", [ upload.single("profile_pic")], async (req, res) => {
   let url;
 
   const publicId = `${req.body.name}${uuidv4()}`;

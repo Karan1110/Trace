@@ -36,6 +36,7 @@ const Department = () => {
             navigate("/");
           }, 2000);
         }
+        console.log(resp.data);
         setDepartment(resp.data.department);
         setFollowersInCommon(resp.data.followersInCommon);
       } catch (error) {
@@ -47,25 +48,22 @@ const Department = () => {
   }, [id, navigate, token]);
 
   return (
-    <div>
+    <div className="flex flex-col space-y-5">
       {department && (
-        <div className="absolute top-0 text-center">
-          <AspectRatio ratio={16 / 8}>
+        <div className="my-7">
+          <Heading className="text-center">
+            {department.name} - {department.users.length} members
+          </Heading>
+          <figure class="relative w-100 text-center transition-all duration-300 cursor-pointer  ">
             <img
+              width="100%"
+              className="h-[25rem]"
               src={department.url}
-              alt="Department Image"
-              style={{
-                objectFit: "cover",
-                width: "100%",
-                height: "25%",
-                borderRadius: "var(--radius-2)",
-              }}
+              alt="image description"
             />
-          </AspectRatio>
-          <Heading>{department.name}</Heading>
+          </figure>
         </div>
       )}
-
       <Tabs.Root defaultValue="tickets">
         <Tabs.List>
           <Tabs.Trigger value="tickets">Tickets</Tabs.Trigger>

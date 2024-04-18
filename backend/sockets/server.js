@@ -106,7 +106,6 @@ module.exports = function (app) {
                   id: id,
                   value: null,
                   channel_id: req.channel.id,
-                  chat_id: req.params.chat,
                   user_id: req.user.id,
                   url: url,
                 })
@@ -132,21 +131,22 @@ module.exports = function (app) {
           produceMessage(msg, req, false, message_id, null, null);
         } else {
           const id = uuidv4().toString();
+          console.log(Chats[`${req.params.chat}_${req.params.channel}`]);
           Chats[`${req.params.chat}_${req.params.channel}`].forEach(
             (connection) => {
-              console.log("the value of the message is", msg.value);
+              console.log("the value of the message is", msg);
               connection.send(
                 JSON.stringify({
                   id: id,
                   value: msg,
                   channel_id: req.channel.id,
-                  chat_id: req.params.chat,
                   user_id: req.user.id,
+                  createdAt : new Date()
                 })
               );
             }
           );
-          produceMessage(Chats, msg, ws, req, null, null, id, null);
+          produceMessage(msg, req, null, id, null, null);
         }
       });
       // Handle WebSocket connection closure
@@ -159,7 +159,7 @@ module.exports = function (app) {
       });
     } catch (ex) {
       console.log(ex.message, ex);
-      ws.close(4000, ex.message);
+      ws.close(4000, "ws closed due to an error");
     }
   });
 };
